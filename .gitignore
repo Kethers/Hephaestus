@@ -1,0 +1,22 @@
+# Binaries
+**bin/
+bin-int/
+
+# IDE folders
+.idea/
+.vscode/
+
+# Visual Studio files and folder
+.vs/
+**.sln
+**.vcxproj
+**.vcxproj.filters
+**.vcxproj.user
+**.csproj
+**.nsight-gfxproj
+**.DotSettings
+**.user
+
+# LFS Folders
+lfs/
+hooks/
