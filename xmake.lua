@@ -56,6 +56,7 @@ function BuildProject(config)
     Execute(config.macros, add_defines)
     Execute(config.files, add_files)
     Execute(config.includePaths, add_includedirs)
+	Execute(config.headerfiles, add_headerfiles)
     Execute(config.depends, add_deps)
     Execute(config.link, add_links)
 
@@ -106,7 +107,8 @@ BuildProject({
     macros = {"HEP_BUILD_DLL"},
     depends = {},
     files = {"Hephaestus/src/**.cpp"},
-    includePaths = {"external", "Hephaestus/src"},
+	headerfiles = {"Hephaestus/src/**.h"},
+    includePaths = {"external"},
     debugLink = {},
     releaseLink = {},
     link = {"kernel32", "User32", "Gdi32", "Shell32"},
@@ -122,6 +124,7 @@ BuildProject({
     macros = {},
     depends = {"Hephaestus"},
     files = {"Sandbox/src/**.cpp"},
+	headerfiles = {"Sandbox/src/**.h"},
     includePaths = {"external", "Hephaestus/src"},
     debugLink = {},
     releaseLink = {},
