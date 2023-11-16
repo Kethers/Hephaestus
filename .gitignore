@@ -4,6 +4,8 @@ bin-int/
 
 # xmake
 .xmake/
+build/
+vsxmake*/
 
 # IDE folders
 .idea/
