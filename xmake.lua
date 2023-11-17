@@ -114,7 +114,7 @@ BuildProject({
 	files = {"Hephaestus/src/**.cpp"},
 	headerfiles = {"Hephaestus/src/**.h"},
 	pchHeader = "Hephaestus/src/heppch.h",
-	includePaths = {"external"},
+	includePaths = {"external", "Hephaestus/src"},
 	debugLink = {},
 	releaseLink = {},
 	link = {"kernel32", "User32", "Gdi32", "Shell32"},
