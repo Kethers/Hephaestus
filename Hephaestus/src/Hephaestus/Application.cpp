@@ -1,16 +1,23 @@
 #include "Application.h"
+
+#include "Hephaestus/Events/ApplicationEvent.h"
+#include "Hephaestus/Log.h"
+
 namespace Hep
 {
-	Hep::Application::Application()
+	Application::Application()
 	{
 	}
 
-	Hep::Application::~Application()
+	Application::~Application()
 	{
 	}
 
-	void Hep::Application::Run()
+	void Application::Run()
 	{
+		WindowResizeEvent e(1280, 720);
+		HEP_TRACE(e);
+
 		while (true)
 		{
 			
