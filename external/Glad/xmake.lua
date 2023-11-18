@@ -1,0 +1,17 @@
+BuildProject({
+	projectName = "Glad",
+	projectType = "static",
+	macros = {},
+	languages = {"clatest"},
+	depends = {},
+	files = {"src/glad.c"},
+	headerfiles = {"include/glad/glad.h", "include/KHR/khrplatform.h"},
+	pchHeader = nil,
+	includePaths = {"include"},
+	packages = nil,
+	debugLink = {},
+	releaseLink = {},
+	link = {},
+	afterBuildFunc = nil,
+	enableException = true,
+})

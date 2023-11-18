@@ -18,7 +18,9 @@ if is_mode("debug") then
 elseif is_mode("release") then
 	add_defines("HEP_RELEASE")
 elseif is_mode("dist") then
-	add_defines("HEP_DIST")
+	add_defines("HEP_DIST", "NDEBUG")
+	set_optimize("fastest")
+	set_symbols("hidden")
 end
 
 function Execute(map, func)
@@ -45,7 +47,6 @@ function BuildProject(config)
 		after_build(afterBuildFunc)
 	end
 
-	set_languages("clatest", "cxx20")
 	set_targetdir("$(buildir)/bin/$(mode)-$(plat)-$(arch)/" .. config.projectName)
 	-- set_objectdir("$(buildir)/bin-int/$(mode)-$(plat)-$(arch)/" .. config.projectName)
 	projectType = config.projectType
@@ -58,34 +59,37 @@ function BuildProject(config)
 		set_pcxxheader(pchHeader)
 	end
 
+	Execute(config.packages, add_packages)
+	Execute(config.languages, set_languages)
 	Execute(config.macros, add_defines)
 	Execute(config.files, add_files)
 	Execute(config.includePaths, add_includedirs)
 	Execute(config.headerfiles, add_headerfiles)
 	Execute(config.depends, add_deps)
 	Execute(config.link, add_links)
+	Execute(config.cxflags, add_cxflags)
 
 	if is_mode("release") then
 		Execute(config.releaseLink, add_links)
 		set_optimize("fastest")
-		if is_plat("windows") then
-			set_runtimes("MD")
-			add_cxflags("/Zi", "/W0", "/MP", "/Ob2", "/Oi", "/Ot", "/Oy", "/GT", "/GF", "/GS-", "/Gy", "/arch:AVX2",
-				"/fp:precise", "/Gr", "/TP", {
-					force = true
-				})
-			SetException(config)
-		end
+		-- if is_plat("windows") then
+		-- 	set_runtimes("MD")
+		-- 	add_cxflags("/Zi", "/W0", "/MP", "/Ob2", "/Oi", "/Ot", "/Oy", "/GT", "/GF", "/GS-", "/Gy", "/arch:AVX2",
+		-- 		"/fp:precise", "/Gr", "/TP", {
+		-- 			force = true
+		-- 		})
+		-- 	SetException(config)
+		-- end
 	else
 		Execute(config.debugLink, add_links)
 		set_optimize("none")
-		if is_plat("windows") then
-			set_runtimes("MDd")
-			add_cxflags("/Zi", "/W0", "/MP", "/Ob0", "/Oy-", "/GF", "/GS", "/arch:AVX2", "/fp:precise", "/Gr", "/TP", {
-				force = true
-			})
-			SetException(config)
-		end
+		-- if is_plat("windows") then
+		-- 	set_runtimes("MDd")
+		-- 	add_cxflags("/Zi", "/W0", "/MP", "/Ob0", "/Oy-", "/GF", "/GS", "/arch:AVX2", "/fp:precise", "/Gr", "/TP", {
+		-- 		force = true
+		-- 	})
+		-- 	SetException(config)
+		-- end
 	end
 end
 
@@ -105,19 +109,29 @@ end
 --     end
 -- end
 
+includes("external/Glad")
+includes("external/GLFW")
+add_repositories("glfw external/GLFW", {rootdir = os.scriptdir()})
+add_requires("glfw")
+
+IncludeDir = {}
+IncludeDir["GLFW"] = "external/GLFW/include"
+IncludeDir["Glad"] = "external/Glad/include"
 
 BuildProject({
 	projectName = "Hephaestus",
 	projectType = "shared",
 	macros = {"HEP_BUILD_DLL"},
-	depends = {},
+	languages = {"clatest", "cxx20"},
+	depends = {"Glad"},
 	files = {"Hephaestus/src/**.cpp"},
 	headerfiles = {"Hephaestus/src/**.h"},
 	pchHeader = "Hephaestus/src/heppch.h",
-	includePaths = {"external", "Hephaestus/src"},
+	includePaths = {"external", "Hephaestus/src", IncludeDir.GLFW, IncludeDir.Glad},
+	packages = {"glfw"},
 	debugLink = {},
 	releaseLink = {},
-	link = {"kernel32", "User32", "Gdi32", "Shell32"},
+	link = {"kernel32", "User32", "Gdi32", "Shell32", "opengl32.lib"},
 	afterBuildFunc = function (target)
 		os.cp(target:targetfile(), target:targetdir() .. "/../Sandbox/" .. target:filename())
 	end,
@@ -128,11 +142,13 @@ BuildProject({
 	projectName = "Sandbox",
 	projectType = "binary",
 	macros = {},
+	languages = {"clatest", "cxx20"},
 	depends = {"Hephaestus"},
 	files = {"Sandbox/src/**.cpp"},
 	headerfiles = {"Sandbox/src/**.h"},
 	pchHeader = nil,
 	includePaths = {"external", "Hephaestus/src"},
+	packages = nil,
 	debugLink = {},
 	releaseLink = {},
 	link = {"kernel32", "User32", "Gdi32", "Shell32"},
