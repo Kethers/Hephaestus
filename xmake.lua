@@ -119,6 +119,7 @@ IncludeDir = {}
 IncludeDir["GLFW"] = "external/GLFW/include"
 IncludeDir["Glad"] = "external/Glad/include"
 IncludeDir["ImGui"] = "external/imgui"
+IncludeDir["rtm"] = "external/rtm"
 
 BuildProject({
 	projectName = "Hephaestus",
@@ -127,12 +128,13 @@ BuildProject({
 	languages = {"clatest", "cxx20"},
 	depends = {"Glad", "ImGui"},
 	files = {"Hephaestus/src/**.cpp"},
-	headerfiles = {"Hephaestus/src/**.h"},
+	headerfiles = {"Hephaestus/src/**.h", "external/rtm/rtm/**.h"},
 	pchHeader = "Hephaestus/src/heppch.h",
 	includePaths = {"external", "Hephaestus/src", 
 		IncludeDir.GLFW, 
 		IncludeDir.Glad,
 		IncludeDir.ImGui,
+		IncludeDir.rtm,
 	},
 	packages = {"glfw"},
 	debugLink = {},
@@ -153,7 +155,9 @@ BuildProject({
 	files = {"Sandbox/src/**.cpp"},
 	headerfiles = {"Sandbox/src/**.h"},
 	pchHeader = nil,
-	includePaths = {"external", "Hephaestus/src"},
+	includePaths = {"external", "Hephaestus/src",
+		IncludeDir.rtm,
+	},
 	packages = nil,
 	debugLink = {},
 	releaseLink = {},
