@@ -10,13 +10,24 @@
 	#error Hephaestus only supports Windows!
 #endif
 
-
 #ifdef _MSC_VER
 #define HEP_DEBUG_BREAK __debugbreak();
 #elif defined (__GNUC__ || __clang__)
 	#define HEP_DEBUG_BREAK __builtin_trap();
 #else
 	#define HEP_DEBUG_BREAK
+#endif
+
+#ifdef _MSC_VER
+	#define HEP_FORCE_INLINE __forceinline
+#elif defined (__GNUC__ || __clang__)
+	#defineHEP_FORCE_INLINE __attribute__((always_inline))
+#else
+	#define HEP_FORCE_INLINE inline
+#endif
+
+#ifdef HEP_DEBUG
+	#define HEP_ENABLE_ASSERTS
 #endif
 
 

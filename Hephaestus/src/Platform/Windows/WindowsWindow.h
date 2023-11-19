@@ -3,8 +3,8 @@
 #include "Hephaestus/Window.h"
 struct GLFWwindow;
 
-namespace Hep {
-
+namespace Hep
+{
 	class WindowsWindow : public Window
 	{
 	public:
@@ -21,10 +21,12 @@ namespace Hep {
 		void SetVSync(bool enabled) override;
 		bool IsVSync() const override;
 
-		virtual void* GetNativeWindow() const { return m_Window; }
+		void* GetNativeWindow() const override { return m_Window; }
+
 	private:
 		virtual void Init(const WindowProps& props);
 		virtual void Shutdown();
+
 	private:
 		GLFWwindow* m_Window;
 		// Scope<GraphicsContext> m_Context;
@@ -40,5 +42,4 @@ namespace Hep {
 
 		WindowData m_Data;
 	};
-
 }

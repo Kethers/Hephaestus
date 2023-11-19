@@ -72,24 +72,24 @@ function BuildProject(config)
 	if is_mode("release") then
 		Execute(config.releaseLink, add_links)
 		set_optimize("fastest")
-		-- if is_plat("windows") then
-		-- 	set_runtimes("MD")
+		if is_plat("windows") then
+			set_runtimes("MD")
 		-- 	add_cxflags("/Zi", "/W0", "/MP", "/Ob2", "/Oi", "/Ot", "/Oy", "/GT", "/GF", "/GS-", "/Gy", "/arch:AVX2",
 		-- 		"/fp:precise", "/Gr", "/TP", {
 		-- 			force = true
 		-- 		})
-		-- 	SetException(config)
-		-- end
+			SetException(config)
+		end
 	else
 		Execute(config.debugLink, add_links)
 		set_optimize("none")
-		-- if is_plat("windows") then
-		-- 	set_runtimes("MDd")
+		if is_plat("windows") then
+			set_runtimes("MDd")
 		-- 	add_cxflags("/Zi", "/W0", "/MP", "/Ob0", "/Oy-", "/GF", "/GS", "/arch:AVX2", "/fp:precise", "/Gr", "/TP", {
 		-- 		force = true
 		-- 	})
-		-- 	SetException(config)
-		-- end
+			SetException(config)
+		end
 	end
 end
 
