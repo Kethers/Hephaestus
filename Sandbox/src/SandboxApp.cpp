@@ -10,12 +10,19 @@ public:
 
 	void OnUpdate() override
 	{
-		HEP_INFO("ExampleLayer::Update");
+		if (Hep::Input::IsKeyPressed(HEP_KEY_TAB))
+			HEP_TRACE("Tab Key is pressed (pool)!");
 	}
 
 	void OnEvent(Hep::Event& event) override
 	{
-		HEP_TRACE("{0}", event);
+		if (event.GetEventType() == Hep::EventType::KeyPressed)
+		{
+			auto e = static_cast<Hep::KeyPressedEvent&>(event);
+			if (Hep::Input::IsKeyPressed(HEP_KEY_TAB))
+				HEP_TRACE("Tab Key is pressed (event)!");
+			HEP_TRACE("{0}", (char)e.GetKeyCode());
+		}
 	}
 };
 
