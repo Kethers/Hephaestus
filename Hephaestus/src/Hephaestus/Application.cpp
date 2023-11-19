@@ -9,11 +9,15 @@ namespace Hep
 {
 #define BIND_EVENT_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
 
+	Application* Application::s_Instance = nullptr;
+
 	Application::Application()
 	{
+		HEP_CORE_ASSERT(!s_Instance, "Application already exist!");
+		s_Instance = this;
+
 		m_Window = std::unique_ptr<Window>(Window::Create());
 		m_Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
-
 	}
 
 	Application::~Application()
@@ -23,11 +27,13 @@ namespace Hep
 	void Application::PushLayer(Layer* layer)
 	{
 		m_LayerStack.PushLayer(layer);
+		layer->OnAttach();
 	}
 
 	void Application::PushOverlay(Layer* layer)
 	{
 		m_LayerStack.PushOverlay(layer);
+		layer->OnAttach();
 	}
 
 	void Application::OnEvent(Event& e)
@@ -35,10 +41,10 @@ namespace Hep
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
 
-		for(auto iter = m_LayerStack.end();iter!=m_LayerStack.begin();)
+		for (auto iter = m_LayerStack.end(); iter != m_LayerStack.begin();)
 		{
 			(*--iter)->OnEvent(e);
-			if(e.Handled)
+			if (e.Handled)
 				break;
 		}
 	}
@@ -63,4 +69,3 @@ namespace Hep
 		return true;
 	}
 }
-

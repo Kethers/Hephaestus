@@ -21,12 +21,19 @@ namespace Hep
 
 		void PushLayer(Layer* layer);
 		void PushOverlay(Layer* layer);
+
+		static Application& Get() { return *s_Instance; }
+		Window& GetWindow() { return *m_Window; }
 	private:
 		bool OnWindowClose(WindowCloseEvent& e);
 
 		std::unique_ptr<Window> m_Window;
 		bool m_Running = true;
 		LayerStack m_LayerStack;
+
+		#pragma region static
+		static Application* s_Instance;
+		#pragma endregion static
 	};
 
 	// To be defined in CLIENT

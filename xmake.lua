@@ -111,23 +111,29 @@ end
 
 includes("external/Glad")
 includes("external/GLFW")
+includes("external/imgui")
 add_repositories("glfw external/GLFW", {rootdir = os.scriptdir()})
 add_requires("glfw")
 
 IncludeDir = {}
 IncludeDir["GLFW"] = "external/GLFW/include"
 IncludeDir["Glad"] = "external/Glad/include"
+IncludeDir["ImGui"] = "external/imgui"
 
 BuildProject({
 	projectName = "Hephaestus",
 	projectType = "shared",
 	macros = {"HEP_BUILD_DLL"},
 	languages = {"clatest", "cxx20"},
-	depends = {"Glad"},
+	depends = {"Glad", "ImGui"},
 	files = {"Hephaestus/src/**.cpp"},
 	headerfiles = {"Hephaestus/src/**.h"},
 	pchHeader = "Hephaestus/src/heppch.h",
-	includePaths = {"external", "Hephaestus/src", IncludeDir.GLFW, IncludeDir.Glad},
+	includePaths = {"external", "Hephaestus/src", 
+		IncludeDir.GLFW, 
+		IncludeDir.Glad,
+		IncludeDir.ImGui,
+	},
 	packages = {"glfw"},
 	debugLink = {},
 	releaseLink = {},
