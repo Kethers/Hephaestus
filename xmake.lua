@@ -132,7 +132,7 @@ IncludeDir["rtm"] = "external/rtm"
 
 BuildProject({
 	projectName = "Hephaestus",
-	projectType = "shared",
+	projectType = "static",
 	macros = {"HEP_BUILD_DLL"},
 	languages = {"clatest", "cxx20"},
 	depends = {"Glad", "ImGui"},
@@ -149,10 +149,9 @@ BuildProject({
 	debugLink = {},
 	releaseLink = {},
 	link = {"kernel32", "User32", "Gdi32", "Shell32", "opengl32.lib"},
-	afterBuildFunc = function (target)
-		os.cp(target:targetfile(), target:targetdir() .. "/../Sandbox/" .. target:filename())
-	end,
+	afterBuildFunc = nil,
 	enableException = true,
+	staticruntime = true,
 })
 
 BuildProject({
@@ -173,4 +172,5 @@ BuildProject({
 	link = {"kernel32", "User32", "Gdi32", "Shell32"},
 	afterBuildFunc = nil,
 	enableException = true,
+	staticruntime = true,
 })

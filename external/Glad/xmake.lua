@@ -14,4 +14,5 @@ BuildProject({
 	link = {},
 	afterBuildFunc = nil,
 	enableException = true,
+	staticruntime = true,
 })

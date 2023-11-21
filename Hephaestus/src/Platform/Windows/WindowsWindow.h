@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Hephaestus/Window.h"
-struct GLFWwindow;
+#include "Hephaestus/Renderer/GraphicsContext.h"
+
+#include <GLFW/glfw3.h>
 
 namespace Hep
 {
@@ -29,7 +31,7 @@ namespace Hep
 
 	private:
 		GLFWwindow* m_Window;
-		// Scope<GraphicsContext> m_Context;
+		GraphicsContext* m_Context;
 
 		struct WindowData
 		{

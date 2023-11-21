@@ -1,5 +1,7 @@
 #include <Hephaestus.h>
 
+#include <imgui/imgui.h>
+
 class ExampleLayer : public Hep::Layer
 {
 public:
@@ -12,6 +14,13 @@ public:
 	{
 		if (Hep::Input::IsKeyPressed(HEP_KEY_TAB))
 			HEP_TRACE("Tab Key is pressed (pool)!");
+	}
+
+	void OnImGuiRender() override
+	{
+		ImGui::Begin("Test");
+		ImGui::Text("Hello World");
+		ImGui::End();
 	}
 
 	void OnEvent(Hep::Event& event) override
