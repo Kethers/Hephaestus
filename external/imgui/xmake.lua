@@ -2,7 +2,7 @@ local srcFiles = {
 	"imgui.cpp",
 	"imgui_draw.cpp",
 
-	"imgui_tables.cpp",
+	-- "imgui_tables.cpp",
 	"imgui_widgets.cpp",
 	"imgui_demo.cpp"
 }
@@ -37,4 +37,5 @@ BuildProject({
 	link = {},
 	afterBuildFunc = nil,
 	enableException = true,
+	staticruntime = true,
 })

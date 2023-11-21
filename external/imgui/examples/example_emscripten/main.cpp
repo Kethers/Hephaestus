@@ -1,11 +1,10 @@
-// Dear ImGui: standalone example application for Emscripten, using SDL2 + OpenGL3
-// (Emscripten is a C++-to-javascript compiler, used to publish executables for the web. See https://emscripten.org/)
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
-
+// dear imgui: standalone example application for Emscripten, using SDL2 + OpenGL3
 // This is mostly the same code as the SDL2 + OpenGL3 example, simply with the modifications needed to run on Emscripten.
 // It is possible to combine both code into a single source file that will compile properly on Desktop and using Emscripten.
 // See https://github.com/ocornut/imgui/pull/2492 as an example on how to do just that.
+//
+// If you are new to dear imgui, see examples/README.txt and documentation at the top of imgui.cpp.
+// (Emscripten is a C++-to-javascript compiler, used to publish executables for the web. See https://emscripten.org/)
 
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
@@ -21,7 +20,7 @@ SDL_Window*     g_Window = NULL;
 SDL_GLContext   g_GLContext = NULL;
 
 // For clarity, our main loop code is declared at the end.
-static void main_loop(void*);
+void main_loop(void*);
 
 int main(int, char**)
 {
@@ -74,7 +73,7 @@ int main(int, char**)
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
 
-    // Setup Platform/Renderer backends
+    // Setup Platform/Renderer bindings
     ImGui_ImplSDL2_InitForOpenGL(g_Window, g_GLContext);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
@@ -100,7 +99,7 @@ int main(int, char**)
     emscripten_set_main_loop_arg(main_loop, NULL, 0, true);
 }
 
-static void main_loop(void* arg)
+void main_loop(void* arg)
 {
     ImGuiIO& io = ImGui::GetIO();
     IM_UNUSED(arg); // We can pass this argument as the second parameter of emscripten_set_main_loop_arg(), but we don't use that.
@@ -124,7 +123,7 @@ static void main_loop(void* arg)
 
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplSDL2_NewFrame();
+    ImGui_ImplSDL2_NewFrame(g_Window);
     ImGui::NewFrame();
 
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
@@ -168,7 +167,7 @@ static void main_loop(void* arg)
     ImGui::Render();
     SDL_GL_MakeCurrent(g_Window, g_GLContext);
     glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     SDL_GL_SwapWindow(g_Window);

@@ -73,7 +73,12 @@ function BuildProject(config)
 		Execute(config.releaseLink, add_links)
 		set_optimize("fastest")
 		if is_plat("windows") then
-			set_runtimes("MD")
+			if config.staticruntime ~= nil and config.staticruntime then
+				set_runtimes("MT");
+			else
+				set_runtimes("MD")
+			end
+				
 		-- 	add_cxflags("/Zi", "/W0", "/MP", "/Ob2", "/Oi", "/Ot", "/Oy", "/GT", "/GF", "/GS-", "/Gy", "/arch:AVX2",
 		-- 		"/fp:precise", "/Gr", "/TP", {
 		-- 			force = true
@@ -84,7 +89,11 @@ function BuildProject(config)
 		Execute(config.debugLink, add_links)
 		set_optimize("none")
 		if is_plat("windows") then
-			set_runtimes("MDd")
+			if config.staticruntime ~= nil and config.staticruntime then
+				set_runtimes("MTd");
+			else
+				set_runtimes("MDd")
+			end
 		-- 	add_cxflags("/Zi", "/W0", "/MP", "/Ob0", "/Oy-", "/GF", "/GS", "/arch:AVX2", "/fp:precise", "/Gr", "/TP", {
 		-- 		force = true
 		-- 	})

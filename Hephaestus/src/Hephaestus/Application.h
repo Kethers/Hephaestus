@@ -7,6 +7,8 @@
 #include "Hephaestus/Events/Event.h"
 #include "Hephaestus/Events/ApplicationEvent.h"
 
+#include "Hephaestus/ImGui/ImGuiLayer.h"
+
 namespace Hep
 {
 	class HEP_API Application
@@ -24,10 +26,12 @@ namespace Hep
 
 		static Application& Get() { return *s_Instance; }
 		Window& GetWindow() { return *m_Window; }
+
 	private:
 		bool OnWindowClose(WindowCloseEvent& e);
 
 		std::unique_ptr<Window> m_Window;
+		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running = true;
 		LayerStack m_LayerStack;
 
