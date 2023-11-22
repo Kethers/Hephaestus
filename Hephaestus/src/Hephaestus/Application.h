@@ -9,6 +9,8 @@
 
 #include "Hephaestus/ImGui/ImGuiLayer.h"
 
+#include "Hephaestus/Renderer/Shader.h"
+
 namespace Hep
 {
 	class HEP_API Application
@@ -36,6 +38,7 @@ namespace Hep
 		LayerStack m_LayerStack;
 
 		unsigned int m_VertexArray, m_VertexBuffer, m_IndexBuffer;
+		std::unique_ptr<Shader> m_Shader;
 
 		#pragma region static
 		static Application* s_Instance;
