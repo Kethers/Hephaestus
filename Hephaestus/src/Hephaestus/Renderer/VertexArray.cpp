@@ -10,12 +10,12 @@ namespace Hep
 	{
 		switch (Renderer::GetAPI())
 		{
-			case RendererAPI::None:
+			case RendererAPI::API::None:
 			{
-				HEP_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
+				HEP_CORE_ASSERT(false, "RendererAPI::API::None is currently not supported!");
 				return nullptr;
 			}
-			case RendererAPI::OpenGL: return new OpenGLVertexArray();
+			case RendererAPI::API::OpenGL: return new OpenGLVertexArray();
 		}
 
 		HEP_CORE_ASSERT(false, "Unknown Renderer API!");

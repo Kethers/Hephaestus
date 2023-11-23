@@ -10,12 +10,12 @@ namespace Hep
 	{
 		switch (Renderer::GetAPI())
 		{
-			case RendererAPI::None:
+			case RendererAPI::API::None:
 			{
-				HEP_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
+				HEP_CORE_ASSERT(false, "RendererAPI::API::None is currently not supported!");
 				return nullptr;
 			}
-			case RendererAPI::OpenGL: return new OpenGLVertexBuffer(vertices, size);
+			case RendererAPI::API::OpenGL: return new OpenGLVertexBuffer(vertices, size);
 		}
 
 		HEP_CORE_ASSERT(false, "Unknown Renderer API!");
@@ -26,12 +26,12 @@ namespace Hep
 	{
 		switch (Renderer::GetAPI())
 		{
-			case RendererAPI::None:
+			case RendererAPI::API::None:
 			{
-				HEP_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
+				HEP_CORE_ASSERT(false, "RendererAPI::API::None is currently not supported!");
 				return nullptr;
 			}
-			case RendererAPI::OpenGL: return new OpenGLIndexBuffer(indices, size);
+			case RendererAPI::API::OpenGL: return new OpenGLIndexBuffer(indices, size);
 		}
 
 		HEP_CORE_ASSERT(false, "Unknown Renderer API!");
