@@ -11,6 +11,7 @@
 
 #include "Hephaestus/Renderer/Shader.h"
 #include "Renderer/Buffer.h"
+#include "Renderer/OrthographicCamera.h"
 #include "Renderer/VertexArray.h"
 
 namespace Hep
@@ -44,6 +45,9 @@ namespace Hep
 
 		std::shared_ptr<Shader> m_BlueShader;
 		std::shared_ptr<VertexArray> m_SquareVA;
+
+		OrthographicCamera m_Camera;
+
 		#pragma region static
 		static Application* s_Instance;
 		#pragma endregion static

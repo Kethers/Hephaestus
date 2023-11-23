@@ -3,6 +3,8 @@
 
 #include <glad/glad.h>
 
+#include "rtm/impl/matrix_cast.h"
+
 namespace Hep
 {
 	Shader::Shader(const std::string& vertexSrc, const std::string& fragmentSrc)
@@ -71,7 +73,7 @@ namespace Hep
 		// Vertex and fragment shaders are successfully compiled.
 		// Now time to link them together into a program.
 		// Get a program object.
-		m_RendererID   = glCreateProgram();
+		m_RendererID = glCreateProgram();
 		GLuint program = m_RendererID;
 
 		// Attach our shaders to our program
@@ -122,5 +124,11 @@ namespace Hep
 	void Shader::Unbind() const
 	{
 		glUseProgram(0);
+	}
+
+	void Shader::UploadUniformMat4(const std::string& name, const rtm::matrix4x4f& matrix)
+	{
+		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		glUniformMatrix4fv(location, 1, GL_FALSE, (GLfloat*)&matrix);
 	}
 }
