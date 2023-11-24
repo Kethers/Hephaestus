@@ -3,14 +3,13 @@
 
 namespace Hep
 {
-	LayerStack::LayerStack()
-	{
-	}
-
 	LayerStack::~LayerStack()
 	{
 		for (Layer* layer : m_Layers)
+		{
+			layer->OnDetach();
 			delete layer;
+		}
 	}
 
 	void LayerStack::PushLayer(Layer* layer)
@@ -26,9 +25,10 @@ namespace Hep
 
 	void LayerStack::PopLayer(Layer* layer)
 	{
-		auto iter = std::find(m_Layers.begin(), m_Layers.end(), layer);
+		auto iter = std::find(m_Layers.begin(), m_Layers.begin() + m_LayerInsertIndex, layer);
 		if (iter != m_Layers.end())
 		{
+			layer->OnDetach();
 			m_Layers.erase(iter);
 			m_LayerInsertIndex--;
 		}
@@ -36,8 +36,11 @@ namespace Hep
 
 	void LayerStack::PopOverlay(Layer* overlay)
 	{
-		auto iter = std::find(m_Layers.begin(), m_Layers.end(), overlay);
+		auto iter = std::find(m_Layers.begin() + m_LayerInsertIndex, m_Layers.end(), overlay);
 		if (iter != m_Layers.end())
+		{
+			overlay->OnDetach();
 			m_Layers.erase(iter);
+		}
 	}
 }
