@@ -15,7 +15,7 @@ namespace Hep
 
 		static void Submit(const ::std::shared_ptr<Shader>& shader,
 			const std::shared_ptr<VertexArray>& vertexArray,
-			const rtm::matrix4x4f& transform = rtm::matrix_identity());
+			rtm::matrix4x4f_argn transform = rtm::matrix_identity());
 
 		static RendererAPI::API GetAPI() { return RendererAPI::GetAPI(); }
 

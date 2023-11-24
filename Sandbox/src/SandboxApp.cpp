@@ -90,7 +90,7 @@ public:
 
 		m_Shader.reset(new Hep::Shader(vertexSrc, fragmentSrc));
 
-		std::string blueShaderVertexSrc = R"(
+		std::string flatColorShaderVertexSrc = R"(
 			#version 330 core
 
 			layout(location = 0) in vec3 a_Position;
@@ -107,20 +107,22 @@ public:
 			}
 		)";
 
-		std::string blueShaderFragmentSrc = R"(
+		std::string flatColorShaderFragmentSrc = R"(
 			#version 330 core
 
 			layout(location = 0) out vec4 color;
 
 			in vec3 v_Position;
 
+			uniform vec4 u_Color;
+
 			void main()
 			{
-				color = vec4(0.2, 0.3, 0.8, 1.0);
+				color = u_Color;
 			}
 		)";
 
-		m_BlueShader.reset(new Hep::Shader(blueShaderVertexSrc, blueShaderFragmentSrc));
+		m_FlatColorShader.reset(new Hep::Shader(flatColorShaderVertexSrc, flatColorShaderFragmentSrc));
 	}
 
 	void OnUpdate(Hep::Timestep ts) override
@@ -151,6 +153,9 @@ public:
 		Hep::Renderer::BeginScene(m_Camera);
 
 		static rtm::float3f scale{ 0.1f, 0.1f, 0.1f };
+
+		rtm::float4f redColor(0.8f, 0.2f, 0.3f, 1.0f);
+		rtm::float4f blueColor(0.2f, 0.3f, 0.8f, 1.0f);
 		for (int i = 0; i < 20; ++i)
 		{
 			for (int j = 0; j < 20; ++j)
@@ -159,7 +164,11 @@ public:
 				rtm::matrix3x4f transform = rtm::matrix_from_qvv(rtm::quat_identity(),
 					rtm::vector_load3(&pos),
 					rtm::vector_load3(&scale));
-				Hep::Renderer::Submit(m_BlueShader, m_SquareVA, matrix_cast(transform));
+				if (i % 2 == 0)
+					m_FlatColorShader->UploadUniformFloat4("u_Color", rtm::vector_load(&redColor));
+				else
+					m_FlatColorShader->UploadUniformFloat4("u_Color", rtm::vector_load(&blueColor));
+				Hep::Renderer::Submit(m_FlatColorShader, m_SquareVA, matrix_cast(transform));
 			}
 		}
 
@@ -178,7 +187,7 @@ private:
 	std::shared_ptr<Hep::Shader> m_Shader;
 	std::shared_ptr<Hep::VertexArray> m_VertexArray;
 
-	std::shared_ptr<Hep::Shader> m_BlueShader;
+	std::shared_ptr<Hep::Shader> m_FlatColorShader;
 	std::shared_ptr<Hep::VertexArray> m_SquareVA;
 
 	Hep::OrthographicCamera m_Camera;
@@ -197,8 +206,7 @@ public:
 		PushLayer(new ExampleLayer());
 	}
 
-	~Sandbox()
-	{ }
+	~Sandbox() override = default;
 };
 
 Hep::Application* Hep::CreateApplication()

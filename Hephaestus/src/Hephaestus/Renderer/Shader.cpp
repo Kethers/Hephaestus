@@ -126,7 +126,14 @@ namespace Hep
 		glUseProgram(0);
 	}
 
-	void Shader::UploadUniformMat4(const std::string& name, const rtm::matrix4x4f& matrix)
+	void Shader::UploadUniformFloat4(const std::string& name, rtm::vector4f_arg1& values)
+	{
+		auto pVec = values.m128_f32;
+		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
+		glUniform4f(location, pVec[0], pVec[1], pVec[2], pVec[3]);
+	}
+
+	void Shader::UploadUniformMat4(const std::string& name, rtm::matrix4x4f_arg1 matrix)
 	{
 		GLint location = glGetUniformLocation(m_RendererID, name.c_str());
 		glUniformMatrix4fv(location, 1, GL_FALSE, (GLfloat*)&matrix);

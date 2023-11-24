@@ -15,7 +15,7 @@ namespace Hep
 
 	void Renderer::Submit(const std::shared_ptr<Shader>& shader,
 		const std::shared_ptr<VertexArray>& vertexArray,
-		const rtm::matrix4x4f& transform)
+		rtm::matrix4x4f_argn transform)
 	{
 		shader->Bind();
 		shader->UploadUniformMat4("u_ViewProjection", s_SceneData->ViewProjectionMatrix);

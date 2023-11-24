@@ -14,7 +14,8 @@ namespace Hep
 		void Bind() const;
 		void Unbind() const;
 
-		void UploadUniformMat4(const std::string& name, const rtm::matrix4x4f& matrix);
+		void UploadUniformFloat4(const std::string& name, rtm::vector4f_arg1& values);
+		void UploadUniformMat4(const std::string& name, rtm::matrix4x4f_arg1 matrix);
 
 	private:
 		uint32_t m_RendererID;
