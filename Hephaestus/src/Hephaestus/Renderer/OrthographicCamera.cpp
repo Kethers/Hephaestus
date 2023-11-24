@@ -16,7 +16,7 @@ namespace Hep
 	{
 		rtm::matrix4x4f transform = rtm::ext::transform_4x4(
 			vector_load3(&m_Position),
-			rtm::quat_from_axis_angle({ { 0.0f, 0.0f, 1.0f, 0.0f } }, rtm::scalar_deg_to_rad(m_Rotation)),
+			rtm::quat_from_axis_angle({ { 0.0f, 0.0f, -1.0f, 0.0f } }, rtm::scalar_deg_to_rad(m_Rotation)),
 			rtm::vector_set(1.0f));
 
 		m_ViewMatrix = rtm::matrix_inverse(transform);

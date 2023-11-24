@@ -12,6 +12,17 @@
 
 #include "Hephaestus/ImGui/ImGuiLayer.h"
 
+// --------- Renderer ----------
+#include "Hephaestus/Renderer/Renderer.h"
+#include "Hephaestus/Renderer/RenderCommand.h"
+
+#include "Hephaestus/Renderer/Buffer.h"
+#include "Hephaestus/Renderer/Shader.h"
+#include "Hephaestus/Renderer/VertexArray.h"
+
+#include "Hephaestus/Renderer/OrthographicCamera.h"
+// -----------------------------
+
 // -------- Entry Point --------
 #include "Hephaestus/EntryPoint.h"
 // -----------------------------
