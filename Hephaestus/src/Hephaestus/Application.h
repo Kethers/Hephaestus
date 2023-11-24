@@ -7,6 +7,8 @@
 #include "Hephaestus/Events/Event.h"
 #include "Hephaestus/Events/ApplicationEvent.h"
 
+#include "Hephaestus/Core/Timestep.h"
+
 #include "Hephaestus/ImGui/ImGuiLayer.h"
 
 namespace Hep
@@ -34,6 +36,7 @@ namespace Hep
 		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running = true;
 		LayerStack m_LayerStack;
+		float m_LastFrameTime = 0.0f;
 
 		#pragma region static
 		static Application* s_Instance;

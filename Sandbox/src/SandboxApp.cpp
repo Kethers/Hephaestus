@@ -118,22 +118,24 @@ public:
 		m_BlueShader.reset(new Hep::Shader(blueShaderVertexSrc, blueShaderFragmentSrc));
 	}
 
-	void OnUpdate() override
+	void OnUpdate(Hep::Timestep ts) override
 	{
+		HEP_TRACE("Delta time: {0}s ({1}ms)", ts.GetSeconds(), ts.GetMilliseconds());
+
 		if (Hep::Input::IsKeyPressed(HEP_KEY_LEFT))
-			m_CameraPosition.x -= m_CameraMoveSpeed;
+			m_CameraPosition.x -= m_CameraMoveSpeed * ts;
 		else if (Hep::Input::IsKeyPressed(HEP_KEY_RIGHT))
-			m_CameraPosition.x += m_CameraMoveSpeed;
+			m_CameraPosition.x += m_CameraMoveSpeed * ts;
 
 		if (Hep::Input::IsKeyPressed(HEP_KEY_UP))
-			m_CameraPosition.y += m_CameraMoveSpeed;
+			m_CameraPosition.y += m_CameraMoveSpeed * ts;
 		else if (Hep::Input::IsKeyPressed(HEP_KEY_DOWN))
-			m_CameraPosition.y -= m_CameraMoveSpeed;
+			m_CameraPosition.y -= m_CameraMoveSpeed * ts;
 
 		if (Hep::Input::IsKeyPressed(HEP_KEY_A))
-			m_CameraRotation += m_CameraRotateSpeed;
+			m_CameraRotation += m_CameraRotateSpeed * ts;
 		else if (Hep::Input::IsKeyPressed(HEP_KEY_D))
-			m_CameraRotation -= m_CameraRotateSpeed;
+			m_CameraRotation -= m_CameraRotateSpeed * ts;
 
 		Hep::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1 });
 		Hep::RenderCommand::Clear();
@@ -164,10 +166,10 @@ private:
 
 	Hep::OrthographicCamera m_Camera;
 	rtm::float3f m_CameraPosition;
-	float m_CameraMoveSpeed = 0.1f;
+	float m_CameraMoveSpeed = 5.0f;
 
 	float m_CameraRotation = 0.0f;
-	float m_CameraRotateSpeed = 2.0f;
+	float m_CameraRotateSpeed = 180.0f;
 };
 
 class Sandbox : public Hep::Application

@@ -6,6 +6,8 @@
 #include "Hephaestus/Layer.h"
 #include "Hephaestus/Log.h"
 
+#include "Hephaestus/Core/Timestep.h"
+
 #include "Hephaestus/Input.h"
 #include "Hephaestus/KeyCodes.h"
 #include "Hephaestus/MouseButtonCodes.h"
