@@ -21,6 +21,6 @@ namespace Hep
 			rtm::matrix4x4f ViewProjectionMatrix;
 		};
 
-		static SceneData* m_SceneData;
+		static SceneData* s_SceneData;
 	};
 }
