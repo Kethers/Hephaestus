@@ -1,23 +1,19 @@
 ﻿#pragma once
 
 #include <string>
-#include <rtm/math.h>
+
+using GLint = int; // TODO: replace by including glad.h
 
 namespace Hep
 {
 	class Shader
 	{
 	public:
-		Shader(const std::string& vertexSrc, const std::string& fragmentSrc);
-		~Shader();
+		virtual ~Shader() = default;
 
-		void Bind() const;
-		void Unbind() const;
+		virtual void Bind() const = 0;
+		virtual void Unbind() const = 0;
 
-		void UploadUniformFloat4(const std::string& name, rtm::vector4f_arg1& values);
-		void UploadUniformMat4(const std::string& name, rtm::matrix4x4f_arg1 matrix);
-
-	private:
-		uint32_t m_RendererID;
+		static Shader* Create(const std::string& vertexSrc, const std::string& fragmentSrc);
 	};
 }

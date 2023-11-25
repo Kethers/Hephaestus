@@ -1,5 +1,7 @@
 #include <Hephaestus.h>
 
+#include "Platform/OpenGL/OpenGLShader.h"
+
 #include <imgui/imgui.h>
 
 #include "rtm/matrix3x3d.h"
@@ -88,7 +90,7 @@ public:
 			}
 		)";
 
-		m_Shader.reset(new Hep::Shader(vertexSrc, fragmentSrc));
+		m_Shader.reset(Hep::Shader::Create(vertexSrc, fragmentSrc));
 
 		std::string flatColorShaderVertexSrc = R"(
 			#version 330 core
@@ -114,15 +116,15 @@ public:
 
 			in vec3 v_Position;
 
-			uniform vec4 u_Color;
+			uniform vec3 u_Color;
 
 			void main()
 			{
-				color = u_Color;
+				color = vec4(u_Color, 1.0);
 			}
 		)";
 
-		m_FlatColorShader.reset(new Hep::Shader(flatColorShaderVertexSrc, flatColorShaderFragmentSrc));
+		m_FlatColorShader.reset(Hep::Shader::Create(flatColorShaderVertexSrc, flatColorShaderFragmentSrc));
 	}
 
 	void OnUpdate(Hep::Timestep ts) override
@@ -156,6 +158,9 @@ public:
 
 		rtm::float4f redColor(0.8f, 0.2f, 0.3f, 1.0f);
 		rtm::float4f blueColor(0.2f, 0.3f, 0.8f, 1.0f);
+
+		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_FlatColorShader)->Bind();
+		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_FlatColorShader)->UploadUniformFloat3("u_Color", m_SquareColor);;
 		for (int i = 0; i < 20; ++i)
 		{
 			for (int j = 0; j < 20; ++j)
@@ -164,10 +169,6 @@ public:
 				rtm::matrix3x4f transform = rtm::matrix_from_qvv(rtm::quat_identity(),
 					rtm::vector_load3(&pos),
 					rtm::vector_load3(&scale));
-				if (i % 2 == 0)
-					m_FlatColorShader->UploadUniformFloat4("u_Color", rtm::vector_load(&redColor));
-				else
-					m_FlatColorShader->UploadUniformFloat4("u_Color", rtm::vector_load(&blueColor));
 				Hep::Renderer::Submit(m_FlatColorShader, m_SquareVA, matrix_cast(transform));
 			}
 		}
@@ -178,7 +179,11 @@ public:
 	}
 
 	void OnImGuiRender() override
-	{ }
+	{
+		ImGui::Begin("Settings");
+		ImGui::ColorEdit3("Square Color", (float*)&m_SquareColor);
+		ImGui::End();
+	}
 
 	void OnEvent(Hep::Event& event) override
 	{ }
@@ -192,6 +197,7 @@ private:
 
 	Hep::OrthographicCamera m_Camera;
 	rtm::float3f m_CameraPosition;
+	rtm::float3f m_SquareColor{ 0.8f, 0.2f, 0.3f };
 	float m_CameraMoveSpeed = 5.0f;
 
 	float m_CameraRotation = 0.0f;
