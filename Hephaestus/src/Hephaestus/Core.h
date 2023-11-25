@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #ifdef HEP_PLATFORM_WINDOWS
 	#if HEP_DYNAMIC_LINK
 		#ifdef HEP_BUILD_DLL
@@ -46,4 +48,13 @@
 
 #define BIT(x) (1 << x)
 
-#define HEP_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
+#define HEP_BIND_EVENT_FN(fn) std::bind(&##fn, this, std::placeholders::_1)
+
+namespace Hep
+{
+	template <typename T>
+	using Scope = std::unique_ptr<T>;
+
+	template <typename T>
+	using Ref = std::shared_ptr<T>;
+}

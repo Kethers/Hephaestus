@@ -15,8 +15,8 @@ namespace Hep
 	void Renderer::EndScene()
 	{ }
 
-	void Renderer::Submit(const std::shared_ptr<Shader>& shader,
-		const std::shared_ptr<VertexArray>& vertexArray,
+	void Renderer::Submit(const Ref<Shader>& shader,
+		const Ref<VertexArray>& vertexArray,
 		rtm::matrix4x4f_argn transform)
 	{
 		shader->Bind();

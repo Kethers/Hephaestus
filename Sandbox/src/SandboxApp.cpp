@@ -23,7 +23,7 @@ public:
 			0.0f, 0.5f, 0.0f, 0.8f, 0.7f, 0.2f, 1.0f,
 		};
 
-		std::shared_ptr<Hep::VertexBuffer> vertexBuffer;
+		Hep::Ref<Hep::VertexBuffer> vertexBuffer;
 		vertexBuffer.reset(Hep::VertexBuffer::Create(vertices, sizeof(vertices)));
 		Hep::BufferLayout layout = {
 			{ Hep::ShaderDataType::Float3, "a_Position" },
@@ -34,7 +34,7 @@ public:
 		m_VertexArray->AddVertexBuffer(vertexBuffer);
 
 		uint32_t indices[] = { 0, 1, 2 };
-		std::shared_ptr<Hep::IndexBuffer> indexBuffer;
+		Hep::Ref<Hep::IndexBuffer> indexBuffer;
 		indexBuffer.reset(Hep::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
 		m_VertexArray->SetIndexBuffer(indexBuffer);
 
@@ -45,13 +45,13 @@ public:
 			0.5f, 0.5f, 0.0f,
 			-0.5f, 0.5f, 0.0f,
 		};
-		std::shared_ptr<Hep::VertexBuffer> squareVB;
+		Hep::Ref<Hep::VertexBuffer> squareVB;
 		squareVB.reset(Hep::VertexBuffer::Create(squareVertices, sizeof(squareVertices)));
 		squareVB->SetLayout({ { Hep::ShaderDataType::Float3, "a_Position" } });
 		m_SquareVA->AddVertexBuffer(squareVB);
 
 		uint32_t squareIndices[] = { 0, 1, 2, 2, 3, 0 };
-		std::shared_ptr<Hep::IndexBuffer> squareIB;
+		Hep::Ref<Hep::IndexBuffer> squareIB;
 		squareIB.reset(Hep::IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
 		m_SquareVA->SetIndexBuffer(squareIB);
 
@@ -189,11 +189,11 @@ public:
 	{ }
 
 private:
-	std::shared_ptr<Hep::Shader> m_Shader;
-	std::shared_ptr<Hep::VertexArray> m_VertexArray;
+	Hep::Ref<Hep::Shader> m_Shader;
+	Hep::Ref<Hep::VertexArray> m_VertexArray;
 
-	std::shared_ptr<Hep::Shader> m_FlatColorShader;
-	std::shared_ptr<Hep::VertexArray> m_SquareVA;
+	Hep::Ref<Hep::Shader> m_FlatColorShader;
+	Hep::Ref<Hep::VertexArray> m_SquareVA;
 
 	Hep::OrthographicCamera m_Camera;
 	rtm::float3f m_CameraPosition;
