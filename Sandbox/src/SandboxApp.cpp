@@ -40,14 +40,17 @@ public:
 
 		m_SquareVA.reset(Hep::VertexArray::Create());
 		float squareVertices[] = {
-			-0.5f, -0.5f, 0.0f,
-			0.5f, -0.5f, 0.0f,
-			0.5f, 0.5f, 0.0f,
-			-0.5f, 0.5f, 0.0f,
+			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+			0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+			0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
+			-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
 		};
 		Hep::Ref<Hep::VertexBuffer> squareVB;
 		squareVB.reset(Hep::VertexBuffer::Create(squareVertices, sizeof(squareVertices)));
-		squareVB->SetLayout({ { Hep::ShaderDataType::Float3, "a_Position" } });
+		squareVB->SetLayout({
+			{ Hep::ShaderDataType::Float3, "a_Position" },
+			{ Hep::ShaderDataType::Float2, "a_TexCoord" },
+		});
 		m_SquareVA->AddVertexBuffer(squareVB);
 
 		uint32_t squareIndices[] = { 0, 1, 2, 2, 3, 0 };
@@ -125,6 +128,37 @@ public:
 		)";
 
 		m_FlatColorShader.reset(Hep::Shader::Create(flatColorShaderVertexSrc, flatColorShaderFragmentSrc));
+
+		std::string textureShaderVertexSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) in vec3 a_Position;
+			layout(location = 1) in vec2 a_TexCoord;
+			uniform mat4 u_ViewProjection;
+			uniform mat4 u_Transform;
+			out vec2 v_TexCoord;
+			void main()
+			{
+				v_TexCoord = a_TexCoord;
+				gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1.0);	
+			}
+		)";
+		std::string textureShaderFragmentSrc = R"(
+			#version 330 core
+			
+			layout(location = 0) out vec4 color;
+			in vec2 v_TexCoord;
+			
+			uniform sampler2D u_Texture;
+			void main()
+			{
+				color = texture(u_Texture, v_TexCoord);
+			}
+		)";
+		m_TextureShader.reset(Hep::Shader::Create(textureShaderVertexSrc, textureShaderFragmentSrc));
+		m_Texture = Hep::Texture2D::Create("assets/textures/Checkerboard.png");
+		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_TextureShader)->Bind();
+		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_TextureShader)->UploadUniformInt("u_Texture", 0);
 	}
 
 	void OnUpdate(Hep::Timestep ts) override
@@ -160,7 +194,7 @@ public:
 		rtm::float4f blueColor(0.2f, 0.3f, 0.8f, 1.0f);
 
 		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_FlatColorShader)->Bind();
-		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_FlatColorShader)->UploadUniformFloat3("u_Color", m_SquareColor);;
+		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_FlatColorShader)->UploadUniformFloat3("u_Color", m_SquareColor);
 		for (int i = 0; i < 20; ++i)
 		{
 			for (int j = 0; j < 20; ++j)
@@ -173,7 +207,12 @@ public:
 			}
 		}
 
-		Hep::Renderer::Submit(m_Shader, m_VertexArray);
+		m_Texture->Bind();
+		Hep::Renderer::Submit(m_TextureShader, m_SquareVA,
+			rtm::matrix_cast<rtm::matrix3x4f>(rtm::matrix_from_scale(rtm::vector_load(new rtm::float4f(1.5f)))));
+
+		// Triangle
+		// Hep::Renderer::Submit(m_Shader, m_VertexArray);
 
 		Hep::Renderer::EndScene();
 	}
@@ -192,8 +231,10 @@ private:
 	Hep::Ref<Hep::Shader> m_Shader;
 	Hep::Ref<Hep::VertexArray> m_VertexArray;
 
-	Hep::Ref<Hep::Shader> m_FlatColorShader;
+	Hep::Ref<Hep::Shader> m_FlatColorShader, m_TextureShader;
 	Hep::Ref<Hep::VertexArray> m_SquareVA;
+
+	Hep::Ref<Hep::Texture2D> m_Texture;
 
 	Hep::OrthographicCamera m_Camera;
 	rtm::float3f m_CameraPosition;

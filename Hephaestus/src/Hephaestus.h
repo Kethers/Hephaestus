@@ -20,6 +20,7 @@
 
 #include "Hephaestus/Renderer/Buffer.h"
 #include "Hephaestus/Renderer/Shader.h"
+#include "Hephaestus/Renderer/Texture.h"
 #include "Hephaestus/Renderer/VertexArray.h"
 
 #include "Hephaestus/Renderer/OrthographicCamera.h"

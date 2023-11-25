@@ -59,6 +59,11 @@ function BuildProject(config)
 		set_pcxxheader(pchHeader)
 	end
 
+	runDir = config.rundir
+	if (runDir) ~= nil then
+		set_rundir(runDir)
+	end
+
 	Execute(config.packages, add_packages)
 	Execute(config.languages, set_languages)
 	Execute(config.macros, add_defines)
@@ -129,6 +134,7 @@ IncludeDir["GLFW"] = "external/GLFW/include"
 IncludeDir["Glad"] = "external/Glad/include"
 IncludeDir["ImGui"] = "external/imgui"
 IncludeDir["rtm"] = "external/rtm"
+IncludeDir['stb_image'] = "external/stb_image"
 
 BuildProject({
 	projectName = "Hephaestus",
@@ -136,12 +142,13 @@ BuildProject({
 	macros = {"HEP_BUILD_DLL"},
 	languages = {"clatest", "cxx20"},
 	depends = {"Glad", "ImGui"},
-	files = {"Hephaestus/src/**.cpp"},
+	files = {"Hephaestus/src/**.cpp", "external/stb_image/**.cpp"},
 	headerfiles = {
 		"Hephaestus/src/**.h", 
 		"Hephaestus/src/**.hpp",
 		"external/rtm/rtm/**.h", 
-		"external/rtm/rtm/**.hpp"
+		"external/rtm/rtm/**.hpp",
+		"external/stb_image/**.h",
 	},
 	pchHeader = "Hephaestus/src/heppch.h",
 	includePaths = {"external", "Hephaestus/src", 
@@ -149,6 +156,7 @@ BuildProject({
 		IncludeDir.Glad,
 		IncludeDir.ImGui,
 		IncludeDir.rtm,
+		IncludeDir.stb_image,
 	},
 	packages = {"glfw"},
 	debugLink = {},
@@ -171,6 +179,7 @@ BuildProject({
 	includePaths = {"external", "Hephaestus/src",
 		IncludeDir.rtm,
 	},
+	rundir = "$(projectdir)/Sandbox",
 	packages = nil,
 	debugLink = {},
 	releaseLink = {},

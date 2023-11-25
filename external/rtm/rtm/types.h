@@ -345,8 +345,8 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct qvf
 	{
-		quatf		rotation;
-		vector4f	translation;	// [w] is undefined
+		quatf rotation;
+		vector4f translation; // [w] is undefined
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -354,8 +354,8 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct qvd
 	{
-		quatd		rotation;
-		vector4d	translation;	// [w] is undefined
+		quatd rotation;
+		vector4d translation; // [w] is undefined
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -364,8 +364,8 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct qvsf
 	{
-		quatf		rotation;
-		vector4f	translation_scale;	// [xyz] for translation, [w] for scale
+		quatf rotation;
+		vector4f translation_scale; // [xyz] for translation, [w] for scale
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -374,8 +374,8 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct qvsd
 	{
-		quatd		rotation;
-		vector4d	translation_scale;	// [xyz] for translation, [w] for scale
+		quatd rotation;
+		vector4d translation_scale; // [xyz] for translation, [w] for scale
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -386,9 +386,9 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct qvvf
 	{
-		quatf		rotation;
-		vector4f	translation;	// [w] is undefined
-		vector4f	scale;			// [w] is undefined
+		quatf rotation;
+		vector4f translation; // [w] is undefined
+		vector4f scale;       // [w] is undefined
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -399,9 +399,9 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct qvvd
 	{
-		quatd		rotation;
-		vector4d	translation;	// [w] is undefined
-		vector4d	scale;			// [w] is undefined
+		quatd rotation;
+		vector4d translation; // [w] is undefined
+		vector4d scale;       // [w] is undefined
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -410,9 +410,9 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct matrix3x3f
 	{
-		vector4f	x_axis;
-		vector4f	y_axis;
-		vector4f	z_axis;
+		vector4f x_axis;
+		vector4f y_axis;
+		vector4f z_axis;
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -421,9 +421,9 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct matrix3x3d
 	{
-		vector4d	x_axis;
-		vector4d	y_axis;
-		vector4d	z_axis;
+		vector4d x_axis;
+		vector4d y_axis;
+		vector4d z_axis;
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -441,10 +441,10 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct matrix3x4f
 	{
-		vector4f	x_axis;
-		vector4f	y_axis;
-		vector4f	z_axis;
-		vector4f	w_axis;
+		vector4f x_axis;
+		vector4f y_axis;
+		vector4f z_axis;
+		vector4f w_axis;
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -462,10 +462,10 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct matrix3x4d
 	{
-		vector4d	x_axis;
-		vector4d	y_axis;
-		vector4d	z_axis;
-		vector4d	w_axis;
+		vector4d x_axis;
+		vector4d y_axis;
+		vector4d z_axis;
+		vector4d w_axis;
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -473,10 +473,10 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct matrix4x4f
 	{
-		vector4f	x_axis;
-		vector4f	y_axis;
-		vector4f	z_axis;
-		vector4f	w_axis;
+		vector4f x_axis;
+		vector4f y_axis;
+		vector4f z_axis;
+		vector4f w_axis;
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -484,10 +484,10 @@ namespace rtm
 	//////////////////////////////////////////////////////////////////////////
 	struct matrix4x4d
 	{
-		vector4d	x_axis;
-		vector4d	y_axis;
-		vector4d	z_axis;
-		vector4d	w_axis;
+		vector4d x_axis;
+		vector4d y_axis;
+		vector4d z_axis;
+		vector4d w_axis;
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -538,6 +538,10 @@ namespace rtm
 	{
 		float x;
 		float y;
+
+		float2f() = default;
+		float2f(float scalar) : x(scalar), y(scalar) {}
+		float2f(float _x, float _y) : x(_x), y(_y) {}
 	};
 
 	struct float3f
@@ -545,6 +549,10 @@ namespace rtm
 		float x;
 		float y;
 		float z;
+
+		float3f() = default;
+		float3f(float scalar) : x(scalar), y(scalar), z(scalar) {}
+		float3f(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 	};
 
 	struct float4f
@@ -553,12 +561,20 @@ namespace rtm
 		float y;
 		float z;
 		float w;
+
+		float4f() = default;
+		float4f(float scalar) : x(scalar), y(scalar), z(scalar), w(scalar) {}
+		float4f(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
 	};
 
 	struct float2d
 	{
 		double x;
 		double y;
+
+		float2d() = default;
+		float2d(double scalar) : x(scalar), y(scalar) {}
+		float2d(double _x, double _y) : x(_x), y(_y) {}
 	};
 
 	struct float3d
@@ -566,6 +582,10 @@ namespace rtm
 		double x;
 		double y;
 		double z;
+
+		float3d() = default;
+		float3d(double scalar) : x(scalar), y(scalar), z(scalar) {}
+		float3d(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
 	};
 
 	struct float4d
@@ -574,6 +594,10 @@ namespace rtm
 		double y;
 		double z;
 		double w;
+
+		float4d() = default;
+		float4d(double scalar) : x(scalar), y(scalar), z(scalar), w(scalar) {}
+		float4d(double _x, double _y, double _z, double _w) : x(_x), y(_y), z(_z), w(_w) {}
 	};
 
 	RTM_IMPL_VERSION_NAMESPACE_END
