@@ -137,7 +137,12 @@ BuildProject({
 	languages = {"clatest", "cxx20"},
 	depends = {"Glad", "ImGui"},
 	files = {"Hephaestus/src/**.cpp"},
-	headerfiles = {"Hephaestus/src/**.h", "external/rtm/rtm/**.h"},
+	headerfiles = {
+		"Hephaestus/src/**.h", 
+		"Hephaestus/src/**.hpp",
+		"external/rtm/rtm/**.h", 
+		"external/rtm/rtm/**.hpp"
+	},
 	pchHeader = "Hephaestus/src/heppch.h",
 	includePaths = {"external", "Hephaestus/src", 
 		IncludeDir.GLFW, 
