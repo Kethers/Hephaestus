@@ -93,7 +93,7 @@ public:
 			}
 		)";
 
-		m_Shader.reset(Hep::Shader::Create(vertexSrc, fragmentSrc));
+		m_Shader = Hep::Shader::Create("VertexPosColor", vertexSrc, fragmentSrc);
 
 		std::string flatColorShaderVertexSrc = R"(
 			#version 330 core
@@ -127,14 +127,14 @@ public:
 			}
 		)";
 
-		m_FlatColorShader.reset(Hep::Shader::Create(flatColorShaderVertexSrc, flatColorShaderFragmentSrc));
-		m_TextureShader.reset(Hep::Shader::Create("assets/shaders/Texture.glsl"));
+		m_FlatColorShader = Hep::Shader::Create("FlatColor", flatColorShaderVertexSrc, flatColorShaderFragmentSrc);
+		auto textureShader = m_ShaderLibrary.Load("assets/shaders/Texture.glsl");
 
 		m_Texture = Hep::Texture2D::Create("assets/textures/Checkerboard.png");
 		m_ChernoLogoTexture = Hep::Texture2D::Create("assets/textures/ChernoLogo.png");
 
-		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_TextureShader)->Bind();
-		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_TextureShader)->UploadUniformInt("u_Texture", 0);
+		std::dynamic_pointer_cast<Hep::OpenGLShader>(textureShader)->Bind();
+		std::dynamic_pointer_cast<Hep::OpenGLShader>(textureShader)->UploadUniformInt("u_Texture", 0);
 	}
 
 	void OnUpdate(Hep::Timestep ts) override
@@ -183,11 +183,12 @@ public:
 			}
 		}
 
+		auto textureShader = m_ShaderLibrary.Get("Texture");
 		m_Texture->Bind();
-		Hep::Renderer::Submit(m_TextureShader, m_SquareVA,
+		Hep::Renderer::Submit(textureShader, m_SquareVA,
 			rtm::matrix_cast<rtm::matrix3x4f>(rtm::matrix_from_scale(rtm::vector_load(new rtm::float4f(1.5f)))));
 		m_ChernoLogoTexture->Bind();
-		Hep::Renderer::Submit(m_TextureShader, m_SquareVA,
+		Hep::Renderer::Submit(textureShader, m_SquareVA,
 			rtm::matrix_cast<rtm::matrix3x4f>(rtm::matrix_from_scale(rtm::vector_load(new rtm::float4f(1.5f)))));
 
 		// Triangle
@@ -210,7 +211,8 @@ private:
 	Hep::Ref<Hep::Shader> m_Shader;
 	Hep::Ref<Hep::VertexArray> m_VertexArray;
 
-	Hep::Ref<Hep::Shader> m_FlatColorShader, m_TextureShader;
+	Hep::ShaderLibrary m_ShaderLibrary;
+	Hep::Ref<Hep::Shader> m_FlatColorShader;
 	Hep::Ref<Hep::VertexArray> m_SquareVA;
 
 	Hep::Ref<Hep::Texture2D> m_Texture, m_ChernoLogoTexture;
