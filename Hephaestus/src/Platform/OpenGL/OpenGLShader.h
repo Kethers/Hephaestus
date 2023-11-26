@@ -5,11 +5,15 @@
 
 #include "Hephaestus/Renderer/Shader.h"
 
+// TODO: REMOVE!
+typedef unsigned int GLenum;
+
 namespace Hep
 {
 	class OpenGLShader : public Shader
 	{
 	public:
+		OpenGLShader(const std::string& filepath);
 		OpenGLShader(const std::string& vertexSrc, const std::string& fragmentSrc);
 		~OpenGLShader() override;
 
@@ -25,6 +29,9 @@ namespace Hep
 		void UploadUniformMat4(const std::string& name, rtm::matrix4x4f_arg1 matrix);
 
 	private:
+		std::string ReadFile(const std::string& filepath);
+		std::unordered_map<GLenum, std::string> PreProcess(const std::string& source);
+		void Compile(const std::unordered_map<GLenum, std::string>& shaderSources);
 		GLint GetUniformLocation(const std::string& name) const;
 
 	private:
