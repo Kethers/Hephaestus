@@ -7,6 +7,11 @@ namespace Hep
 	class RenderCommand
 	{
 	public:
+		static void Init()
+		{
+			s_RendererAPI->Init();
+		}
+
 		static void SetClearColor(const rtm::float4f& color)
 		{
 			s_RendererAPI->SetClearColor(color);

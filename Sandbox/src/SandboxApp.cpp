@@ -157,6 +157,8 @@ public:
 		)";
 		m_TextureShader.reset(Hep::Shader::Create(textureShaderVertexSrc, textureShaderFragmentSrc));
 		m_Texture = Hep::Texture2D::Create("assets/textures/Checkerboard.png");
+		m_ChernoLogoTexture = Hep::Texture2D::Create("assets/textures/ChernoLogo.png");
+
 		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_TextureShader)->Bind();
 		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_TextureShader)->UploadUniformInt("u_Texture", 0);
 	}
@@ -210,6 +212,9 @@ public:
 		m_Texture->Bind();
 		Hep::Renderer::Submit(m_TextureShader, m_SquareVA,
 			rtm::matrix_cast<rtm::matrix3x4f>(rtm::matrix_from_scale(rtm::vector_load(new rtm::float4f(1.5f)))));
+		m_ChernoLogoTexture->Bind();
+		Hep::Renderer::Submit(m_TextureShader, m_SquareVA,
+			rtm::matrix_cast<rtm::matrix3x4f>(rtm::matrix_from_scale(rtm::vector_load(new rtm::float4f(1.5f)))));
 
 		// Triangle
 		// Hep::Renderer::Submit(m_Shader, m_VertexArray);
@@ -234,7 +239,7 @@ private:
 	Hep::Ref<Hep::Shader> m_FlatColorShader, m_TextureShader;
 	Hep::Ref<Hep::VertexArray> m_SquareVA;
 
-	Hep::Ref<Hep::Texture2D> m_Texture;
+	Hep::Ref<Hep::Texture2D> m_Texture, m_ChernoLogoTexture;
 
 	Hep::OrthographicCamera m_Camera;
 	rtm::float3f m_CameraPosition;

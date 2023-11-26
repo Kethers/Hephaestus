@@ -1,3 +1,5 @@
-xmake project -k vsxmake
+call xmake project -k vsxmake
 
-pause
+IF %ERRORLEVEL% NEQ 0 (
+  PAUSE
+)

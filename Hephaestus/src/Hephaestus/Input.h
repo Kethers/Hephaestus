@@ -4,6 +4,11 @@ namespace Hep
 {
 	class HEP_API Input
 	{
+	protected:
+		Input() = default;
+		Input(const Input& input) = delete;
+		Input& operator=(const Input&) = delete;
+
 	public:
 		static bool IsKeyPressed(int keycode) { return s_instance->IsKeyPressedImpl(keycode); }
 		static bool IsMouseButtonPressed(int button) { return s_instance->IsMouseButtonPressedImpl(button); }

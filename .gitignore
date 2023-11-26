@@ -1,6 +1,6 @@
 # Binaries
 **bin/
-bin-int/
+**bin-int/
 
 # xmake
 .xmake/
@@ -25,3 +25,6 @@ vsxmake*/
 # LFS Folders
 lfs/
 hooks/
+
+# imgui
+**imgui.ini

@@ -5,6 +5,12 @@
 
 namespace Hep
 {
+	void OpenGLRendererAPI::Init()
+	{
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+
 	void OpenGLRendererAPI::SetClearColor(const rtm::float4f& color)
 	{
 		glClearColor(color.x, color.y, color.z, color.w);

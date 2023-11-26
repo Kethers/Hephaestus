@@ -17,6 +17,7 @@ namespace Hep
 		};
 		#pragma endregion
 
+		virtual void Init() = 0;
 		virtual void SetClearColor(const rtm::float4f& color) = 0;
 		virtual void Clear() = 0;
 
