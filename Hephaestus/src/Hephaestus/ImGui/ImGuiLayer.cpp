@@ -18,6 +18,8 @@ namespace Hep
 		: Layer("ImGuiLayer")
 	{ }
 
+	ImGuiLayer::ImGuiLayer(const std::string& name) {}
+
 	void ImGuiLayer::OnAttach()
 	{
 		// Setup Dear ImGui context
@@ -88,7 +90,7 @@ namespace Hep
 
 	void ImGuiLayer::OnImGuiRender()
 	{
-		static bool show = true;
-		ImGui::ShowDemoWindow(&show);
+		// static bool show = true;
+		// ImGui::ShowDemoWindow(&show);
 	}
 }

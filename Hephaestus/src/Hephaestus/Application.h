@@ -21,15 +21,21 @@ namespace Hep
 
 		void Run();
 
-		void OnEvent(Event& e);
+		virtual void OnInit() {}
+		virtual void OnShutdown() {}
+		virtual void OnUpdate() {}
+
+		virtual void OnEvent(Event& event);
 
 		void PushLayer(Layer* layer);
 		void PushOverlay(Layer* layer);
+		void RenderImGui();
 
 		static Application& Get() { return *s_Instance; }
 		Window& GetWindow() { return *m_Window; }
 
 	private:
+		bool OnWindowResize(WindowResizeEvent& e);
 		bool OnWindowClose(WindowCloseEvent& e);
 
 		std::unique_ptr<Window> m_Window;

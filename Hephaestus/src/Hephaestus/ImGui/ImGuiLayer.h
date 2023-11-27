@@ -11,7 +11,8 @@ namespace Hep
 	{
 	public:
 		ImGuiLayer();
-		~ImGuiLayer() = default;
+		ImGuiLayer(const std::string& name);
+		~ImGuiLayer() override = default;
 
 		void OnAttach() override;
 		void OnDetach() override;

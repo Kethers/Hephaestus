@@ -1,6 +1,9 @@
 #pragma once
 
-// For use by Hephaestus applications
+//
+// Note:	this file is to be included in client applications ONLY
+//			NEVER include this file anywhere in the engine codebase
+//
 
 #include "Hephaestus/Application.h"
 #include "Hephaestus/Layer.h"

@@ -40,6 +40,15 @@ namespace Hep
 		layer->OnAttach();
 	}
 
+	void Application::RenderImGui()
+	{
+		m_ImGuiLayer->Begin();
+		for (Layer* layer : m_LayerStack)
+			layer->OnImGuiRender();
+
+		m_ImGuiLayer->End();
+	}
+
 	void Application::OnEvent(Event& e)
 	{
 		EventDispatcher dispatcher(e);
@@ -55,6 +64,7 @@ namespace Hep
 
 	void Application::Run()
 	{
+		OnInit();
 		while (m_Running)
 		{
 			auto time = static_cast<float>(glfwGetTime()); // Platform::GetTime
@@ -64,13 +74,20 @@ namespace Hep
 			for (Layer* layer : m_LayerStack)
 				layer->OnUpdate(timestep);
 
-			m_ImGuiLayer->Begin();
-			for (Layer* layer : m_LayerStack)
-				layer->OnImGuiRender();
-			m_ImGuiLayer->End();
+			// Render ImGui on render thread
+			Application* app = this;
+			HEP_RENDER_1(app, { app->RenderImGui(); });
+
+			Renderer::Get().WaitAndRender();
 
 			m_Window->OnUpdate();
 		}
+		OnShutdown();
+	}
+
+	bool Application::OnWindowResize(WindowResizeEvent& e)
+	{
+		return false;
 	}
 
 	bool Application::OnWindowClose(WindowCloseEvent& e)
