@@ -1,9 +1,9 @@
 #include "heppch.h"
 #include "WindowsWindow.h"
 
-#include "Hephaestus/Events/ApplicationEvent.h"
-#include "Hephaestus/Events/MouseEvent.h"
-#include "Hephaestus/Events/KeyEvent.h"
+#include "Hephaestus/Core/Events/ApplicationEvent.h"
+#include "Hephaestus/Core/Events/MouseEvent.h"
+#include "Hephaestus/Core/Events/KeyEvent.h"
 
 #include "Platform/OpenGL/OpenGLContext.h"
 

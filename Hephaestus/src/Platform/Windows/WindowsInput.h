@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Hephaestus/Input.h"
+#include "Hephaestus/Core/Input.h"
 
 namespace Hep
 {

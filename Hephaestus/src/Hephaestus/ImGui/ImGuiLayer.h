@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Hephaestus/Layer.h"
-#include "Hephaestus/Events/ApplicationEvent.h"
-#include "Hephaestus/Events/KeyEvent.h"
-#include "Hephaestus/Events/MouseEvent.h"
+#include "Hephaestus/Core/Layer.h"
+#include "Hephaestus/Core/Events/ApplicationEvent.h"
+#include "Hephaestus/Core/Events/KeyEvent.h"
+#include "Hephaestus/Core/Events/MouseEvent.h"
 
 namespace Hep
 {

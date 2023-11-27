@@ -5,15 +5,15 @@
 //			NEVER include this file anywhere in the engine codebase
 //
 
-#include "Hephaestus/Application.h"
-#include "Hephaestus/Layer.h"
-#include "Hephaestus/Log.h"
+#include "Hephaestus/Core/Application.h"
+#include "Hephaestus/Core/Layer.h"
+#include "Hephaestus/Core/Log.h"
 
 #include "Hephaestus/Core/Timestep.h"
 
-#include "Hephaestus/Input.h"
-#include "Hephaestus/KeyCodes.h"
-#include "Hephaestus/MouseButtonCodes.h"
+#include "Hephaestus/Core/Input.h"
+#include "Hephaestus/Core/KeyCodes.h"
+#include "Hephaestus/Core/MouseButtonCodes.h"
 
 #include "Hephaestus/ImGui/ImGuiLayer.h"
 

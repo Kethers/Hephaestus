@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Hephaestus/Window.h"
+#include "Hephaestus/Core/Window.h"
 #include "Hephaestus/Renderer/GraphicsContext.h"
 
 #include <GLFW/glfw3.h>

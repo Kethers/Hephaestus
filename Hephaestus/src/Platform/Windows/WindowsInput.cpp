@@ -3,7 +3,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "Hephaestus/Application.h"
+#include "Hephaestus/Core/Application.h"
 
 namespace Hep
 {

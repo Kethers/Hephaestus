@@ -3,7 +3,7 @@
 
 #include "imgui.h"
 
-#include "Hephaestus/Application.h"
+#include "Hephaestus/Core/Application.h"
 
 #include "imgui/examples/imgui_impl_glfw.h"
 #include "imgui/examples/imgui_impl_opengl3.h"

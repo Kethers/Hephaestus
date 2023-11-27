@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include <string>
-#include <Hephaestus/Core.h>
+#include <Hephaestus/Core/Base.h>
 
 namespace Hep
 {
