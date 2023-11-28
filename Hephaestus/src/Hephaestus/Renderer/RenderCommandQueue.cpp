@@ -35,8 +35,8 @@ namespace Hep
 
 	void RenderCommandQueue::Execute()
 	{
-		HEP_RENDER_TRACE("RenderCommandQueue::Execute -- {0} commands, {1} bytes", m_CommandCount,
-			(m_CommandBufferPtr - m_CommandBuffer));
+		// HEP_RENDER_TRACE("RenderCommandQueue::Execute -- {0} commands, {1} bytes", m_CommandCount,
+		// 	(m_CommandBufferPtr - m_CommandBuffer));
 
 		byte* buffer = m_CommandBuffer;
 

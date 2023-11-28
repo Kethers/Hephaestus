@@ -1,11 +1,15 @@
-#include <Hephaestus.h>
+#include "Hephaestus.h"
 
-#include "Platform/OpenGL/OpenGLShader.h"
+#include "Hephaestus/ImGui/ImGuiLayer.h"
 
-#include <imgui/imgui.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-#include "rtm/matrix3x3d.h"
-#include "rtm/matrix3x4f.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
+
+#include <string>
 
 static void ImGuiShowHelpMarker(const char* desc)
 {
@@ -24,203 +28,252 @@ class EditorLayer : public Hep::Layer
 {
 public:
 	EditorLayer()
-		: Layer("Example"),
-		  m_Camera(-1.6f, 1.6f, -0.9f, 0.9f),
-		  m_CameraPosition({ 0.0f, 0.0f, 0.0f })
+		: m_Scene(Scene::Spheres), m_Camera(glm::perspectiveFov(glm::radians(45.0f), 1280.0f, 720.0f, 0.1f, 10000.0f))
+	{ }
+
+	~EditorLayer() override
+	{ }
+
+	void OnAttach() override
 	{
-		m_VertexArray.reset(Hep::VertexArray::Create());
+		m_SimplePBRShader.reset(Hep::Shader::Create("assets/shaders/simplepbr.glsl"));
+		m_QuadShader.reset(Hep::Shader::Create("assets/shaders/quad.glsl"));
+		m_HDRShader.reset(Hep::Shader::Create("assets/shaders/hdr.glsl"));
+		m_Mesh.reset(new Hep::Mesh("assets/meshes/cerberus.fbx"));
+		m_SphereMesh.reset(new Hep::Mesh("assets/models/Sphere.fbx"));
 
-		float vertices[] = {
-			-0.5f, -0.5f, 0.0f, 0.8f, 0.2f, 0.8f, 1.0f,
-			0.5f, -0.5f, 0.0f, 0.2f, 0.3f, 0.8f, 1.0f,
-			0.0f, 0.5f, 0.0f, 0.8f, 0.7f, 0.2f, 1.0f,
+		// Editor
+		m_CheckerboardTex.reset(Hep::Texture2D::Create("assets/editor/Checkerboard.tga"));
+
+		// Environment
+		m_EnvironmentCubeMap.reset(
+			Hep::TextureCube::Create("assets/textures/environments/Arches_E_PineTree_Radiance.tga"));
+		//m_EnvironmentCubeMap.reset(Hazel::TextureCube::Create("assets/textures/environments/DebugCubeMap.tga"));
+		m_EnvironmentIrradiance.reset(
+			Hep::TextureCube::Create("assets/textures/environments/Arches_E_PineTree_Irradiance.tga"));
+		m_BRDFLUT.reset(Hep::Texture2D::Create("assets/textures/BRDF_LUT.tga"));
+
+		m_Framebuffer.reset(Hep::Framebuffer::Create(1280, 720, Hep::FramebufferFormat::RGBA16F));
+		m_FinalPresentBuffer.reset(Hep::Framebuffer::Create(1280, 720, Hep::FramebufferFormat::RGBA8));
+
+		// Create Quad
+		float x = -1, y = -1;
+		float width = 2, height = 2;
+		struct QuadVertex
+		{
+			glm::vec3 Position;
+			glm::vec2 TexCoord;
 		};
 
-		Hep::Ref<Hep::VertexBuffer> vertexBuffer;
-		vertexBuffer.reset(Hep::VertexBuffer::Create(vertices, sizeof(vertices)));
-		Hep::BufferLayout layout = {
-			{ Hep::ShaderDataType::Float3, "a_Position" },
-			{ Hep::ShaderDataType::Float4, "a_Color" },
-			// { ShaderDataType::Float3, "a_Normal" },
-		};
-		vertexBuffer->SetLayout(layout);
-		m_VertexArray->AddVertexBuffer(vertexBuffer);
+		QuadVertex* data = new QuadVertex[4];
 
-		uint32_t indices[] = { 0, 1, 2 };
-		Hep::Ref<Hep::IndexBuffer> indexBuffer;
-		indexBuffer.reset(Hep::IndexBuffer::Create(indices, sizeof(indices) / sizeof(uint32_t)));
-		m_VertexArray->SetIndexBuffer(indexBuffer);
+		data[0].Position = glm::vec3(x, y, 0);
+		data[0].TexCoord = glm::vec2(0, 0);
 
-		m_SquareVA.reset(Hep::VertexArray::Create());
-		float squareVertices[] = {
-			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-			0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-			0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
-			-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-		};
-		Hep::Ref<Hep::VertexBuffer> squareVB;
-		squareVB.reset(Hep::VertexBuffer::Create(squareVertices, sizeof(squareVertices)));
-		squareVB->SetLayout({
-			{ Hep::ShaderDataType::Float3, "a_Position" },
-			{ Hep::ShaderDataType::Float2, "a_TexCoord" },
-		});
-		m_SquareVA->AddVertexBuffer(squareVB);
+		data[1].Position = glm::vec3(x + width, y, 0);
+		data[1].TexCoord = glm::vec2(1, 0);
 
-		uint32_t squareIndices[] = { 0, 1, 2, 2, 3, 0 };
-		Hep::Ref<Hep::IndexBuffer> squareIB;
-		squareIB.reset(Hep::IndexBuffer::Create(squareIndices, sizeof(squareIndices) / sizeof(uint32_t)));
-		m_SquareVA->SetIndexBuffer(squareIB);
+		data[2].Position = glm::vec3(x + width, y + height, 0);
+		data[2].TexCoord = glm::vec2(1, 1);
 
-		std::string vertexSrc = R"(
-			#version 330 core
+		data[3].Position = glm::vec3(x, y + height, 0);
+		data[3].TexCoord = glm::vec2(0, 1);
 
-			layout(location = 0) in vec3 a_Position;
-			layout(location = 1) in vec4 a_Color;
+		m_VertexBuffer.reset(Hep::VertexBuffer::Create());
+		m_VertexBuffer->SetData(data, 4 * sizeof(QuadVertex));
 
-			uniform mat4 u_ViewProjection;
-			uniform mat4 u_Transform;
+		uint32_t* indices = new uint32_t[6]{ 0, 1, 2, 2, 3, 0, };
+		m_IndexBuffer.reset(Hep::IndexBuffer::Create());
+		m_IndexBuffer->SetData(indices, 6 * sizeof(unsigned int));
 
-			out vec3 v_Position;
-			out vec4 v_Color;
-
-			void main()
-			{
-				v_Position = a_Position;
-				v_Color = a_Color;
-				gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1.0);
-			}
-		)";
-
-		std::string fragmentSrc = R"(
-			#version 330 core
-
-			layout(location = 0) out vec4 color;
-
-			in vec3 v_Position;
-			in vec4 v_Color;
-
-			void main()
-			{
-				color = vec4(v_Position * 0.5 + 0.5, 1.0);
-				color = v_Color;
-			}
-		)";
-
-		m_Shader = Hep::Shader::Create("VertexPosColor", vertexSrc, fragmentSrc);
-
-		std::string flatColorShaderVertexSrc = R"(
-			#version 330 core
-
-			layout(location = 0) in vec3 a_Position;
-
-			uniform mat4 u_ViewProjection;
-			uniform mat4 u_Transform;
-
-			out vec3 v_Position;
-
-			void main()
-			{
-				v_Position = a_Position;
-				gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 1.0);
-			}
-		)";
-
-		std::string flatColorShaderFragmentSrc = R"(
-			#version 330 core
-
-			layout(location = 0) out vec4 color;
-
-			in vec3 v_Position;
-
-			uniform vec3 u_Color;
-
-			void main()
-			{
-				color = vec4(u_Color, 1.0);
-			}
-		)";
-
-		m_FlatColorShader = Hep::Shader::Create("FlatColor", flatColorShaderVertexSrc, flatColorShaderFragmentSrc);
-		auto textureShader = m_ShaderLibrary.Load("assets/shaders/Texture.glsl");
-
-		m_Texture = Hep::Texture2D::Create("assets/textures/Checkerboard.png");
-		m_ChernoLogoTexture = Hep::Texture2D::Create("assets/textures/ChernoLogo.png");
-
-		std::dynamic_pointer_cast<Hep::OpenGLShader>(textureShader)->Bind();
-		std::dynamic_pointer_cast<Hep::OpenGLShader>(textureShader)->UploadUniformInt("u_Texture", 0);
+		m_Light.Direction = { -0.5f, -0.5f, 1.0f };
+		m_Light.Radiance = { 1.0f, 1.0f, 1.0f };
 	}
+
+	void OnDetach() override
+	{ }
 
 	void OnUpdate(Hep::Timestep ts) override
 	{
-		HEP_TRACE("Delta time: {0}s ({1}ms)", ts.GetSeconds(), ts.GetMilliseconds());
+		// THINGS TO LOOK AT:
+		// - BRDF LUT
+		// - Cubemap mips and filtering
+		// - Tonemapping and proper HDR pipeline
+		using namespace Hep;
+		using namespace glm;
 
-		if (Hep::Input::IsKeyPressed(HEP_KEY_LEFT))
-			m_CameraPosition.x -= m_CameraMoveSpeed * ts;
-		else if (Hep::Input::IsKeyPressed(HEP_KEY_RIGHT))
-			m_CameraPosition.x += m_CameraMoveSpeed * ts;
+		m_Camera.Update();
+		auto viewProjection = m_Camera.GetProjectionMatrix() * m_Camera.GetViewMatrix();
 
-		if (Hep::Input::IsKeyPressed(HEP_KEY_UP))
-			m_CameraPosition.y += m_CameraMoveSpeed * ts;
-		else if (Hep::Input::IsKeyPressed(HEP_KEY_DOWN))
-			m_CameraPosition.y -= m_CameraMoveSpeed * ts;
+		m_Framebuffer->Bind();
+		Renderer::Clear();
 
-		if (Hep::Input::IsKeyPressed(HEP_KEY_A))
-			m_CameraRotation += m_CameraRotateSpeed * ts;
-		else if (Hep::Input::IsKeyPressed(HEP_KEY_D))
-			m_CameraRotation -= m_CameraRotateSpeed * ts;
+		Hep::UniformBufferDeclaration<sizeof(mat4), 1> quadShaderUB;
+		quadShaderUB.Push("u_InverseVP", inverse(viewProjection));
+		m_QuadShader->UploadUniformBuffer(quadShaderUB);
 
-		Hep::RenderCommand::SetClearColor({ 0.1f, 0.1f, 0.1f, 1 });
-		Hep::RenderCommand::Clear();
+		m_QuadShader->Bind();
+		m_EnvironmentIrradiance->Bind(0);
+		m_VertexBuffer->Bind();
+		m_IndexBuffer->Bind();
+		Renderer::DrawIndexed(m_IndexBuffer->GetCount(), false);
 
-		m_Camera.SetPosition(m_CameraPosition);
-		m_Camera.SetRotation(m_CameraRotation);
+		Hep::UniformBufferDeclaration<sizeof(mat4) * 2 + sizeof(vec3) * 4 + sizeof(float) * 8, 14> simplePbrShaderUB;
+		simplePbrShaderUB.Push("u_ViewProjectionMatrix", viewProjection);
+		simplePbrShaderUB.Push("u_ModelMatrix", mat4(1.0f));
+		simplePbrShaderUB.Push("u_AlbedoColor", m_AlbedoInput.Color);
+		simplePbrShaderUB.Push("u_Metalness", m_MetalnessInput.Value);
+		simplePbrShaderUB.Push("u_Roughness", m_RoughnessInput.Value);
+		simplePbrShaderUB.Push("lights.Direction", m_Light.Direction);
+		simplePbrShaderUB.Push("lights.Radiance", m_Light.Radiance * m_LightMultiplier);
+		simplePbrShaderUB.Push("u_CameraPosition", m_Camera.GetPosition());
+		simplePbrShaderUB.Push("u_RadiancePrefilter", m_RadiancePrefilter ? 1.0f : 0.0f);
+		simplePbrShaderUB.Push("u_AlbedoTexToggle", m_AlbedoInput.UseTexture ? 1.0f : 0.0f);
+		simplePbrShaderUB.Push("u_NormalTexToggle", m_NormalInput.UseTexture ? 1.0f : 0.0f);
+		simplePbrShaderUB.Push("u_MetalnessTexToggle", m_MetalnessInput.UseTexture ? 1.0f : 0.0f);
+		simplePbrShaderUB.Push("u_RoughnessTexToggle", m_RoughnessInput.UseTexture ? 1.0f : 0.0f);
+		simplePbrShaderUB.Push("u_EnvMapRotation", m_EnvMapRotation);
+		m_SimplePBRShader->UploadUniformBuffer(simplePbrShaderUB);
 
-		Hep::Renderer::BeginScene(m_Camera);
+		m_EnvironmentCubeMap->Bind(10);
+		m_EnvironmentIrradiance->Bind(11);
+		m_BRDFLUT->Bind(15);
 
-		static rtm::float3f scale{ 0.1f, 0.1f, 0.1f };
+		m_SimplePBRShader->Bind();
+		if (m_AlbedoInput.TextureMap)
+			m_AlbedoInput.TextureMap->Bind(1);
+		if (m_NormalInput.TextureMap)
+			m_NormalInput.TextureMap->Bind(2);
+		if (m_MetalnessInput.TextureMap)
+			m_MetalnessInput.TextureMap->Bind(3);
+		if (m_RoughnessInput.TextureMap)
+			m_RoughnessInput.TextureMap->Bind(4);
 
-		rtm::float4f redColor(0.8f, 0.2f, 0.3f, 1.0f);
-		rtm::float4f blueColor(0.2f, 0.3f, 0.8f, 1.0f);
-
-		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_FlatColorShader)->Bind();
-		std::dynamic_pointer_cast<Hep::OpenGLShader>(m_FlatColorShader)->UploadUniformFloat3("u_Color", m_SquareColor);
-		for (int i = 0; i < 20; ++i)
+		if (m_Scene == Scene::Spheres)
 		{
-			for (int j = 0; j < 20; ++j)
+			// Metals
+			float roughness = 0.0f;
+			float x = -88.0f;
+			for (int i = 0; i < 8; i++)
 			{
-				rtm::float3f pos(i * 0.11f, j * 0.11f, 0.0f);
-				rtm::matrix3x4f transform = rtm::matrix_from_qvv(rtm::quat_identity(),
-					rtm::vector_load3(&pos),
-					rtm::vector_load3(&scale));
-				Hep::Renderer::Submit(m_FlatColorShader, m_SquareVA, matrix_cast(transform));
+				m_SimplePBRShader->SetMat4("u_ModelMatrix", translate(mat4(1.0f), vec3(x, 0.0f, 0.0f)));
+				m_SimplePBRShader->SetFloat("u_Roughness", roughness);
+				m_SimplePBRShader->SetFloat("u_Metalness", 1.0f);
+				m_SphereMesh->Render();
+
+				roughness += 0.15f;
+				x += 22.0f;
+			}
+
+			// Dielectrics
+			roughness = 0.0f;
+			x = -88.0f;
+			for (int i = 0; i < 8; i++)
+			{
+				m_SimplePBRShader->SetMat4("u_ModelMatrix", translate(mat4(1.0f), vec3(x, 22.0f, 0.0f)));
+				m_SimplePBRShader->SetFloat("u_Roughness", roughness);
+				m_SimplePBRShader->SetFloat("u_Metalness", 0.0f);
+				m_SphereMesh->Render();
+
+				roughness += 0.15f;
+				x += 22.0f;
 			}
 		}
+		else if (m_Scene == Scene::Model)
+		{
+			m_Mesh->Render();
+		}
 
-		auto textureShader = m_ShaderLibrary.Get("Texture");
-		m_Texture->Bind();
-		Hep::Renderer::Submit(textureShader, m_SquareVA,
-			rtm::matrix_cast<rtm::matrix3x4f>(rtm::matrix_from_scale(rtm::vector_load(new rtm::float4f(1.5f)))));
-		m_ChernoLogoTexture->Bind();
-		Hep::Renderer::Submit(textureShader, m_SquareVA,
-			rtm::matrix_cast<rtm::matrix3x4f>(rtm::matrix_from_scale(rtm::vector_load(new rtm::float4f(1.5f)))));
+		m_Framebuffer->Unbind();
 
-		// Triangle
-		// Hep::Renderer::Submit(m_Shader, m_VertexArray);
+		m_FinalPresentBuffer->Bind();
+		m_HDRShader->Bind();
+		m_HDRShader->SetFloat("u_Exposure", m_Exposure);
+		m_Framebuffer->BindTexture();
+		m_VertexBuffer->Bind();
+		m_IndexBuffer->Bind();
+		Renderer::DrawIndexed(m_IndexBuffer->GetCount(), false);
+		m_FinalPresentBuffer->Unbind();
+	}
 
-		Hep::Renderer::EndScene();
+	enum class PropertyFlag
+	{
+		None = 0, ColorProperty = 1
+	};
+
+	void Property(const std::string& name, bool& value)
+	{
+		ImGui::Text(name.c_str());
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+
+		std::string id = "##" + name;
+		ImGui::Checkbox(id.c_str(), &value);
+
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
+	}
+
+	void Property(const std::string& name, float& value, float min = -1.0f, float max = 1.0f,
+		PropertyFlag flags = PropertyFlag::None)
+	{
+		ImGui::Text(name.c_str());
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+
+		std::string id = "##" + name;
+		ImGui::SliderFloat(id.c_str(), &value, min, max);
+
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
+	}
+
+	void Property(const std::string& name, glm::vec3& value, PropertyFlag flags)
+	{
+		Property(name, value, -1.0f, 1.0f, flags);
+	}
+
+	void Property(const std::string& name, glm::vec3& value, float min = -1.0f, float max = 1.0f,
+		PropertyFlag flags = PropertyFlag::None)
+	{
+		ImGui::Text(name.c_str());
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+
+		std::string id = "##" + name;
+		if ((int)flags & (int)PropertyFlag::ColorProperty)
+			ImGui::ColorEdit3(id.c_str(), glm::value_ptr(value), ImGuiColorEditFlags_NoInputs);
+		else
+			ImGui::SliderFloat3(id.c_str(), glm::value_ptr(value), min, max);
+
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
+	}
+
+	void Property(const std::string& name, glm::vec4& value, PropertyFlag flags)
+	{
+		Property(name, value, -1.0f, 1.0f, flags);
+	}
+
+	void Property(const std::string& name, glm::vec4& value, float min = -1.0f, float max = 1.0f,
+		PropertyFlag flags = PropertyFlag::None)
+	{
+		ImGui::Text(name.c_str());
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+
+		std::string id = "##" + name;
+		if ((int)flags & (int)PropertyFlag::ColorProperty)
+			ImGui::ColorEdit4(id.c_str(), glm::value_ptr(value), ImGuiColorEditFlags_NoInputs);
+		else
+			ImGui::SliderFloat4(id.c_str(), glm::value_ptr(value), min, max);
+
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
 	}
 
 	void OnImGuiRender() override
 	{
-		static bool show_demo_window = true;
-		if (show_demo_window)
-			ImGui::ShowDemoWindow(&show_demo_window);
-
-		ImGui::Begin("EditorLayer");
-		ImGui::ColorEdit4("Clear Color", m_ClearColor);
-		ImGui::End();
-
-#if ENABLE_DOCKSPACE
 		static bool p_open = true;
 
 		static bool opt_fullscreen_persistant = true;
@@ -238,7 +291,8 @@ public:
 			ImGui::SetNextWindowViewport(viewport->ID);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoMove;
 			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 		}
 
@@ -261,6 +315,217 @@ public:
 			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), opt_flags);
 		}
 
+		// Editor Panel ------------------------------------------------------------------------------
+		ImGui::Begin("Model");
+		ImGui::RadioButton("Spheres", (int*)&m_Scene, (int)Scene::Spheres);
+		ImGui::SameLine();
+		ImGui::RadioButton("Model", (int*)&m_Scene, (int)Scene::Model);
+
+		ImGui::Begin("Environment");
+
+		ImGui::Columns(2);
+		ImGui::AlignTextToFramePadding();
+
+		Property("Light Direction", m_Light.Direction);
+		Property("Light Radiance", m_Light.Radiance, PropertyFlag::ColorProperty);
+		Property("Light Multiplier", m_LightMultiplier, 0.0f, 5.0f);
+		Property("Exposure", m_Exposure, 0.0f, 5.0f);
+
+		Property("Radiance Prefiltering", m_RadiancePrefilter);
+		Property("Env Map Rotation", m_EnvMapRotation, -360.0f, 360.0f);
+
+		ImGui::Columns(1);
+
+		ImGui::End();
+
+		ImGui::Separator();
+		{
+			ImGui::Text("Mesh");
+			std::string fullpath = m_Mesh ? m_Mesh->GetFilePath() : "None";
+			size_t found = fullpath.find_last_of("/\\");
+			std::string path = found != std::string::npos ? fullpath.substr(found + 1) : fullpath;
+			ImGui::Text(path.c_str());
+			ImGui::SameLine();
+			if (ImGui::Button("...##Mesh"))
+			{
+				std::string filename = Hep::Application::Get().OpenFile("");
+				if (filename != "")
+					m_Mesh.reset(new Hep::Mesh(filename));
+			}
+		}
+		ImGui::Separator();
+
+		// Textures ------------------------------------------------------------------------------
+		{
+			// Albedo
+			if (ImGui::CollapsingHeader("Albedo", nullptr, ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10, 10));
+				ImGui::Image(m_AlbedoInput.TextureMap
+								 ? (void*)m_AlbedoInput.TextureMap->GetRendererID()
+								 : (void*)m_CheckerboardTex->GetRendererID(), ImVec2(64, 64));
+				ImGui::PopStyleVar();
+				if (ImGui::IsItemHovered())
+				{
+					if (m_AlbedoInput.TextureMap)
+					{
+						ImGui::BeginTooltip();
+						ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+						ImGui::TextUnformatted(m_AlbedoInput.TextureMap->GetPath().c_str());
+						ImGui::PopTextWrapPos();
+						ImGui::Image((void*)m_AlbedoInput.TextureMap->GetRendererID(), ImVec2(384, 384));
+						ImGui::EndTooltip();
+					}
+					if (ImGui::IsItemClicked())
+					{
+						std::string filename = Hep::Application::Get().OpenFile("");
+						if (filename != "")
+							m_AlbedoInput.TextureMap.reset(Hep::Texture2D::Create(filename, m_AlbedoInput.SRGB));
+					}
+				}
+				ImGui::SameLine();
+				ImGui::BeginGroup();
+				ImGui::Checkbox("Use##AlbedoMap", &m_AlbedoInput.UseTexture);
+				if (ImGui::Checkbox("sRGB##AlbedoMap", &m_AlbedoInput.SRGB))
+				{
+					if (m_AlbedoInput.TextureMap)
+						m_AlbedoInput.TextureMap.reset(Hep::Texture2D::Create(m_AlbedoInput.TextureMap->GetPath(),
+							m_AlbedoInput.SRGB));
+				}
+				ImGui::EndGroup();
+				ImGui::SameLine();
+				ImGui::ColorEdit3("Color##Albedo", glm::value_ptr(m_AlbedoInput.Color), ImGuiColorEditFlags_NoInputs);
+			}
+		}
+		{
+			// Normals
+			if (ImGui::CollapsingHeader("Normals", nullptr, ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10, 10));
+				ImGui::Image(m_NormalInput.TextureMap
+								 ? (void*)m_NormalInput.TextureMap->GetRendererID()
+								 : (void*)m_CheckerboardTex->GetRendererID(), ImVec2(64, 64));
+				ImGui::PopStyleVar();
+				if (ImGui::IsItemHovered())
+				{
+					if (m_NormalInput.TextureMap)
+					{
+						ImGui::BeginTooltip();
+						ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+						ImGui::TextUnformatted(m_NormalInput.TextureMap->GetPath().c_str());
+						ImGui::PopTextWrapPos();
+						ImGui::Image((void*)m_NormalInput.TextureMap->GetRendererID(), ImVec2(384, 384));
+						ImGui::EndTooltip();
+					}
+					if (ImGui::IsItemClicked())
+					{
+						std::string filename = Hep::Application::Get().OpenFile("");
+						if (filename != "")
+							m_NormalInput.TextureMap.reset(Hep::Texture2D::Create(filename));
+					}
+				}
+				ImGui::SameLine();
+				ImGui::Checkbox("Use##NormalMap", &m_NormalInput.UseTexture);
+			}
+		}
+		{
+			// Metalness
+			if (ImGui::CollapsingHeader("Metalness", nullptr, ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10, 10));
+				ImGui::Image(m_MetalnessInput.TextureMap
+								 ? (void*)m_MetalnessInput.TextureMap->GetRendererID()
+								 : (void*)m_CheckerboardTex->GetRendererID(), ImVec2(64, 64));
+				ImGui::PopStyleVar();
+				if (ImGui::IsItemHovered())
+				{
+					if (m_MetalnessInput.TextureMap)
+					{
+						ImGui::BeginTooltip();
+						ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+						ImGui::TextUnformatted(m_MetalnessInput.TextureMap->GetPath().c_str());
+						ImGui::PopTextWrapPos();
+						ImGui::Image((void*)m_MetalnessInput.TextureMap->GetRendererID(), ImVec2(384, 384));
+						ImGui::EndTooltip();
+					}
+					if (ImGui::IsItemClicked())
+					{
+						std::string filename = Hep::Application::Get().OpenFile("");
+						if (filename != "")
+							m_MetalnessInput.TextureMap.reset(Hep::Texture2D::Create(filename));
+					}
+				}
+				ImGui::SameLine();
+				ImGui::Checkbox("Use##MetalnessMap", &m_MetalnessInput.UseTexture);
+				ImGui::SameLine();
+				ImGui::SliderFloat("Value##MetalnessInput", &m_MetalnessInput.Value, 0.0f, 1.0f);
+			}
+		}
+		{
+			// Roughness
+			if (ImGui::CollapsingHeader("Roughness", nullptr, ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10, 10));
+				ImGui::Image(m_RoughnessInput.TextureMap
+								 ? (void*)m_RoughnessInput.TextureMap->GetRendererID()
+								 : (void*)m_CheckerboardTex->GetRendererID(), ImVec2(64, 64));
+				ImGui::PopStyleVar();
+				if (ImGui::IsItemHovered())
+				{
+					if (m_RoughnessInput.TextureMap)
+					{
+						ImGui::BeginTooltip();
+						ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+						ImGui::TextUnformatted(m_RoughnessInput.TextureMap->GetPath().c_str());
+						ImGui::PopTextWrapPos();
+						ImGui::Image((void*)m_RoughnessInput.TextureMap->GetRendererID(), ImVec2(384, 384));
+						ImGui::EndTooltip();
+					}
+					if (ImGui::IsItemClicked())
+					{
+						std::string filename = Hep::Application::Get().OpenFile("");
+						if (filename != "")
+							m_RoughnessInput.TextureMap.reset(Hep::Texture2D::Create(filename));
+					}
+				}
+				ImGui::SameLine();
+				ImGui::Checkbox("Use##RoughnessMap", &m_RoughnessInput.UseTexture);
+				ImGui::SameLine();
+				ImGui::SliderFloat("Value##RoughnessInput", &m_RoughnessInput.Value, 0.0f, 1.0f);
+			}
+		}
+
+		ImGui::Separator();
+
+		if (ImGui::TreeNode("Shaders"))
+		{
+			auto& shaders = Hep::Shader::s_AllShaders;
+			for (auto& shader : shaders)
+			{
+				if (ImGui::TreeNode(shader->GetName().c_str()))
+				{
+					std::string buttonName = "Reload##" + shader->GetName();
+					if (ImGui::Button(buttonName.c_str()))
+						shader->Reload();
+					ImGui::TreePop();
+				}
+			}
+			ImGui::TreePop();
+		}
+
+		ImGui::End();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+		ImGui::Begin("Viewport");
+		auto viewportSize = ImGui::GetContentRegionAvail();
+		m_Framebuffer->Resize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
+		m_FinalPresentBuffer->Resize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
+		m_Camera.SetProjectionMatrix(glm::perspectiveFov(glm::radians(45.0f), viewportSize.x, viewportSize.y, 0.1f,
+			10000.0f));
+		ImGui::Image((void*)m_FinalPresentBuffer->GetColorAttachmentRendererID(), viewportSize, { 0, 1 }, { 1, 0 });
+		ImGui::End();
+		ImGui::PopStyleVar();
+
 		if (ImGui::BeginMenuBar())
 		{
 			if (ImGui::BeginMenu("Docking"))
@@ -269,21 +534,31 @@ public:
 				// which we can't undo at the moment without finer window depth/z control.
 				//ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
 
-				if (ImGui::MenuItem("Flag: NoSplit", "", (opt_flags & ImGuiDockNodeFlags_NoSplit) != 0))                 opt_flags ^= ImGuiDockNodeFlags_NoSplit;
-				if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (opt_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0))  opt_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode;
-				if (ImGui::MenuItem("Flag: NoResize", "", (opt_flags & ImGuiDockNodeFlags_NoResize) != 0))                opt_flags ^= ImGuiDockNodeFlags_NoResize;
-				if (ImGui::MenuItem("Flag: PassthruDockspace", "", (opt_flags & ImGuiDockNodeFlags_PassthruDockspace) != 0))       opt_flags ^= ImGuiDockNodeFlags_PassthruDockspace;
-				if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (opt_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0))          opt_flags ^= ImGuiDockNodeFlags_AutoHideTabBar;
+				if (ImGui::MenuItem("Flag: NoSplit", "", (opt_flags & ImGuiDockNodeFlags_NoSplit) != 0))
+					opt_flags ^= ImGuiDockNodeFlags_NoSplit;
+				if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "",
+					(opt_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0))
+					opt_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode;
+				if (ImGui::MenuItem("Flag: NoResize", "", (opt_flags & ImGuiDockNodeFlags_NoResize) != 0))
+					opt_flags ^= ImGuiDockNodeFlags_NoResize;
+				if (ImGui::MenuItem("Flag: PassthruDockspace", "",
+					(opt_flags & ImGuiDockNodeFlags_PassthruDockspace) != 0))
+					opt_flags ^= ImGuiDockNodeFlags_PassthruDockspace;
+				if (ImGui::MenuItem("Flag: AutoHideTabBar", "", (opt_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0))
+					opt_flags ^= ImGuiDockNodeFlags_AutoHideTabBar;
 				ImGui::Separator();
 				if (ImGui::MenuItem("Close DockSpace", NULL, false, p_open != NULL))
 					p_open = false;
 				ImGui::EndMenu();
 			}
 			ImGuiShowHelpMarker(
-				"You can _always_ dock _any_ window into another by holding the SHIFT key while moving a window. Try it now!" "\n"
+				"You can _always_ dock _any_ window into another by holding the SHIFT key while moving a window. Try it now!"
+				"\n"
 				"This demo app has nothing to do with it!" "\n\n"
-				"This demo app only demonstrate the use of ImGui::DockSpace() which allows you to manually create a docking node _within_ another window. This is useful so you can decorate your main application window (e.g. with a menu bar)." "\n\n"
-				"ImGui::DockSpace() comes with one hard constraint: it needs to be submitted _before_ any window which may be docked into it. Therefore, if you use a dock spot as the central point of your application, you'll probably want it to be part of the very first window you are submitting to imgui every frame." "\n\n"
+				"This demo app only demonstrate the use of ImGui::DockSpace() which allows you to manually create a docking node _within_ another window. This is useful so you can decorate your main application window (e.g. with a menu bar)."
+				"\n\n"
+				"ImGui::DockSpace() comes with one hard constraint: it needs to be submitted _before_ any window which may be docked into it. Therefore, if you use a dock spot as the central point of your application, you'll probably want it to be part of the very first window you are submitting to imgui every frame."
+				"\n\n"
 				"(NB: because of this constraint, the implicit \"Debug\" window can not be docked into an explicit DockSpace() node, because that window is submitted as part of the NewFrame() call. An easy workaround is that you can create your own implicit \"Debug##2\" window after calling DockSpace() and leave it in the window stack for anyone to use.)"
 			);
 
@@ -291,48 +566,108 @@ public:
 		}
 
 		ImGui::End();
-#endif
 	}
 
 	void OnEvent(Hep::Event& event) override
 	{ }
 
 private:
-	Hep::Ref<Hep::Shader> m_Shader;
-	Hep::Ref<Hep::VertexArray> m_VertexArray;
+	std::unique_ptr<Hep::Shader> m_Shader;
+	std::unique_ptr<Hep::Shader> m_PBRShader;
+	std::unique_ptr<Hep::Shader> m_SimplePBRShader;
+	std::unique_ptr<Hep::Shader> m_QuadShader;
+	std::unique_ptr<Hep::Shader> m_HDRShader;
+	std::unique_ptr<Hep::Mesh> m_Mesh;
+	std::unique_ptr<Hep::Mesh> m_SphereMesh;
+	std::unique_ptr<Hep::Texture2D> m_BRDFLUT;
 
-	Hep::ShaderLibrary m_ShaderLibrary;
-	Hep::Ref<Hep::Shader> m_FlatColorShader;
-	Hep::Ref<Hep::VertexArray> m_SquareVA;
+	struct AlbedoInput
+	{
+		glm::vec3 Color = { 0.972f, 0.96f, 0.915f };
+		// Silver, from https://docs.unrealengine.com/en-us/Engine/Rendering/Materials/PhysicallyBased
+		std::unique_ptr<Hep::Texture2D> TextureMap;
+		bool SRGB = true;
+		bool UseTexture = false;
+	};
 
-	Hep::Ref<Hep::Texture2D> m_Texture, m_ChernoLogoTexture;
+	AlbedoInput m_AlbedoInput;
 
-	Hep::OrthographicCamera m_Camera;
-	rtm::float3f m_CameraPosition;
-	rtm::float3f m_SquareColor{ 0.8f, 0.2f, 0.3f };
-	float m_CameraMoveSpeed = 5.0f;
+	struct NormalInput
+	{
+		std::unique_ptr<Hep::Texture2D> TextureMap;
+		bool UseTexture = false;
+	};
 
-	float m_CameraRotation = 0.0f;
-	float m_CameraRotateSpeed = 180.0f;
+	NormalInput m_NormalInput;
 
-	float m_ClearColor[4];
+	struct MetalnessInput
+	{
+		float Value = 1.0f;
+		std::unique_ptr<Hep::Texture2D> TextureMap;
+		bool UseTexture = false;
+	};
+
+	MetalnessInput m_MetalnessInput;
+
+	struct RoughnessInput
+	{
+		float Value = 0.5f;
+		std::unique_ptr<Hep::Texture2D> TextureMap;
+		bool UseTexture = false;
+	};
+
+	RoughnessInput m_RoughnessInput;
+
+	std::unique_ptr<Hep::Framebuffer> m_Framebuffer, m_FinalPresentBuffer;
+
+	std::unique_ptr<Hep::VertexBuffer> m_VertexBuffer;
+	std::unique_ptr<Hep::IndexBuffer> m_IndexBuffer;
+	std::unique_ptr<Hep::TextureCube> m_EnvironmentCubeMap, m_EnvironmentIrradiance;
+
+	Hep::Camera m_Camera;
+
+	struct Light
+	{
+		glm::vec3 Direction;
+		glm::vec3 Radiance;
+	};
+
+	Light m_Light;
+	float m_LightMultiplier = 0.3f;
+
+	// PBR params
+	float m_Exposure = 1.0f;
+
+	bool m_RadiancePrefilter = false;
+
+	float m_EnvMapRotation = 0.0f;
+
+	enum class Scene : uint32_t
+	{
+		Spheres = 0, Model = 1
+	};
+
+	Scene m_Scene;
+
+	// Editor resources
+	std::unique_ptr<Hep::Texture2D> m_CheckerboardTex;
 };
 
 class Sandbox : public Hep::Application
 {
 public:
 	Sandbox()
-	{ }
+	{
+		HEP_TRACE("Hello!");
+	}
 
 	void OnInit() override
 	{
 		PushLayer(new EditorLayer());
 	}
-
-	~Sandbox() override = default;
 };
 
 Hep::Application* Hep::CreateApplication()
 {
-	return new Sandbox{};
+	return new Sandbox();
 }

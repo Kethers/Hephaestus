@@ -8,16 +8,12 @@ extern Hep::Application* Hep::CreateApplication();
 
 int main(int argc, char** argv)
 {
-	Hep::Log::Init();
-	HEP_CORE_WARN("Initialized Log!");
-	int a = 5;
-	HEP_INFO("Hello! Var={0}", a);
-
-	auto app = Hep::CreateApplication();
+	Hep::InitializeCore();
+	Hep::Application* app = Hep::CreateApplication();
+	HEP_CORE_ASSERT(app, "Client Application is null!");
 	app->Run();
 	delete app;
-
-	return 0;
+	Hep::ShutdownCore();
 }
 
 #endif

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <rtm/math.h>
+#include <glm/glm.hpp>
 
 namespace Hep
 {
@@ -9,9 +9,9 @@ namespace Hep
 	public:
 		OrthographicCamera(float left, float right, float bottom, float top);
 
-		const rtm::float3f& GetPosition() const { return m_Position; }
+		const glm::vec3& GetPosition() const { return m_Position; }
 
-		void SetPosition(const rtm::float3f& position)
+		void SetPosition(const glm::vec3& position)
 		{
 			m_Position = position;
 			RecalculateViewMatrix();
@@ -25,19 +25,19 @@ namespace Hep
 			RecalculateViewMatrix();
 		}
 
-		const rtm::matrix4x4f GetProjectionMatrix() const { return m_ProjectionMatrix; }
-		const rtm::matrix4x4f GetViewMatrix() const { return m_ViewMatrix; }
-		const rtm::matrix4x4f GetViewProjectionMatrix() const { return m_ViewProjectionMatrix; }
+		const glm::mat4 GetProjectionMatrix() const { return m_ProjectionMatrix; }
+		const glm::mat4 GetViewMatrix() const { return m_ViewMatrix; }
+		const glm::mat4 GetViewProjectionMatrix() const { return m_ViewProjectionMatrix; }
 
 	private:
 		void RecalculateViewMatrix();
 
 	private:
-		rtm::matrix4x4f m_ProjectionMatrix;
-		rtm::matrix4x4f m_ViewMatrix;
-		rtm::matrix4x4f m_ViewProjectionMatrix;
+		glm::mat4 m_ProjectionMatrix;
+		glm::mat4 m_ViewMatrix;
+		glm::mat4 m_ViewProjectionMatrix;
 
-		rtm::float3f m_Position{};
+		glm::vec3 m_Position{};
 		float m_Rotation = 0.0f;
 	};
 }

@@ -95,9 +95,9 @@ function BuildProject(config)
 		set_optimize("none")
 		if is_plat("windows") then
 			if config.staticruntime ~= nil and config.staticruntime then
-				set_runtimes("MTd");
+				set_runtimes("MT");
 			else
-				set_runtimes("MDd")
+				set_runtimes("MD")
 			end
 		-- 	add_cxflags("/Zi", "/W0", "/MP", "/Ob0", "/Oy-", "/GF", "/GS", "/arch:AVX2", "/fp:precise", "/Gr", "/TP", {
 		-- 		force = true
@@ -128,13 +128,19 @@ includes("external/GLFW")
 includes("external/imgui")
 add_repositories("glfw external/GLFW", {rootdir = os.scriptdir()})
 add_requires("glfw")
+if (is_mode("debug")) then
+	add_requires("assimp >= 5.2.4")
+else
+	add_requires("assimp >= 5.2.4")
+end
 
 IncludeDir = {}
 IncludeDir["GLFW"] = "external/GLFW/include"
 IncludeDir["Glad"] = "external/Glad/include"
 IncludeDir["ImGui"] = "external/imgui"
-IncludeDir["rtm"] = "external/rtm"
-IncludeDir['stb_image'] = "external/stb_image"
+IncludeDir["glm"] = "external/glm"
+IncludeDir["assimp"] = "external/assimp/include"
+IncludeDir['stb'] = "external/stb"
 
 BuildProject({
 	projectName = "Hephaestus",
@@ -142,26 +148,25 @@ BuildProject({
 	macros = {"HEP_BUILD_DLL"},
 	languages = {"clatest", "cxx20"},
 	depends = {"Glad", "ImGui"},
-	files = {"Hephaestus/src/**.cpp", "external/stb_image/**.cpp"},
+	files = {"Hephaestus/src/**.cpp", "external/stb/**.cpp"},
 	headerfiles = {
 		"Hephaestus/src/**.h", 
 		"Hephaestus/src/**.hpp",
-		"external/rtm/rtm/**.h", 
-		"external/rtm/rtm/**.hpp",
-		"external/stb_image/**.h",
+		"external/stb/**.h",
 	},
 	pchHeader = "Hephaestus/src/heppch.h",
 	includePaths = {"external", "Hephaestus/src", 
 		IncludeDir.GLFW, 
 		IncludeDir.Glad,
 		IncludeDir.ImGui,
-		IncludeDir.rtm,
-		IncludeDir.stb_image,
+		IncludeDir.glm,
+		IncludeDir.assimp,
+		IncludeDir.stb,
 	},
 	packages = {"glfw"},
 	debugLink = {},
 	releaseLink = {},
-	link = {"kernel32", "User32", "Gdi32", "Shell32", "opengl32.lib"},
+	link = {"kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib"},
 	afterBuildFunc = nil,
 	enableException = true,
 	staticruntime = true,
@@ -177,10 +182,10 @@ BuildProject({
 	headerfiles = {"Sandbox/src/**.h"},
 	pchHeader = nil,
 	includePaths = {"external", "Hephaestus/src",
-		IncludeDir.rtm,
+		IncludeDir.glm,
 	},
 	rundir = "$(projectdir)/Sandbox",
-	packages = nil,
+	packages = {"assimp"},
 	debugLink = {},
 	releaseLink = {},
 	link = {"kernel32", "User32", "Gdi32", "Shell32"},

@@ -1,9 +1,6 @@
 #pragma once
 
 #include "Hephaestus/Core/Layer.h"
-#include "Hephaestus/Core/Events/ApplicationEvent.h"
-#include "Hephaestus/Core/Events/KeyEvent.h"
-#include "Hephaestus/Core/Events/MouseEvent.h"
 
 namespace Hep
 {
@@ -22,6 +19,6 @@ namespace Hep
 		void End();
 
 	private:
-		float m_Time;
+		float m_Time = 0.0f;
 	};
 }

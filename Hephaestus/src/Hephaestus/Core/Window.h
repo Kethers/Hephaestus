@@ -5,20 +5,19 @@
 #include "Base.h"
 #include "Hephaestus/Core/Events/Event.h"
 
-namespace Hep {
-
+namespace Hep
+{
 	struct WindowProps
 	{
 		std::string Title;
 		uint32_t Width;
 		uint32_t Height;
 
-		WindowProps(const std::string& title = "Hephaestus",
+		WindowProps(const std::string& title = "Hephaestus Engine",
 			uint32_t width = 1600,
 			uint32_t height = 900)
 			: Title(title), Width(width), Height(height)
-		{
-		}
+		{ }
 	};
 
 	// Interface representing a desktop system based Window
@@ -43,5 +42,4 @@ namespace Hep {
 
 		static Window* Create(const WindowProps& props = WindowProps());
 	};
-
 }

@@ -1,34 +1,45 @@
 ﻿#pragma once
 
-#include <rtm/math.h>
-
-#include "VertexArray.h"
-
 namespace Hep
 {
+	using RendererID = uint32_t;
+
+	enum class RendererAPIType
+	{
+		None,
+		OpenGL
+	};
+
+	struct RenderAPICapabilities
+	{
+		std::string Vendor;
+		std::string Renderer;
+		std::string Version;
+
+		int MaxSamples;
+		float MaxAnisotropy;
+	};
+
 	class RendererAPI
 	{
 	public:
+		static void Init();
+		static void Shutdown();
+
 		static void Clear(float r, float g, float b, float a);
 		static void SetClearColor(float r, float g, float b, float a);
 
-		#pragma region enums
-		enum class API
+		static void DrawIndexed(unsigned int count, bool depthTest = true);
+
+		static RenderAPICapabilities& GetCapabilities()
 		{
-			None   = 0,
-			OpenGL = 1,
-		};
-		#pragma endregion
+			static RenderAPICapabilities capabilities;
+			return capabilities;
+		}
 
-		virtual void Init() = 0;
-		virtual void SetClearColor(const rtm::float4f& color) = 0;
-		virtual void Clear() = 0;
-
-		virtual void DrawIndexed(const Ref<VertexArray>& vertexArray) = 0;
-
-		static API GetAPI() { return s_API; }
+		static RendererAPIType Current() { return s_CurrentRendererAPI; }
 
 	private:
-		static API s_API;
+		static RendererAPIType s_CurrentRendererAPI;
 	};
 }

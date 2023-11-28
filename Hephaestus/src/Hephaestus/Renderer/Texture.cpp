@@ -1,24 +1,38 @@
 ﻿#include "heppch.h"
 #include "Texture.h"
 
-#include "Renderer.h"
-#include "Platform/OpenGL/OpenGLTexture.h"
+#include "Hephaestus/Renderer/RendererAPI.h"
+#include "Hephaestus/Platform/OpenGL/OpenGLTexture.h"
 
 namespace Hep
 {
-	Ref<Texture2D> Texture2D::Create(const std::string& path)
+	Texture2D* Texture2D::Create(TextureFormat format, unsigned int width, unsigned int height)
 	{
-		switch (Renderer::GetAPI())
+		switch (RendererAPI::Current())
 		{
-			case RendererAPI::API::None:
-			{
-				HEP_CORE_ASSERT(false, "RendererAPI::API::None is currently not supported!");
-				return nullptr;
-			}
-			case RendererAPI::API::OpenGL: return std::make_shared<OpenGLTexture2D>(path);
+			case RendererAPIType::None: return nullptr;
+			case RendererAPIType::OpenGL: return new OpenGLTexture2D(format, width, height);
 		}
+		return nullptr;
+	}
 
-		HEP_CORE_ASSERT(false, "Unknown Renderer API!");
+	Texture2D* Texture2D::Create(const std::string& path, bool srgb)
+	{
+		switch (RendererAPI::Current())
+		{
+			case RendererAPIType::None: return nullptr;
+			case RendererAPIType::OpenGL: return new OpenGLTexture2D(path, srgb);
+		}
+		return nullptr;
+	}
+
+	TextureCube* TextureCube::Create(const std::string& path)
+	{
+		switch (RendererAPI::Current())
+		{
+			case RendererAPIType::None: return nullptr;
+			case RendererAPIType::OpenGL: return new OpenGLTextureCube(path);
+		}
 		return nullptr;
 	}
 }

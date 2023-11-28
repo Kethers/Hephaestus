@@ -1,13 +1,10 @@
 #pragma once
 
-#include "Base.h"
+#include "Hephaestus/Core/Base.h"
+#include "Hephaestus/Core/Window.h"
+#include "Hephaestus/Core/LayerStack.h"
 
-#include "Window.h"
-#include "LayerStack.h"
-#include "Hephaestus/Core/Events/Event.h"
 #include "Hephaestus/Core/Events/ApplicationEvent.h"
-
-#include "Hephaestus/Core/Timestep.h"
 
 #include "Hephaestus/ImGui/ImGuiLayer.h"
 
@@ -31,6 +28,8 @@ namespace Hep
 		void PushOverlay(Layer* layer);
 		void RenderImGui();
 
+		std::string OpenFile(const std::string& filter) const;
+
 		static Application& Get() { return *s_Instance; }
 		Window& GetWindow() { return *m_Window; }
 
@@ -38,17 +37,16 @@ namespace Hep
 		bool OnWindowResize(WindowResizeEvent& e);
 		bool OnWindowClose(WindowCloseEvent& e);
 
+	private:
 		std::unique_ptr<Window> m_Window;
 		ImGuiLayer* m_ImGuiLayer;
-		bool m_Running = true;
+		bool m_Running = true, m_Minimized = false;
 		LayerStack m_LayerStack;
 		float m_LastFrameTime = 0.0f;
 
-		#pragma region static
 		static Application* s_Instance;
-		#pragma endregion static
 	};
 
-	// To be defined in CLIENT
+	// Implemented by CLIENT
 	Application* CreateApplication();
 }

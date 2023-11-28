@@ -1,25 +1,24 @@
 ﻿#include "heppch.h"
 #include "OrthographicCamera.h"
 
-#include <rtm/rtm_ext.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 namespace Hep
 {
 	OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top)
-		: m_ProjectionMatrix(rtm::ext::ortho_off_center_lh(left, right, bottom, top, -1.0f, 1.0f)),
-		  m_ViewMatrix(rtm::matrix_identity())
+		: m_ProjectionMatrix(glm::ortho(left, right, bottom, top, -1.0f, 1.0f)),
+		  m_ViewMatrix(glm::mat4(1.0f))
 	{
-		m_ViewProjectionMatrix = rtm::matrix_mul(m_ViewMatrix, m_ProjectionMatrix);
+		m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 
 	void OrthographicCamera::RecalculateViewMatrix()
 	{
-		rtm::matrix4x4f transform = rtm::ext::transform_4x4(
-			vector_load3(&m_Position),
-			rtm::quat_from_axis_angle({ { 0.0f, 0.0f, -1.0f, 0.0f } }, rtm::scalar_deg_to_rad(m_Rotation)),
-			rtm::vector_set(1.0f));
+		glm::mat4 transform = glm::translate(glm::mat4(1.0f), m_Position)
+							  * glm::rotate(glm::mat4(1.0f), glm::radians(m_Rotation), glm::vec3(0.0, 0.0, 1.0));
 
-		m_ViewMatrix = rtm::matrix_inverse(transform);
-		m_ViewProjectionMatrix = rtm::matrix_mul(m_ViewMatrix, m_ProjectionMatrix);
+		m_ViewMatrix = glm::inverse(transform);
+		m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
 	}
 }

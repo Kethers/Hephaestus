@@ -2,6 +2,12 @@
 
 #include <memory>
 
+namespace Hep
+{
+	void InitializeCore();
+	void ShutdownCore();
+}
+
 #ifdef HEP_PLATFORM_WINDOWS
 	#if HEP_DYNAMIC_LINK
 		#ifdef HEP_BUILD_DLL
