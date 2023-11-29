@@ -157,6 +157,10 @@ namespace Hep
 	{
 		glfwPollEvents();
 		m_Context->SwapBuffers();
+
+		float time = glfwGetTime();
+		float delta = time - m_LastFrameTime;
+		m_LastFrameTime = time;
 	}
 
 	void WindowsWindow::SetVSync(bool enabled)

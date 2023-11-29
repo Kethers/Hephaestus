@@ -44,11 +44,17 @@ namespace Hep
 
 
 #ifdef HEP_ENABLE_ASSERTS
-	#define HEP_ASSERT(x, ...) { if (!(x)) { HEP_ERROR("Assertion Failed: {0}", __VA_ARGS__); HEP_DEBUG_BREAK; } }
-	#define HEP_CORE_ASSERT(x, ...) { if (!(x)) { HEP_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__); HEP_DEBUG_BREAK; } }
+
+	#define HEP_ASSERT_NO_MESSAGE(condition) { if(!(condition)) { HEP_ERROR("Assertion Failed!"); HEP_DEBUG_BREAK; } }
+	#define HEP_ASSERT_MESSAGE(condition, ...) { if(!(condition)) { HEP_ERROR("Assertion Failed: {0}", __VA_ARGS__); HEP_DEBUG_BREAK; } }
+
+	#define HEP_ASSERT_RESOLVE(arg1, arg2, macro, ...) macro
+
+	#define HEP_ASSERT(...) HEP_ASSERT_RESOLVE(__VA_ARGS__, HEP_ASSERT_MESSAGE, HEP_ASSERT_NO_MESSAGE)(__VA_ARGS__)
+	#define HEP_CORE_ASSERT(...) HEP_ASSERT_RESOLVE(__VA_ARGS__, HEP_ASSERT_MESSAGE, HEP_ASSERT_NO_MESSAGE)(__VA_ARGS__)
 #else
-#define HEP_ASSERT(x, ...)
-#define HEP_CORE_ASSERT(x, ...)
+	#define HEP_ASSERT(...)
+	#define HEP_CORE_ASSERT(...)
 #endif
 
 
@@ -56,6 +62,7 @@ namespace Hep
 
 #define HEP_BIND_EVENT_FN(fn) std::bind(&##fn, this, std::placeholders::_1)
 
+// Pointer wrappers
 namespace Hep
 {
 	template <typename T>
@@ -63,4 +70,6 @@ namespace Hep
 
 	template <typename T>
 	using Ref = std::shared_ptr<T>;
+
+	using byte = unsigned char;
 }

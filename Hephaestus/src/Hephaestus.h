@@ -6,6 +6,7 @@
 
 #include "Hephaestus/Core/Application.h"
 #include "Hephaestus/Core/Log.h"
+#include "Hephaestus/Core/TimeStep.h"
 
 #include "Hephaestus/Core/Events/Event.h"
 #include "Hephaestus/Core/Events/ApplicationEvent.h"
@@ -22,6 +23,7 @@
 #include "Hephaestus/Renderer/Shader.h"
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Renderer/Camera.h"
+#include "Hephaestus/Renderer/Material.h"
 // ---------------------------------------------------
 
 // --- Entry Point ------------

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Hephaestus/Core/Base.h"
+#include "Hephaestus/Core/TimeStep.h"
 #include "Hephaestus/Core/Window.h"
 #include "Hephaestus/Core/LayerStack.h"
 
@@ -10,7 +11,7 @@
 
 namespace Hep
 {
-	class HEP_API Application
+	class Application
 	{
 	public:
 		Application();
@@ -20,7 +21,7 @@ namespace Hep
 
 		virtual void OnInit() {}
 		virtual void OnShutdown() {}
-		virtual void OnUpdate() {}
+		virtual void OnUpdate(TimeStep ts) {}
 
 		virtual void OnEvent(Event& event);
 
@@ -33,6 +34,8 @@ namespace Hep
 		static Application& Get() { return *s_Instance; }
 		Window& GetWindow() { return *m_Window; }
 
+		float GetTime() const; // TODO: This should be in "Platform"
+
 	private:
 		bool OnWindowResize(WindowResizeEvent& e);
 		bool OnWindowClose(WindowCloseEvent& e);
@@ -42,6 +45,7 @@ namespace Hep
 		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running = true, m_Minimized = false;
 		LayerStack m_LayerStack;
+		TimeStep m_TimeStep;
 		float m_LastFrameTime = 0.0f;
 
 		static Application* s_Instance;

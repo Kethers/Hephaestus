@@ -9,7 +9,13 @@ namespace Hep
 		const GLchar* message, const void* userParam)
 	{
 		if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+		{
+			HEP_CORE_ASSERT(false, "");
+		}
+		else
+		{
 			HEP_CORE_ERROR("{0}", message);
+		}
 	}
 
 	void RendererAPI::Init()
@@ -29,7 +35,7 @@ namespace Hep
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		auto& caps = RendererAPI::GetCapabilities();
+		auto& caps = GetCapabilities();
 
 		caps.Vendor = (const char*)glGetString(GL_VENDOR);
 		caps.Renderer = (const char*)glGetString(GL_RENDERER);
@@ -37,6 +43,13 @@ namespace Hep
 
 		glGetIntegerv(GL_MAX_SAMPLES, &caps.MaxSamples);
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &caps.MaxAnisotropy);
+
+		GLenum error = glGetError();
+		while (error != GL_NO_ERROR)
+		{
+			HEP_CORE_ERROR("OpenGL Error {0}", error);
+			error = glGetError();
+		}
 	}
 
 	void RendererAPI::Shutdown()
@@ -55,11 +68,12 @@ namespace Hep
 
 	void RendererAPI::DrawIndexed(unsigned int count, bool depthTest)
 	{
-		if (depthTest)
-			glEnable(GL_DEPTH_TEST);
-		else
+		if (!depthTest)
 			glDisable(GL_DEPTH_TEST);
 
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+
+		if (!depthTest)
+			glEnable(GL_DEPTH_TEST);
 	}
 }

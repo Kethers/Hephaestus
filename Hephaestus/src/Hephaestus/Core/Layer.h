@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Hephaestus/Core/Timestep.h"
+#include "Hephaestus/Core/TimeStep.h"
 #include "Base.h"
 #include "Hephaestus/Core/Events/Event.h"
 
@@ -16,7 +16,7 @@ namespace Hep
 
 		virtual void OnDetach() { }
 
-		virtual void OnUpdate(Timestep ts) { }
+		virtual void OnUpdate(TimeStep ts) { }
 
 		virtual void OnImGuiRender() { }
 

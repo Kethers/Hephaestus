@@ -43,5 +43,6 @@ namespace Hep
 		};
 
 		WindowData m_Data;
+		float m_LastFrameTime = 0.0f;
 	};
 }

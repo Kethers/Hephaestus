@@ -20,10 +20,7 @@ namespace Hep
 
 	FramebufferPool* FramebufferPool::s_Instance = new FramebufferPool;
 
-	FramebufferPool::FramebufferPool(uint32_t maxFBs /* = 32 */)
-	{ }
-
-	FramebufferPool::~FramebufferPool()
+	FramebufferPool::FramebufferPool(uint32_t maxFBs)
 	{ }
 
 	std::weak_ptr<Framebuffer> FramebufferPool::AllocateBuffer()

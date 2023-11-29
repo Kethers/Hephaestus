@@ -16,7 +16,7 @@ namespace Hep
 	public:
 		static Framebuffer* Create(uint32_t width, uint32_t height, FramebufferFormat format);
 
-		virtual ~Framebuffer() {}
+		virtual ~Framebuffer() = default;
 		virtual void Bind() const = 0;
 		virtual void Unbind() const = 0;
 
@@ -33,7 +33,7 @@ namespace Hep
 	{
 	public:
 		FramebufferPool(uint32_t maxFBs = 32);
-		~FramebufferPool();
+		~FramebufferPool() = default;
 
 		std::weak_ptr<Framebuffer> AllocateBuffer();
 		void Add(Framebuffer* framebuffer);

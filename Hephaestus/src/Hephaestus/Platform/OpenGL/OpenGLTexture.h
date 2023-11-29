@@ -8,15 +8,21 @@ namespace Hep
 	class OpenGLTexture2D : public Texture2D
 	{
 	public:
-		OpenGLTexture2D(TextureFormat format, unsigned int width, unsigned int height);
+		OpenGLTexture2D(TextureFormat format, unsigned int width, unsigned int height, TextureWrap wrap);
 		OpenGLTexture2D(const std::string& path, bool srgb);
 		~OpenGLTexture2D() override;
 
-		void Bind(unsigned int slot = 0) const override;
+		void Bind(uint32_t slot = 0) const override;
 
 		TextureFormat GetFormat() const override { return m_Format; }
-		unsigned int GetWidth() const override { return m_Width; }
-		unsigned int GetHeight() const override { return m_Height; }
+		uint32_t GetWidth() const override { return m_Width; }
+		uint32_t GetHeight() const override { return m_Height; }
+
+		void Lock() override;
+		void Unlock() override;
+
+		void Resize(uint32_t width, uint32_t height) override;
+		Buffer GetWriteableBuffer() override;
 
 		const std::string& GetPath() const override { return m_FilePath; }
 
@@ -25,9 +31,12 @@ namespace Hep
 	private:
 		RendererID m_RendererID;
 		TextureFormat m_Format;
-		unsigned int m_Width, m_Height;
+		TextureWrap m_Wrap = TextureWrap::Clamp;
+		uint32_t m_Width, m_Height;
 
-		unsigned char* m_ImageData;
+		Buffer m_ImageData;
+
+		bool m_Locked = false;
 
 		std::string m_FilePath;
 	};
@@ -38,11 +47,11 @@ namespace Hep
 		OpenGLTextureCube(const std::string& path);
 		~OpenGLTextureCube() override;
 
-		void Bind(unsigned int slot = 0) const override;
+		void Bind(uint32_t slot = 0) const override;
 
 		TextureFormat GetFormat() const override { return m_Format; }
-		unsigned int GetWidth() const override { return m_Width; }
-		unsigned int GetHeight() const override { return m_Height; }
+		uint32_t GetWidth() const override { return m_Width; }
+		uint32_t GetHeight() const override { return m_Height; }
 
 		const std::string& GetPath() const override { return m_FilePath; }
 

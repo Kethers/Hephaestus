@@ -14,8 +14,6 @@
 
 namespace Hep
 {
-#define BIND_EVENT_FN(fn) std::bind(&Application::##fn, this, std::placeholders::_1)
-
 	Application* Application::s_Instance = nullptr;
 
 	Application::Application()
@@ -23,7 +21,8 @@ namespace Hep
 		s_Instance = this;
 
 		m_Window = std::unique_ptr<Window>(Window::Create());
-		m_Window->SetEventCallback(BIND_EVENT_FN(OnEvent));
+		m_Window->SetEventCallback(HEP_BIND_EVENT_FN(Application::OnEvent));
+		m_Window->SetVSync(false);
 
 		m_ImGuiLayer = new ImGuiLayer("ImGui");
 		PushOverlay(m_ImGuiLayer);
@@ -52,6 +51,7 @@ namespace Hep
 		ImGui::Text("Vendor: %s", caps.Vendor.c_str());
 		ImGui::Text("Renderer: %s", caps.Renderer.c_str());
 		ImGui::Text("Version: %s", caps.Version.c_str());
+		ImGui::Text("Frame Time: %.2fms\n", m_TimeStep.GetMilliseconds());
 		ImGui::End();
 
 		for (Layer* layer : m_LayerStack)
@@ -65,14 +65,10 @@ namespace Hep
 		OnInit();
 		while (m_Running)
 		{
-			auto time = static_cast<float>(glfwGetTime()); // Platform::GetTime
-			Timestep timestep = time - m_LastFrameTime;
-			m_LastFrameTime = time;
-
 			if (!m_Minimized)
 			{
 				for (Layer* layer : m_LayerStack)
-					layer->OnUpdate(timestep);
+					layer->OnUpdate(m_TimeStep);
 
 				// Render ImGui on render thread
 				Application* app = this;
@@ -81,6 +77,10 @@ namespace Hep
 				Renderer::Get().WaitAndRender();
 			}
 			m_Window->OnUpdate();
+
+			float time = GetTime();
+			m_TimeStep = time - m_LastFrameTime;
+			m_LastFrameTime = time;
 		}
 		OnShutdown();
 	}
@@ -88,8 +88,8 @@ namespace Hep
 	void Application::OnEvent(Event& event)
 	{
 		EventDispatcher dispatcher(event);
-		dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT_FN(OnWindowResize));
-		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
+		dispatcher.Dispatch<WindowResizeEvent>(HEP_BIND_EVENT_FN(Application::OnWindowResize));
+		dispatcher.Dispatch<WindowCloseEvent>(HEP_BIND_EVENT_FN(Application::OnWindowClose));
 
 		for (auto it = m_LayerStack.end(); it != m_LayerStack.begin();)
 		{
@@ -144,5 +144,10 @@ namespace Hep
 			return ofn.lpstrFile;
 		}
 		return {};
+	}
+
+	float Application::GetTime() const
+	{
+		return (float)glfwGetTime();
 	}
 }

@@ -70,8 +70,8 @@ namespace Hep
 	{
 		m_Size = size;
 		HEP_RENDER_S3(buffer, size, offset, {
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self->m_RendererID);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, buffer, GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, self->m_RendererID);
+			glBufferData(GL_ARRAY_BUFFER, size, buffer, GL_STATIC_DRAW);
 			});
 	}
 
