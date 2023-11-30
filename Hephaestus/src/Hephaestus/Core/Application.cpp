@@ -28,6 +28,7 @@ namespace Hep
 		PushOverlay(m_ImGuiLayer);
 
 		Renderer::Init();
+		Renderer::Get().WaitAndRender();
 	}
 
 	void Application::PushLayer(Layer* layer)

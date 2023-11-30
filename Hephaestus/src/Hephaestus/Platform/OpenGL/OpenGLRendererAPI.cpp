@@ -3,6 +3,8 @@
 
 #include <Glad/glad.h>
 
+#include "Hephaestus/Renderer/Shader.h"
+
 namespace Hep
 {
 	static void OpenGLLogMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
@@ -14,13 +16,14 @@ namespace Hep
 		}
 		else
 		{
-			HEP_CORE_ERROR("{0}", message);
+			// HEP_CORE_ERROR("{0}", message);
 		}
 	}
 
 	void RendererAPI::Init()
 	{
 		glDebugMessageCallback(OpenGLLogMessage, nullptr);
+		glEnable(GL_DEBUG_OUTPUT);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 		unsigned int vao;
@@ -50,9 +53,14 @@ namespace Hep
 			HEP_CORE_ERROR("OpenGL Error {0}", error);
 			error = glGetError();
 		}
+
+		LoadRequiredAssets();
 	}
 
 	void RendererAPI::Shutdown()
+	{ }
+
+	void RendererAPI::LoadRequiredAssets()
 	{ }
 
 	void RendererAPI::Clear(float r, float g, float b, float a)

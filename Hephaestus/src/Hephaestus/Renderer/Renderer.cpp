@@ -1,6 +1,8 @@
 ﻿#include "heppch.h"
 #include "Renderer.h"
 
+#include "Shader.h"
+
 namespace Hep
 {
 	Renderer* Renderer::s_Instance = new Renderer();
@@ -8,7 +10,11 @@ namespace Hep
 
 	void Renderer::Init()
 	{
+		s_Instance->m_ShaderLibrary = std::make_unique<ShaderLibrary>();
 		HEP_RENDER({ RendererAPI::Init(); });
+
+		Renderer::GetShaderLibrary()->Load("assets/shaders/HazelPBR_Static.glsl");
+		Renderer::GetShaderLibrary()->Load("assets/shaders/HazelPBR_Anim.glsl");
 	}
 
 	void Renderer::Clear()

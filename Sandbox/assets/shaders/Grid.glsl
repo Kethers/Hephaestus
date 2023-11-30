@@ -1,4 +1,4 @@
-// Simple Texture Shader
+// Grid Shader
 
 #type vertex
 #version 430
@@ -12,10 +12,10 @@ out vec2 v_TexCoord;
 
 void main()
 {
-	vec4 position = u_MVP * vec4(a_Position, 1.0);
-	gl_Position = position;
+    vec4 position = u_MVP * vec4(a_Position, 1.0);
+    gl_Position = position;
 
-	v_TexCoord = a_TexCoord;
+    v_TexCoord = a_TexCoord;
 }
 
 #type fragment
@@ -23,28 +23,22 @@ void main()
 
 layout(location = 0) out vec4 color;
 
-uniform sampler2D u_Texture;
 uniform float u_Scale;
 uniform float u_Res;
 
 in vec2 v_TexCoord;
 
-/*void main()
-{
-	color = texture(u_Texture, v_TexCoord * 8.0);
-}*/
-
 float grid(vec2 st, float res)
 {
-	vec2 grid = fract(st);
-	return step(res, grid.x) * step(res, grid.y);
+    vec2 grid = fract(st);
+    return step(res, grid.x) * step(res, grid.y);
 }
- 
+
 void main()
 {
-	float scale = u_Scale;
-	float resolution = u_Res;
+    float scale = u_Scale;
+    float resolution = u_Res;
 
-	float x = grid(v_TexCoord * scale, resolution);
-	color = vec4(vec3(0.2), 0.5) * (1.0 - x);
+    float x = grid(v_TexCoord * scale, resolution);
+    color = vec4(vec3(0.2), 0.5) * (1.0 - x);
 }
