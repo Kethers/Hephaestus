@@ -4,7 +4,7 @@
 
 namespace Hep
 {
-	class HEP_API RenderCommandQueue
+	class RenderCommandQueue
 	{
 	public:
 		using RenderCommandFn = void(*)(void*);

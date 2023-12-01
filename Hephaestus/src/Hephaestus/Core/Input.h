@@ -2,7 +2,7 @@
 
 namespace Hep
 {
-	class HEP_API Input
+	class Input
 	{
 	protected:
 		Input() = default;

@@ -7,7 +7,7 @@
 
 namespace Hep
 {
-	class HEP_API LayerStack
+	class LayerStack
 	{
 	public:
 		LayerStack() = default;

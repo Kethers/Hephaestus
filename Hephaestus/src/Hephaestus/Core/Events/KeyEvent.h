@@ -3,15 +3,15 @@
 #include "Event.h"
 
 
-
-namespace Hep {
-
-	class HEP_API KeyEvent : public Event
+namespace Hep
+{
+	class KeyEvent : public Event
 	{
 	public:
 		inline int GetKeyCode() const { return m_KeyCode; }
 
 		EVENT_CLASS_CATEGORY(EventCategoryKeyboard | EventCategoryInput)
+
 	protected:
 		KeyEvent(int keycode)
 			: m_KeyCode(keycode) {}
@@ -35,6 +35,7 @@ namespace Hep {
 		}
 
 		EVENT_CLASS_TYPE(KeyPressed)
+
 	private:
 		int m_RepeatCount;
 	};

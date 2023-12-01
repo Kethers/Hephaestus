@@ -7,7 +7,7 @@
 
 namespace Hep
 {
-	class HEP_API Log
+	class Log
 	{
 	public:
 		static void Init();

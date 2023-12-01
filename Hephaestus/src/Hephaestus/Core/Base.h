@@ -8,17 +8,7 @@ namespace Hep
 	void ShutdownCore();
 }
 
-#ifdef HEP_PLATFORM_WINDOWS
-	#if HEP_DYNAMIC_LINK
-		#ifdef HEP_BUILD_DLL
-			#define HEP_API __declspec(dllexport)
-		#else
-			#define HEP_API __declspec(dllimport)
-		#endif
-	#else
-		#define HEP_API
-	#endif
-#else
+#ifndef HEP_PLATFORM_WINDOWS
 	#error Hephaestus only supports Windows!
 #endif
 

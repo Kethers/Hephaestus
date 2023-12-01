@@ -3,10 +3,9 @@
 #include "Event.h"
 
 
-
-namespace Hep {
-
-	class HEP_API WindowResizeEvent : public Event
+namespace Hep
+{
+	class WindowResizeEvent : public Event
 	{
 	public:
 		WindowResizeEvent(uint32_t width, uint32_t height)
@@ -24,11 +23,12 @@ namespace Hep {
 
 		EVENT_CLASS_TYPE(WindowResize)
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
+
 	private:
 		uint32_t m_Width, m_Height;
 	};
 
-	class HEP_API WindowCloseEvent : public Event
+	class WindowCloseEvent : public Event
 	{
 	public:
 		WindowCloseEvent() = default;
@@ -37,7 +37,7 @@ namespace Hep {
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
 	};
 
-	class HEP_API AppTickEvent : public Event
+	class AppTickEvent : public Event
 	{
 	public:
 		AppTickEvent() = default;
@@ -46,7 +46,7 @@ namespace Hep {
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
 	};
 
-	class HEP_API AppUpdateEvent : public Event
+	class AppUpdateEvent : public Event
 	{
 	public:
 		AppUpdateEvent() = default;
@@ -55,7 +55,7 @@ namespace Hep {
 		EVENT_CLASS_CATEGORY(EventCategoryApplication)
 	};
 
-	class HEP_API AppRenderEvent : public Event
+	class AppRenderEvent : public Event
 	{
 	public:
 		AppRenderEvent() = default;
