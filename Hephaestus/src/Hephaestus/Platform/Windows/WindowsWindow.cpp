@@ -59,7 +59,7 @@ namespace Hep
 		// Set GLFW callbacks
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
 		{
-			WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 			data.Width = width;
 			data.Height = height;
 
@@ -69,14 +69,14 @@ namespace Hep
 
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
 		{
-			WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 			WindowCloseEvent event;
 			data.EventCallback(event);
 		});
 
 		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
-			WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			switch (action)
 			{
@@ -103,7 +103,7 @@ namespace Hep
 
 		glfwSetCharCallback(m_Window, [](GLFWwindow* window, unsigned int character)
 		{
-			WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			KeyTypedEvent event(character);
 			data.EventCallback(event);
@@ -111,7 +111,7 @@ namespace Hep
 
 		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods)
 		{
-			WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			switch (action)
 			{
@@ -133,7 +133,7 @@ namespace Hep
 
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset)
 		{
-			WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			MouseScrolledEvent event(static_cast<float>(xOffset), static_cast<float>(yOffset));
 			data.EventCallback(event);
@@ -141,7 +141,7 @@ namespace Hep
 
 		glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xPos, double yPos)
 		{
-			WindowData& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+			auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
 
 			MouseMovedEvent event(static_cast<float>(xPos), static_cast<float>(yPos));
 			data.EventCallback(event);

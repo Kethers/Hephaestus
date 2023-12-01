@@ -25,7 +25,7 @@ package("glfw")
 	if is_plat("macosx") then
 		add_frameworks("Cocoa", "IOKit")
 	elseif is_plat("windows") then
-		add_syslinks("user32", "shell32", "gdi32")
+		add_syslinks("user32", "shell32", "gdi32", "Dwmapi")
 	elseif is_plat("mingw") then
 		add_syslinks("gdi32")
 	elseif is_plat("linux") then

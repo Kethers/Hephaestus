@@ -116,11 +116,11 @@ public:
 		data[3].Position = glm::vec3(x, y + height, 0);
 		data[3].TexCoord = glm::vec2(0, 1);
 
-		m_VertexBuffer.reset(Hep::VertexBuffer::Create());
+		m_VertexBuffer.reset(Hep::VertexBuffer::Create(TODO));
 		m_VertexBuffer->SetData(data, 4 * sizeof(QuadVertex));
 
 		uint32_t* indices = new uint32_t[6]{ 0, 1, 2, 2, 3, 0, };
-		m_IndexBuffer.reset(Hep::IndexBuffer::Create());
+		m_IndexBuffer.reset(Hep::IndexBuffer::Create(TODO));
 		m_IndexBuffer->SetData(indices, 6 * sizeof(uint32_t));
 
 		m_Light.Direction = { -0.5f, -0.5f, 1.0f };

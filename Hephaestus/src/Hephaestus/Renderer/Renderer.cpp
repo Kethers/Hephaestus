@@ -39,7 +39,7 @@ namespace Hep
 	void Renderer::SetClearColor(float r, float g, float b, float a)
 	{ }
 
-	void Renderer::DrawIndexed(unsigned int count, bool depthTest)
+	void Renderer::DrawIndexed(uint32_t count, bool depthTest)
 	{
 		HEP_RENDER_2(count, depthTest, {
 			RendererAPI::DrawIndexed(count, depthTest);

@@ -1,6 +1,4 @@
 #pragma once
-#include "Core/Application.h"
-#include "Core/Log.h"
 
 #ifdef HEP_PLATFORM_WINDOWS
 

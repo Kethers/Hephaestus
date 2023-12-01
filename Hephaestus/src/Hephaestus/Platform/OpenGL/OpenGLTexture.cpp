@@ -9,7 +9,7 @@
 
 namespace Hep
 {
-	static GLenum HazelToOpenGLTextureFormat(TextureFormat format)
+	static GLenum ToOpenGLTextureFormat(TextureFormat format)
 	{
 		switch (format)
 		{
@@ -49,8 +49,8 @@ namespace Hep
 			glTextureParameterf(self->m_RendererID, GL_TEXTURE_MAX_ANISOTROPY,
 				RendererAPI::GetCapabilities().MaxAnisotropy);
 
-			glTexImage2D(GL_TEXTURE_2D, 0, HazelToOpenGLTextureFormat(self->m_Format), self->m_Width, self->m_Height, 0,
-				HazelToOpenGLTextureFormat(self->m_Format), GL_UNSIGNED_BYTE, nullptr);
+			glTexImage2D(GL_TEXTURE_2D, 0, ToOpenGLTextureFormat(self->m_Format), self->m_Width, self->m_Height, 0,
+				ToOpenGLTextureFormat(self->m_Format), GL_UNSIGNED_BYTE, nullptr);
 			glGenerateMipmap(GL_TEXTURE_2D);
 
 			glBindTexture(GL_TEXTURE_2D, 0);
@@ -96,8 +96,8 @@ namespace Hep
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-			glTexImage2D(GL_TEXTURE_2D, 0, HazelToOpenGLTextureFormat(self->m_Format), self->m_Width,
-				self->m_Height, 0, srgb ? GL_SRGB8 : HazelToOpenGLTextureFormat(self->m_Format), GL_UNSIGNED_BYTE,
+			glTexImage2D(GL_TEXTURE_2D, 0, ToOpenGLTextureFormat(self->m_Format), self->m_Width,
+				self->m_Height, 0, srgb ? GL_SRGB8 : ToOpenGLTextureFormat(self->m_Format), GL_UNSIGNED_BYTE,
 				self->m_ImageData.Data);
 			glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -134,7 +134,7 @@ namespace Hep
 	{
 		m_Locked = false;
 		HEP_RENDER_S({
-			glTextureSubImage2D(self->m_RendererID, 0, 0, 0, self->m_Width, self->m_Height, HazelToOpenGLTextureFormat(
+			glTextureSubImage2D(self->m_RendererID, 0, 0, 0, self->m_Width, self->m_Height, ToOpenGLTextureFormat(
 				self->m_Format), GL_UNSIGNED_BYTE, self->m_ImageData.Data);
 			});
 	}
@@ -227,7 +227,7 @@ namespace Hep
 			glTextureParameterf(self->m_RendererID, GL_TEXTURE_MAX_ANISOTROPY,
 				RendererAPI::GetCapabilities().MaxAnisotropy);
 
-			auto format = HazelToOpenGLTextureFormat(self->m_Format);
+			auto format = ToOpenGLTextureFormat(self->m_Format);
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, format, faceWidth, faceHeight, 0, format, GL_UNSIGNED_BYTE,
 				faces[2]);
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, format, faceWidth, faceHeight, 0, format, GL_UNSIGNED_BYTE,

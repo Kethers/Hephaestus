@@ -12,6 +12,7 @@ namespace Hep
 	{
 		if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
 		{
+			HEP_CORE_ERROR("{0}", message);
 			HEP_CORE_ASSERT(false, "");
 		}
 		else

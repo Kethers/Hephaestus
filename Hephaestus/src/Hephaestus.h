@@ -19,13 +19,10 @@
 #include "Hephaestus/Renderer/Renderer.h"
 #include "Hephaestus/Renderer/Framebuffer.h"
 #include "Hephaestus/Renderer/Buffer.h"
+#include "Hephaestus/Renderer/VertexArray.h"
 #include "Hephaestus/Renderer/Texture.h"
 #include "Hephaestus/Renderer/Shader.h"
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Renderer/Camera.h"
 #include "Hephaestus/Renderer/Material.h"
 // ---------------------------------------------------
-
-// --- Entry Point ------------
-#include "Hephaestus/EntryPoint.h"
-// ----------------------------

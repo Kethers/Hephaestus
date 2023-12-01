@@ -6,7 +6,7 @@
 
 namespace Hep
 {
-	VertexArray* VertexArray::Create()
+	Ref<VertexArray> VertexArray::Create()
 	{
 		switch (RendererAPI::Current())
 		{
@@ -15,7 +15,7 @@ namespace Hep
 				HEP_CORE_ASSERT(false, "RendererAPI::API::None is currently not supported!");
 				return nullptr;
 			}
-			case RendererAPIType::OpenGL: return new OpenGLVertexArray();
+			case RendererAPIType::OpenGL: return std::make_shared<OpenGLVertexArray>();
 		}
 
 		HEP_CORE_ASSERT(false, "Unknown Renderer API!");

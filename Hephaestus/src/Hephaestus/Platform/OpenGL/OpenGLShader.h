@@ -10,7 +10,9 @@ namespace Hep
 	class OpenGLShader : public Shader
 	{
 	public:
+		OpenGLShader() = default;
 		OpenGLShader(const std::string& filepath);
+		static Ref<OpenGLShader> CreateFromString(const std::string& source);
 
 		void Reload() override;
 		void AddShaderReloadedCallback(const ShaderReloadedCallback& callback) override;
@@ -29,6 +31,8 @@ namespace Hep
 		const std::string& GetName() const override { return m_Name; }
 
 	private:
+		void Load(const std::string& source);
+
 		std::string ReadShaderFromFile(const std::string& filepath) const;
 		std::unordered_map<GLenum, std::string> PreProcess(const std::string& source);
 		void Parse();

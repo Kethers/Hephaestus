@@ -52,6 +52,14 @@ function BuildProject(config)
 	projectType = config.projectType
 	if projectType ~= nil then
 		set_kind(projectType)
+		if projectType == "binary" then
+			startProj = config.startproject
+			if startProj ~= nil and startProj then
+				set_default(true)
+			else
+				set_default(false)
+			end
+		end
 	end
 
 	pchHeader = config.pchHeader
@@ -173,15 +181,39 @@ BuildProject({
 })
 
 BuildProject({
+	projectName = "Poseidon",
+	projectType = "binary",
+	macros = {},
+	languages = {"clatest", "cxx20"},
+	depends = {"Hephaestus"},
+	files = {"Poseidon/src/**.cpp"},
+	headerfiles = {"Poseidon/src/**.hpp", "Poseidon/src/**.h"},
+	pchHeader = nil,
+	includePaths = {"external", "Hephaestus/src", "Poseidon/src",
+		IncludeDir.glm,
+	},
+	rundir = "$(projectdir)/Poseidon",
+	packages = {"assimp"},
+	debugLink = {},
+	releaseLink = {},
+	link = {"kernel32", "User32", "Gdi32", "Shell32"},
+	afterBuildFunc = nil,
+	enableException = true,
+	staticruntime = true,
+	startproject = true,
+})
+
+
+BuildProject({
 	projectName = "Sandbox",
 	projectType = "binary",
 	macros = {},
 	languages = {"clatest", "cxx20"},
 	depends = {"Hephaestus"},
 	files = {"Sandbox/src/**.cpp"},
-	headerfiles = {"Sandbox/src/**.h"},
+	headerfiles = {"Sandbox/src/**.hpp", "Sandbox/src/**.h"},
 	pchHeader = nil,
-	includePaths = {"external", "Hephaestus/src",
+	includePaths = {"external", "Hephaestus/src", "Sandbox/src",
 		IncludeDir.glm,
 	},
 	rundir = "$(projectdir)/Sandbox",
@@ -192,4 +224,5 @@ BuildProject({
 	afterBuildFunc = nil,
 	enableException = true,
 	staticruntime = true,
+	startproject = false,
 })

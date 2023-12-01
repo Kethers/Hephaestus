@@ -20,6 +20,19 @@ namespace Hep
 		return result;
 	}
 
+	Ref<Shader> Shader::CreateFromString(const std::string& source)
+	{
+		Ref<Shader> result = nullptr;
+
+		switch (RendererAPI::Current())
+		{
+			case RendererAPIType::None: return nullptr;
+			case RendererAPIType::OpenGL: result = OpenGLShader::CreateFromString(source);
+		}
+		s_AllShaders.push_back(result);
+		return result;
+	}
+
 	void ShaderLibrary::Add(const Ref<Shader>& shader)
 	{
 		auto& name = shader->GetName();

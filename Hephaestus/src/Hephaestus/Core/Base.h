@@ -57,6 +57,9 @@ namespace Hep
 	#define HEP_CORE_ASSERT(...)
 #endif
 
+// FIXME: shader recompilation assertion failed
+// #define HEP_EXPAND_VARGS(x) x
+// #include "Assert.h"
 
 #define BIT(x) (1 << x)
 
