@@ -130,7 +130,7 @@ public:
 	void OnDetach() override
 	{ }
 
-	void OnUpdate(Hep::TimeStep ts) override
+	void OnUpdate(Hep::Timestep ts) override
 	{
 		// THINGS TO LOOK AT:
 		// - BRDF LUT

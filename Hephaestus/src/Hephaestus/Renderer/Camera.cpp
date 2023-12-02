@@ -56,7 +56,7 @@ namespace Hep
 		return speed;
 	}
 
-	void Camera::Update(TimeStep ts)
+	void Camera::Update(Timestep ts)
 	{
 		if (Input::IsKeyPressed(HEP_KEY_LEFT_ALT))
 		{

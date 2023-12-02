@@ -10,7 +10,7 @@ namespace Hep
 		Camera(const glm::mat4& projectionMatrix);
 
 		void Focus();
-		void Update(TimeStep ts);
+		void Update(Timestep ts);
 
 		float GetDistance() const { return m_Distance; }
 		void SetDistance(float distance) { m_Distance = distance; }

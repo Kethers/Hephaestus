@@ -29,7 +29,7 @@ namespace Hep
 
 		void OnAttach() override;
 		void OnDetach() override;
-		void OnUpdate(TimeStep ts) override;
+		void OnUpdate(Timestep ts) override;
 
 		void OnImGuiRender() override;
 		void OnEvent(Event& event) override;

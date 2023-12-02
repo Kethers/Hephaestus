@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Hephaestus/Core/Base.h"
-#include "Hephaestus/Core/TimeStep.h"
+#include "Hephaestus/Core/Timestep.h"
 #include "Hephaestus/Core/Window.h"
 #include "Hephaestus/Core/LayerStack.h"
 
@@ -27,7 +27,7 @@ namespace Hep
 
 		virtual void OnInit() {}
 		virtual void OnShutdown() {}
-		virtual void OnUpdate(TimeStep ts) {}
+		virtual void OnUpdate(Timestep ts) {}
 
 		virtual void OnEvent(Event& event);
 
@@ -51,7 +51,7 @@ namespace Hep
 		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running = true, m_Minimized = false;
 		LayerStack m_LayerStack;
-		TimeStep m_TimeStep;
+		Timestep m_TimeStep;
 		float m_LastFrameTime = 0.0f;
 
 		static Application* s_Instance;
