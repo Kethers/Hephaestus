@@ -47,24 +47,23 @@ namespace Hep
 		m_ShaderSource = PreProcess(source);
 		Parse();
 
-		HEP_RENDER_S({
-			if (self->m_RendererID)
-			glDeleteShader(self->m_RendererID);
+		Renderer::Submit([this]()
+		{
+			if (m_RendererID)
+				glDeleteShader(m_RendererID);
 
-			self->CompileAndUploadShader();
-			self->ResolveUniforms();
-			self->ValidateUniforms();
+			CompileAndUploadShader();
+			ResolveUniforms();
+			ValidateUniforms();
 
-			if (self->m_Loaded)
+			if (m_Loaded)
 			{
-			for (auto&callback: self->m_ShaderReloadedCallbacks)
-			callback();
-
+				for (auto& callback : m_ShaderReloadedCallbacks)
+					callback();
 			}
 
-			self->m_Loaded = true;
-
-			});
+			m_Loaded = true;
+		});
 	}
 
 	void OpenGLShader::AddShaderReloadedCallback(const ShaderReloadedCallback& callback)
@@ -74,10 +73,10 @@ namespace Hep
 
 	void OpenGLShader::Bind()
 	{
-		HEP_RENDER_S({
-			glUseProgram(self->m_RendererID);
-
-			});
+		Renderer::Submit([this]()
+		{
+			glUseProgram(m_RendererID);
+		});
 	}
 
 	std::string OpenGLShader::ReadShaderFromFile(const std::string& filepath) const
@@ -603,20 +602,20 @@ namespace Hep
 
 	void OpenGLShader::SetVSMaterialUniformBuffer(Buffer buffer)
 	{
-		HEP_RENDER_S1(buffer, {
-			glUseProgram(self->m_RendererID);
-			self->ResolveAndSetUniforms(self->m_VSMaterialUniformBuffer, buffer);
-
-			});
+		Renderer::Submit([this, buffer]()
+		{
+			glUseProgram(m_RendererID);
+			ResolveAndSetUniforms(m_VSMaterialUniformBuffer, buffer);
+		});
 	}
 
 	void OpenGLShader::SetPSMaterialUniformBuffer(Buffer buffer)
 	{
-		HEP_RENDER_S1(buffer, {
-			glUseProgram(self->m_RendererID);
-			self->ResolveAndSetUniforms(self->m_PSMaterialUniformBuffer, buffer);
-
-			});
+		Renderer::Submit([this, buffer]()
+		{
+			glUseProgram(m_RendererID);
+			ResolveAndSetUniforms(m_PSMaterialUniformBuffer, buffer);
+		});
 	}
 
 	void OpenGLShader::ResolveAndSetUniforms(const Scope<OpenGLShaderUniformBufferDeclaration>& decl, Buffer buffer)
@@ -749,37 +748,37 @@ namespace Hep
 				{
 					const std::string& name = decl.Name;
 					float value = *(float*)(uniformBuffer.GetBuffer() + decl.Offset);
-					HEP_RENDER_S2(name, value, {
-						self->UploadUniformFloat(name, value);
-
-						});
+					Renderer::Submit([=]()
+					{
+						UploadUniformFloat(name, value);
+					});
 				}
 				case UniformType::Float3:
 				{
 					const std::string& name = decl.Name;
 					glm::vec3& values = *(glm::vec3*)(uniformBuffer.GetBuffer() + decl.Offset);
-					HEP_RENDER_S2(name, values, {
-						self->UploadUniformFloat3(name, values);
-
-						});
+					Renderer::Submit([=]()
+					{
+						UploadUniformFloat3(name, values);
+					});
 				}
 				case UniformType::Float4:
 				{
 					const std::string& name = decl.Name;
 					glm::vec4& values = *(glm::vec4*)(uniformBuffer.GetBuffer() + decl.Offset);
-					HEP_RENDER_S2(name, values, {
-						self->UploadUniformFloat4(name, values);
-
-						});
+					Renderer::Submit([=]()
+					{
+						UploadUniformFloat4(name, values);
+					});
 				}
 				case UniformType::Matrix4x4:
 				{
 					const std::string& name = decl.Name;
 					glm::mat4& values = *(glm::mat4*)(uniformBuffer.GetBuffer() + decl.Offset);
-					HEP_RENDER_S2(name, values, {
-						self->UploadUniformMat4(name, values);
-
-						});
+					Renderer::Submit([=]()
+					{
+						UploadUniformMat4(name, values);
+					});
 				}
 			}
 		}
@@ -787,23 +786,32 @@ namespace Hep
 
 	void OpenGLShader::SetFloat(const std::string& name, float value)
 	{
-		HEP_RENDER_S2(name, value, {
-			self->UploadUniformFloat(name, value);
-
-			});
+		Renderer::Submit([=]()
+		{
+			UploadUniformFloat(name, value);
+		});
 	}
 
 	void OpenGLShader::SetMat4(const std::string& name, const glm::mat4& value)
 	{
-		HEP_RENDER_S2(name, value, {
-			self->UploadUniformMat4(name, value);
-
-			});
+		Renderer::Submit([=]()
+		{
+			UploadUniformMat4(name, value);
+		});
 	}
 
 	void OpenGLShader::SetMat4FromRenderThread(const std::string& name, const glm::mat4& value, bool bind)
 	{
-		UploadUniformMat4(name, value);
+		if (bind)
+		{
+			UploadUniformMat4(name, value);
+		}
+		else
+		{
+			int location = glGetUniformLocation(m_RendererID, name.c_str());
+			if (location != -1)
+				UploadUniformMat4(location, value);
+		}
 	}
 
 	void OpenGLShader::UploadUniformInt(uint32_t location, int32_t value)

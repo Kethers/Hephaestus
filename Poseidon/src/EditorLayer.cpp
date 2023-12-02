@@ -204,7 +204,6 @@ namespace Hep
 		auto viewProjection = m_Camera.GetProjectionMatrix() * m_Camera.GetViewMatrix();
 
 		Renderer::BeginRenderPass(m_GeoPass);
-		Renderer::Clear();
 		// TODO:
 		// Renderer::BeginScene(m_Camera);
 		// Renderer::EndScene();

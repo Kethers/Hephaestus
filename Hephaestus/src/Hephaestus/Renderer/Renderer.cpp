@@ -3,6 +3,8 @@
 
 #include "Shader.h"
 
+#include <glad/glad.h>
+
 namespace Hep
 {
 	Renderer* Renderer::s_Instance = new Renderer();
@@ -11,24 +13,26 @@ namespace Hep
 	void Renderer::Init()
 	{
 		s_Instance->m_ShaderLibrary = std::make_unique<ShaderLibrary>();
-		HEP_RENDER({ RendererAPI::Init(); });
+		Submit([]() { RendererAPI::Init(); });
 
-		Renderer::GetShaderLibrary()->Load("assets/shaders/HazelPBR_Static.glsl");
-		Renderer::GetShaderLibrary()->Load("assets/shaders/HazelPBR_Anim.glsl");
+		GetShaderLibrary()->Load("assets/shaders/HazelPBR_Static.glsl");
+		GetShaderLibrary()->Load("assets/shaders/HazelPBR_Anim.glsl");
 	}
 
 	void Renderer::Clear()
 	{
-		HEP_RENDER({
+		Submit([]()
+		{
 			RendererAPI::Clear(0.0f, 0.0f, 0.0f, 1.0f);
-			});
+		});
 	}
 
 	void Renderer::Clear(float r, float g, float b, float a)
 	{
-		HEP_RENDER_4(r, g, b, a, {
+		Submit([=]()
+		{
 			RendererAPI::Clear(r, g, b, a);
-			});
+		});
 	}
 
 	void Renderer::ClearMagenta()
@@ -41,9 +45,10 @@ namespace Hep
 
 	void Renderer::DrawIndexed(uint32_t count, bool depthTest)
 	{
-		HEP_RENDER_2(count, depthTest, {
+		Submit([=]()
+		{
 			RendererAPI::DrawIndexed(count, depthTest);
-			});
+		});
 	}
 
 	void Renderer::WaitAndRender()
@@ -57,6 +62,11 @@ namespace Hep
 		m_ActiveRenderPass = renderPass;
 
 		renderPass->GetSpecification().TargetFramebuffer->Bind();
+		const glm::vec4& clearColor = renderPass->GetSpecification().TargetFramebuffer->GetSpecification().ClearColor;
+		Submit([=]()
+		{
+			RendererAPI::Clear(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+		});
 	}
 
 	void Renderer::IEndRenderPass()
@@ -66,6 +76,39 @@ namespace Hep
 		m_ActiveRenderPass = nullptr;
 	}
 
-	void Renderer::SubmitMeshI(const Ref<Mesh>& mesh)
-	{ }
+	void Renderer::SubmitMeshI(const Ref<Mesh>& mesh, const glm::mat4& transform,
+		const Ref<MaterialInstance>& overrideMaterial)
+	{
+		if (overrideMaterial)
+		{
+			overrideMaterial->Bind();
+		}
+		else
+		{
+			// Bind mesh material here
+		}
+
+		// TODO: Sort this out
+		mesh->m_VertexArray->Bind();
+
+		// TODO: replace with render API calls
+		Submit([=]()
+		{
+			for (Submesh& submesh : mesh->m_Submeshes)
+			{
+				if (mesh->m_IsAnimated)
+				{
+					for (size_t i = 0; i < mesh->m_BoneTransforms.size(); i++)
+					{
+						std::string uniformName = std::string("u_BoneTransforms[") + std::to_string(i) + std::string(
+							"]");
+						mesh->m_MeshShader->SetMat4FromRenderThread(uniformName, mesh->m_BoneTransforms[i]);
+					}
+				}
+
+				glDrawElementsBaseVertex(GL_TRIANGLES, submesh.IndexCount, GL_UNSIGNED_INT,
+					(void*)(sizeof(uint32_t) * submesh.BaseIndex), submesh.BaseVertex);
+			}
+		});
+	}
 }
