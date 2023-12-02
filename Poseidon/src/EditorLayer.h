@@ -33,6 +33,7 @@ namespace Hep
 
 		void OnImGuiRender() override;
 		void OnEvent(Event& event) override;
+		bool OnKeyPressedEvent(KeyPressedEvent& e);
 
 		// ImGui UI helpers
 		void Property(const std::string& name, bool& value);
@@ -130,5 +131,8 @@ namespace Hep
 
 		// Editor resources
 		Ref<Texture2D> m_CheckerboardTex;
+
+		int m_GizmoType = -1; // -1 = no gizmo
+		glm::mat4 m_Transform;
 	};
 }

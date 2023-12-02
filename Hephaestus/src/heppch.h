@@ -1,7 +1,9 @@
 #pragma once
 
 #ifdef HEP_PLATFORM_WINDOWS
-#include <Windows.h>
+	#define NOMINMAX
+	#include <Windows.h>
+near
 #endif
 
 #include <algorithm>
