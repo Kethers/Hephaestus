@@ -7,6 +7,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Hephaestus/Renderer/Renderer.h"
+
 namespace Hep
 {
 #define UNIFORM_LOGGING 0
@@ -55,11 +57,13 @@ namespace Hep
 
 			if (self->m_Loaded)
 			{
-			for (auto& callback : self->m_ShaderReloadedCallbacks)
+			for (auto&callback: self->m_ShaderReloadedCallbacks)
 			callback();
+
 			}
 
 			self->m_Loaded = true;
+
 			});
 	}
 
@@ -72,6 +76,7 @@ namespace Hep
 	{
 		HEP_RENDER_S({
 			glUseProgram(self->m_RendererID);
+
 			});
 	}
 
@@ -601,6 +606,7 @@ namespace Hep
 		HEP_RENDER_S1(buffer, {
 			glUseProgram(self->m_RendererID);
 			self->ResolveAndSetUniforms(self->m_VSMaterialUniformBuffer, buffer);
+
 			});
 	}
 
@@ -609,6 +615,7 @@ namespace Hep
 		HEP_RENDER_S1(buffer, {
 			glUseProgram(self->m_RendererID);
 			self->ResolveAndSetUniforms(self->m_PSMaterialUniformBuffer, buffer);
+
 			});
 	}
 
@@ -744,6 +751,7 @@ namespace Hep
 					float value = *(float*)(uniformBuffer.GetBuffer() + decl.Offset);
 					HEP_RENDER_S2(name, value, {
 						self->UploadUniformFloat(name, value);
+
 						});
 				}
 				case UniformType::Float3:
@@ -752,6 +760,7 @@ namespace Hep
 					glm::vec3& values = *(glm::vec3*)(uniformBuffer.GetBuffer() + decl.Offset);
 					HEP_RENDER_S2(name, values, {
 						self->UploadUniformFloat3(name, values);
+
 						});
 				}
 				case UniformType::Float4:
@@ -760,6 +769,7 @@ namespace Hep
 					glm::vec4& values = *(glm::vec4*)(uniformBuffer.GetBuffer() + decl.Offset);
 					HEP_RENDER_S2(name, values, {
 						self->UploadUniformFloat4(name, values);
+
 						});
 				}
 				case UniformType::Matrix4x4:
@@ -768,6 +778,7 @@ namespace Hep
 					glm::mat4& values = *(glm::mat4*)(uniformBuffer.GetBuffer() + decl.Offset);
 					HEP_RENDER_S2(name, values, {
 						self->UploadUniformMat4(name, values);
+
 						});
 				}
 			}
@@ -778,6 +789,7 @@ namespace Hep
 	{
 		HEP_RENDER_S2(name, value, {
 			self->UploadUniformFloat(name, value);
+
 			});
 	}
 
@@ -785,10 +797,11 @@ namespace Hep
 	{
 		HEP_RENDER_S2(name, value, {
 			self->UploadUniformMat4(name, value);
+
 			});
 	}
 
-	void OpenGLShader::SetMat4FromRenderThread(const std::string& name, const glm::mat4& value)
+	void OpenGLShader::SetMat4FromRenderThread(const std::string& name, const glm::mat4& value, bool bind)
 	{
 		UploadUniformMat4(name, value);
 	}

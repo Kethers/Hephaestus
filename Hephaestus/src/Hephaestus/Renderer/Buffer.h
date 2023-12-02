@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Hephaestus/Renderer/Renderer.h"
+#include "RendererAPI.h"
 
 namespace Hep
 {

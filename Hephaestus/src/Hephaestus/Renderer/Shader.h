@@ -3,7 +3,7 @@
 #include "Hephaestus/Core/Base.h"
 #include "Hephaestus/Core/Buffer.h"
 
-#include "Hephaestus/Renderer/Renderer.h"
+#include "Hephaestus/Renderer/RendererAPI.h"
 #include "Hephaestus/Renderer/ShaderUniform.h"
 
 #include <string>
@@ -114,7 +114,7 @@ namespace Hep
 		// Temporary while we don't have materials
 		virtual void SetFloat(const std::string& name, float value) = 0;
 		virtual void SetMat4(const std::string& name, const glm::mat4& value) = 0;
-		virtual void SetMat4FromRenderThread(const std::string& name, const glm::mat4& value) = 0;
+		virtual void SetMat4FromRenderThread(const std::string& name, const glm::mat4& value, bool bind = true) = 0;
 
 		virtual const std::string& GetName() const = 0;
 

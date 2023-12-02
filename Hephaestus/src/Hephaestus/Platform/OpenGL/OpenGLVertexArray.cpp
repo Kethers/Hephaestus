@@ -3,6 +3,8 @@
 
 #include "glad/glad.h"
 
+#include "Hephaestus/Renderer/Renderer.h"
+
 namespace Hep
 {
 	static GLenum ShaderDataTypeToOpenGLBaseType(ShaderDataType type)

@@ -2,6 +2,9 @@
 
 #include "RenderCommandQueue.h"
 #include "RendererAPI.h"
+#include "RenderPass.h"
+
+#include "Mesh.h"
 
 namespace Hep
 {
@@ -35,9 +38,23 @@ namespace Hep
 
 		static Renderer& Get() { return *s_Instance; }
 
+		// ~Actual~ Renderer here... TODO: remove confusion later
+		static void BeginRenderPass(const Ref<RenderPass>& renderPass) { s_Instance->IBeginRenderPass(renderPass); }
+		static void EndRenderPass() { s_Instance->IEndRenderPass(); }
+
+		static void SubmitMesh(const Ref<Mesh>& mesh) { s_Instance->SubmitMeshI(mesh); }
+
+	private:
+		void IBeginRenderPass(const Ref<RenderPass>& renderPass);
+		void IEndRenderPass();
+
+		void SubmitMeshI(const Ref<Mesh>& mesh);
+
 	private:
 		static Renderer* s_Instance;
 
+	private:
+		Ref<RenderPass> m_ActiveRenderPass;
 		RenderCommandQueue m_CommandQueue;
 		Scope<ShaderLibrary> m_ShaderLibrary;
 	};

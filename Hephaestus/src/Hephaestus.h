@@ -17,6 +17,7 @@
 
 // --- Hephaestus Render API ------------------------------
 #include "Hephaestus/Renderer/Renderer.h"
+#include "Hephaestus/Renderer/RenderPass.h"
 #include "Hephaestus/Renderer/Framebuffer.h"
 #include "Hephaestus/Renderer/Buffer.h"
 #include "Hephaestus/Renderer/VertexArray.h"

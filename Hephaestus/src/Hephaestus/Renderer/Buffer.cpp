@@ -1,5 +1,7 @@
 ﻿#include "heppch.h"
 
+#include "Renderer.h"
+
 #include "Hephaestus/Platform/OpenGL/OpenGLBuffer.h"
 
 namespace Hep

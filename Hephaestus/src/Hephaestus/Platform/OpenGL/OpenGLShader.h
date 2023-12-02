@@ -26,7 +26,7 @@ namespace Hep
 
 		void SetFloat(const std::string& name, float value) override;
 		void SetMat4(const std::string& name, const glm::mat4& value) override;
-		void SetMat4FromRenderThread(const std::string& name, const glm::mat4& value) override;
+		void SetMat4FromRenderThread(const std::string& name, const glm::mat4& value, bool bind = true) override;
 
 		const std::string& GetName() const override { return m_Name; }
 
