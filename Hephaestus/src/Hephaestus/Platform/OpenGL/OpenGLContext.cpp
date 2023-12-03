@@ -16,6 +16,7 @@ namespace Hep
 	void OpenGLContext::Init()
 	{
 		glfwMakeContextCurrent(m_WindowHandle);
+		glfwMaximizeWindow(m_WindowHandle);
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		HEP_CORE_ASSERT(status, "Failed to initialized Glad!")
 

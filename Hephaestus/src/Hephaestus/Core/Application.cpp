@@ -29,7 +29,7 @@ namespace Hep
 		PushOverlay(m_ImGuiLayer);
 
 		Renderer::Init();
-		Renderer::Get().WaitAndRender();
+		Renderer::WaitAndRender();
 	}
 
 	void Application::PushLayer(Layer* layer)
@@ -76,7 +76,7 @@ namespace Hep
 				Application* app = this;
 				Renderer::Submit([app]() { app->RenderImGui(); });
 
-				Renderer::Get().WaitAndRender();
+				Renderer::WaitAndRender();
 			}
 			m_Window->OnUpdate();
 

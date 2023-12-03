@@ -33,23 +33,8 @@ namespace Hep
 #endif
 
 
-#ifdef HEP_ENABLE_ASSERTS
-
-	#define HEP_ASSERT_NO_MESSAGE(condition) { if(!(condition)) { HEP_ERROR("Assertion Failed!"); HEP_DEBUG_BREAK; } }
-	#define HEP_ASSERT_MESSAGE(condition, ...) { if(!(condition)) { HEP_ERROR("Assertion Failed: {0}", __VA_ARGS__); HEP_DEBUG_BREAK; } }
-
-	#define HEP_ASSERT_RESOLVE(arg1, arg2, macro, ...) macro
-
-	#define HEP_ASSERT(...) HEP_ASSERT_RESOLVE(__VA_ARGS__, HEP_ASSERT_MESSAGE, HEP_ASSERT_NO_MESSAGE)(__VA_ARGS__)
-	#define HEP_CORE_ASSERT(...) HEP_ASSERT_RESOLVE(__VA_ARGS__, HEP_ASSERT_MESSAGE, HEP_ASSERT_NO_MESSAGE)(__VA_ARGS__)
-#else
-	#define HEP_ASSERT(...)
-	#define HEP_CORE_ASSERT(...)
-#endif
-
-// FIXME: shader recompilation assertion failed
-// #define HEP_EXPAND_VARGS(x) x
-// #include "Assert.h"
+#define HEP_EXPAND_VARGS(x) x
+#include "Assert.h"
 
 #define BIT(x) (1 << x)
 
@@ -61,8 +46,20 @@ namespace Hep
 	template <typename T>
 	using Scope = std::unique_ptr<T>;
 
+	template <typename T, typename... Args>
+	constexpr Scope<T> CreateScope(Args&&... args)
+	{
+		return std::make_unique<T>(std::forward<Args>(args)...);
+	}
+
 	template <typename T>
 	using Ref = std::shared_ptr<T>;
+
+	template <typename T, typename... Args>
+	constexpr Ref<T> CreateRef(Args&&... args)
+	{
+		return std::make_shared<T>(std::forward<Args>(args)...);
+	}
 
 	using byte = unsigned char;
 }

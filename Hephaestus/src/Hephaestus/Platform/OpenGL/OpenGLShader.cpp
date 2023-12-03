@@ -45,7 +45,8 @@ namespace Hep
 	void OpenGLShader::Load(const std::string& source)
 	{
 		m_ShaderSource = PreProcess(source);
-		Parse();
+		if (!m_IsCompute)
+			Parse();
 
 		Renderer::Submit([this]()
 		{
@@ -53,8 +54,11 @@ namespace Hep
 				glDeleteShader(m_RendererID);
 
 			CompileAndUploadShader();
-			ResolveUniforms();
-			ValidateUniforms();
+			if (!m_IsCompute)
+			{
+				ResolveUniforms();
+				ValidateUniforms();
+			}
 
 			if (m_Loaded)
 			{
@@ -73,7 +77,7 @@ namespace Hep
 
 	void OpenGLShader::Bind()
 	{
-		Renderer::Submit([this]()
+		Renderer::Submit([=]()
 		{
 			glUseProgram(m_RendererID);
 		});
@@ -93,7 +97,7 @@ namespace Hep
 		}
 		else
 		{
-			HEP_CORE_WARN("Could not read shader file {0}", filepath);
+			HEP_CORE_ASSERT(false, "Could not load shader!");
 		}
 
 		return result;
@@ -112,13 +116,22 @@ namespace Hep
 			HEP_CORE_ASSERT(eol != std::string::npos, "Syntax error");
 			size_t begin = pos + typeTokenLength + 1;
 			std::string type = source.substr(begin, eol - begin);
-			HEP_CORE_ASSERT(type == "vertex" || type == "fragment" || type == "pixel", "Invalid shader type specified");
+			HEP_CORE_ASSERT(type == "vertex" || type == "fragment" || type == "pixel" || type == "compute",
+				"Invalid shader type specified");
 
 			size_t nextLinePos = source.find_first_not_of("\r\n", eol);
 			pos = source.find(typeToken, nextLinePos);
 			// strange, but it just works
-			shaderSources[ShaderTypeFromString(type)] = source.substr(nextLinePos,
+			auto shaderType = ShaderTypeFromString(type);
+			shaderSources[shaderType] = source.substr(nextLinePos,
 				pos - (nextLinePos == std::string::npos ? source.size() - 1 : nextLinePos));
+
+			// Compute shaders cannot contain other types
+			if (shaderType == GL_COMPUTE_SHADER)
+			{
+				m_IsCompute = true;
+				break;
+			}
 		}
 
 		return shaderSources;
@@ -527,6 +540,8 @@ namespace Hep
 			return GL_VERTEX_SHADER;
 		if (type == "fragment" || type == "pixel")
 			return GL_FRAGMENT_SHADER;
+		if (type == "compute")
+			return GL_COMPUTE_SHADER;
 
 		return GL_NONE;
 	}

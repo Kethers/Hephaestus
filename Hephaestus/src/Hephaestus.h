@@ -17,6 +17,7 @@
 
 // --- Hephaestus Render API ------------------------------
 #include "Hephaestus/Renderer/Renderer.h"
+#include "Hephaestus/Renderer/SceneRenderer.h"
 #include "Hephaestus/Renderer/RenderPass.h"
 #include "Hephaestus/Renderer/Framebuffer.h"
 #include "Hephaestus/Renderer/Buffer.h"
@@ -27,3 +28,7 @@
 #include "Hephaestus/Renderer/Camera.h"
 #include "Hephaestus/Renderer/Material.h"
 // ---------------------------------------------------
+
+// Scenes
+#include "Hephaestus/Scene/Entity.h"
+#include "Hephaestus/Scene/Scene.h"

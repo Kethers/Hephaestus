@@ -22,10 +22,10 @@ near
 
 
 #include <Hephaestus/Core/Application.h>
-// #include <Hephaestus/Core/Assert.h>
+#include <Hephaestus/Core/Assert.h>
 #include <Hephaestus/Core/Base.h>
 #include <Hephaestus/Core/Events/Event.h>
 #include <Hephaestus/Core/Log.h>
-// #include <Hephaestus/Core/Math/Mat4.h>
+#include <Hephaestus/Core/Math/Mat4.h>
 // #include <Hephaestus/Core/Memory.h>
 // #include <Hephaestus/Core/Delegate.h>

@@ -8,7 +8,7 @@ namespace Hep
 	class OpenGLTexture2D : public Texture2D
 	{
 	public:
-		OpenGLTexture2D(TextureFormat format, unsigned int width, unsigned int height, TextureWrap wrap);
+		OpenGLTexture2D(TextureFormat format, uint32_t width, uint32_t height, TextureWrap wrap);
 		OpenGLTexture2D(const std::string& path, bool srgb);
 		~OpenGLTexture2D() override;
 
@@ -17,6 +17,9 @@ namespace Hep
 		TextureFormat GetFormat() const override { return m_Format; }
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }
+		// This function currently returns the expected number of mips based on image size,
+		// not present mips in data
+		uint32_t GetMipLevelCount() const override;
 
 		void Lock() override;
 		void Unlock() override;
@@ -25,6 +28,8 @@ namespace Hep
 		Buffer GetWriteableBuffer() override;
 
 		const std::string& GetPath() const override { return m_FilePath; }
+
+		bool Loaded() const override { return m_Loaded; }
 
 		RendererID GetRendererID() const override { return m_RendererID; }
 
@@ -35,8 +40,10 @@ namespace Hep
 		uint32_t m_Width, m_Height;
 
 		Buffer m_ImageData;
+		bool m_IsHDR = false;
 
 		bool m_Locked = false;
+		bool m_Loaded = false;
 
 		std::string m_FilePath;
 	};
@@ -44,6 +51,7 @@ namespace Hep
 	class OpenGLTextureCube : public TextureCube
 	{
 	public:
+		OpenGLTextureCube(TextureFormat format, uint32_t width, uint32_t height);
 		OpenGLTextureCube(const std::string& path);
 		~OpenGLTextureCube() override;
 
@@ -52,6 +60,9 @@ namespace Hep
 		TextureFormat GetFormat() const override { return m_Format; }
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }
+		// This function currently returns the expected number of mips based on image size,
+		// not present mips in data
+		uint32_t GetMipLevelCount() const override;
 
 		const std::string& GetPath() const override { return m_FilePath; }
 
@@ -60,7 +71,7 @@ namespace Hep
 	private:
 		RendererID m_RendererID;
 		TextureFormat m_Format;
-		unsigned int m_Width, m_Height;
+		uint32_t m_Width, m_Height;
 
 		unsigned char* m_ImageData;
 

@@ -18,6 +18,7 @@ namespace Hep
 		void AddShaderReloadedCallback(const ShaderReloadedCallback& callback) override;
 
 		void Bind() override;
+		RendererID GetRendererID() const override { return m_RendererID; }
 
 		void UploadUniformBuffer(const UniformBufferBase& uniformBuffer) override;
 
@@ -84,6 +85,9 @@ namespace Hep
 			return m_PSRendererUniformBuffers;
 		}
 
+		bool HasVSMaterialUniformBuffer() const override { return (bool)m_VSMaterialUniformBuffer; }
+		bool HasPSMaterialUniformBuffer() const override { return (bool)m_PSMaterialUniformBuffer; }
+
 		const ShaderUniformBufferDeclaration& GetVSMaterialUniformBuffer() const override
 		{
 			return *m_VSMaterialUniformBuffer;
@@ -99,6 +103,7 @@ namespace Hep
 	private:
 		RendererID m_RendererID = 0;
 		bool m_Loaded = false;
+		bool m_IsCompute = false;
 
 		std::string m_Name, m_AssetPath;
 		std::unordered_map<GLenum, std::string> m_ShaderSource;
