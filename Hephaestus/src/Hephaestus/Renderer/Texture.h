@@ -38,6 +38,8 @@ namespace Hep
 
 		static uint32_t GetBPP(TextureFormat format);
 		static uint32_t CalculateMipMapCount(uint32_t width, uint32_t height);
+
+		virtual bool operator==(const Texture&) const = 0;
 	};
 
 	class Texture2D : public Texture

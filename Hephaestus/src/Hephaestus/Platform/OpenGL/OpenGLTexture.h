@@ -33,6 +33,11 @@ namespace Hep
 
 		RendererID GetRendererID() const override { return m_RendererID; }
 
+		bool operator==(const Texture& other) const override
+		{
+			return m_RendererID == ((OpenGLTexture2D&)other).m_RendererID;
+		}
+
 	private:
 		RendererID m_RendererID;
 		TextureFormat m_Format;
@@ -67,6 +72,11 @@ namespace Hep
 		const std::string& GetPath() const override { return m_FilePath; }
 
 		RendererID GetRendererID() const override { return m_RendererID; }
+
+		bool operator==(const Texture& other) const override
+		{
+			return m_RendererID == ((OpenGLTextureCube&)other).m_RendererID;
+		}
 
 	private:
 		RendererID m_RendererID;

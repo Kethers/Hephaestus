@@ -19,6 +19,8 @@ namespace Hep
 		const std::vector<Ref<VertexBuffer>>& GetVertexBuffer() const override { return m_VertexBuffers; }
 		const Ref<IndexBuffer>& GetIndexBuffer() const override { return m_IndexBuffer; }
 
+		RendererID GetRendererID() const override { return m_RendererID; }
+
 	private:
 		RendererID m_RendererID = 0;
 		uint32_t m_VertexBufferIndex = 0;

@@ -139,7 +139,7 @@ public:
 		using namespace Hep;
 		using namespace glm;
 
-		m_Camera.Update(ts);
+		m_Camera.OnUpdate(ts);
 		auto viewProjection = m_Camera.GetProjectionMatrix() * m_Camera.GetViewMatrix();
 
 		m_Framebuffer->Bind();

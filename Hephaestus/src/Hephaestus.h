@@ -6,6 +6,7 @@
 
 #include "Hephaestus/Core/Application.h"
 #include "Hephaestus/Core/Log.h"
+#include "Hephaestus/Core/Input.h"
 #include "Hephaestus/Core/Timestep.h"
 
 #include "Hephaestus/Core/Events/Event.h"
