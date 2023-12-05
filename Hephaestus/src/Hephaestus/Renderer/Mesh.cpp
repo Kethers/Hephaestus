@@ -24,6 +24,13 @@
 
 namespace Hep
 {
+#define MESH_DEBUG_LOG 1
+#if MESH_DEBUG_LOG
+	#define HEP_MESH_LOG(...) HEP_CORE_TRACE(__VA_ARGS__)
+#else
+	#define HEP_MESH_LOG(...)
+#endif
+
 	glm::mat4 Mat4FromAssimpMat4(const aiMatrix4x4& matrix)
 	{
 		glm::mat4 result;
@@ -78,13 +85,15 @@ namespace Hep
 	{
 		LogStream::Initialize();
 
-		HEP_CORE_INFO("Loading mesh: {0}", filename.c_str());
+		HEP_MESH_LOG("Loading mesh: {0}", filename.c_str());
 
 		m_Importer = std::make_unique<Assimp::Importer>();
 
 		const aiScene* scene = m_Importer->ReadFile(filename, s_MeshImportFlags);
 		if (!scene || !scene->HasMeshes())
 			HEP_CORE_ERROR("Failed to load mesh file: {0}", filename);
+
+		m_Scene = scene;
 
 		m_IsAnimated = scene->mAnimations != nullptr;
 		m_MeshShader = m_IsAnimated
@@ -107,6 +116,7 @@ namespace Hep
 			submesh.BaseIndex = indexCount;
 			submesh.MaterialIndex = mesh->mMaterialIndex;
 			submesh.IndexCount = mesh->mNumFaces * 3;
+			submesh.MeshName = mesh->mName.C_Str();
 
 			vertexCount += mesh->mNumVertices;
 			indexCount += submesh.IndexCount;
@@ -137,19 +147,20 @@ namespace Hep
 			}
 			else
 			{
-				submesh.Min = { FLT_MAX, FLT_MAX, FLT_MAX };
-				submesh.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+				auto& aabb = submesh.BoundingBox;
+				aabb.Min = { FLT_MAX, FLT_MAX, FLT_MAX };
+				aabb.Max = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
 				for (size_t i = 0; i < mesh->mNumVertices; i++)
 				{
 					Vertex vertex;
 					vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
 					vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
-					submesh.Min.x = glm::min(vertex.Position.x, submesh.Min.x);
-					submesh.Min.y = glm::min(vertex.Position.y, submesh.Min.y);
-					submesh.Min.z = glm::min(vertex.Position.z, submesh.Min.z);
-					submesh.Max.x = glm::max(vertex.Position.x, submesh.Max.x);
-					submesh.Max.y = glm::max(vertex.Position.y, submesh.Max.y);
-					submesh.Max.z = glm::max(vertex.Position.z, submesh.Max.z);
+					aabb.Min.x = glm::min(vertex.Position.x, aabb.Min.x);
+					aabb.Min.y = glm::min(vertex.Position.y, aabb.Min.y);
+					aabb.Min.z = glm::min(vertex.Position.z, aabb.Min.z);
+					aabb.Max.x = glm::max(vertex.Position.x, aabb.Max.x);
+					aabb.Max.y = glm::max(vertex.Position.y, aabb.Max.y);
+					aabb.Max.z = glm::max(vertex.Position.z, aabb.Max.z);
 
 					if (mesh->HasTangentsAndBitangents())
 					{
@@ -168,9 +179,12 @@ namespace Hep
 			for (size_t i = 0; i < mesh->mNumFaces; i++)
 			{
 				HEP_CORE_ASSERT(mesh->mFaces[i].mNumIndices == 3, "Must have 3 indices.");
-				m_Indices.push_back({
-					mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2]
-				});
+				Index index = { mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2] };
+				m_Indices.push_back(index);
+
+				if (!m_IsAnimated)
+					m_TriangleCache[m].emplace_back(m_StaticVertices[index.V1 + submesh.BaseVertex],
+						m_StaticVertices[index.V2 + submesh.BaseVertex], m_StaticVertices[index.V3 + submesh.BaseVertex]);
 			}
 		}
 
@@ -202,7 +216,7 @@ namespace Hep
 					}
 					else
 					{
-						HEP_CORE_TRACE("Found existing bone in map");
+						HEP_MESH_LOG("Found existing bone in map");
 						boneIndex = m_BoneMapping[boneName];
 					}
 
@@ -219,6 +233,8 @@ namespace Hep
 		// Materials
 		if (scene->HasMaterials())
 		{
+			HEP_MESH_LOG("---- Materials - {0} ----", filename);
+
 			m_Textures.resize(scene->mNumMaterials);
 			m_Materials.resize(scene->mNumMaterials);
 			for (uint32_t i = 0; i < scene->mNumMaterials; i++)
@@ -229,16 +245,25 @@ namespace Hep
 				auto mi = CreateRef<MaterialInstance>(m_BaseMaterial);
 				m_Materials[i] = mi;
 
-				HEP_CORE_INFO("Material Name = {0}; Index = {1}", aiMaterialName.data, i);
+				HEP_MESH_LOG("Material Name = {0}; Index = {1}", aiMaterialName.data, i);
 				aiString aiTexPath;
 				uint32_t textureCount = aiMaterial->GetTextureCount(aiTextureType_DIFFUSE);
-				HEP_CORE_TRACE("  TextureCount = {0}", textureCount);
+				HEP_MESH_LOG("  TextureCount = {0}", textureCount);
 
 				aiColor3D aiColor;
 				aiMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, aiColor);
-				HEP_CORE_TRACE("COLOR = {0}, {1}, {2}", aiColor.r, aiColor.g, aiColor.b);
 
-				if (aiMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &aiTexPath) == AI_SUCCESS)
+				float shininess, metalness;
+				aiMaterial->Get(AI_MATKEY_SHININESS, shininess);
+				aiMaterial->Get(AI_MATKEY_REFLECTIVITY, metalness);
+
+				// float roughness = 1.0f - shininess * 0.01f;
+				// roughness *= roughness;
+				float roughness = 1.0f - glm::sqrt(shininess / 100.0f);
+				HEP_MESH_LOG("    COLOR = {0}, {1}, {2}", aiColor.r, aiColor.g, aiColor.b);
+				HEP_MESH_LOG("    ROUGHNESS = {0}", roughness);
+				bool hasAlbedoMap = aiMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &aiTexPath) == AI_SUCCESS;
+				if (hasAlbedoMap)
 				{
 					// TODO: Temp - this should be handled by Hazel's filesystem
 					std::filesystem::path path = filename;
@@ -246,27 +271,26 @@ namespace Hep
 					parentPath /= std::string(aiTexPath.data);
 					std::string texturePath = parentPath.string();
 
+					HEP_MESH_LOG("    Albedo map path = {0}", texturePath);
 					auto texture = Texture2D::Create(texturePath, true);
 					if (texture->Loaded())
 					{
 						m_Textures[i] = texture;
-						HEP_CORE_TRACE("  Texture Path = {0}", texturePath);
 						mi->Set("u_AlbedoTexture", m_Textures[i]);
 						mi->Set("u_AlbedoTexToggle", 1.0f);
 					}
 					else
 					{
 						HEP_CORE_ERROR("Could not load texture: {0}", texturePath);
-						//mi->Set("u_AlbedoTexToggle", 0.0f);
+						// Fallback to albedo color
 						mi->Set("u_AlbedoColor", glm::vec3{ aiColor.r, aiColor.g, aiColor.b });
 					}
 				}
 				else
 				{
-					mi->Set("u_AlbedoTexToggle", 0.0f);
 					mi->Set("u_AlbedoColor", glm::vec3{ aiColor.r, aiColor.g, aiColor.b });
 
-					HEP_CORE_TRACE("Mesh has no albedo map");
+					HEP_MESH_LOG("    No albedo map");
 				}
 
 				// Normal maps
@@ -278,22 +302,21 @@ namespace Hep
 					auto parentPath = path.parent_path();
 					parentPath /= std::string(aiTexPath.data);
 					std::string texturePath = parentPath.string();
-
+					HEP_MESH_LOG("    Normal map path = {0}", texturePath);
 					auto texture = Texture2D::Create(texturePath);
 					if (texture->Loaded())
 					{
-						HEP_CORE_TRACE("  Normal map path = {0}", texturePath);
 						mi->Set("u_NormalTexture", texture);
 						mi->Set("u_NormalTexToggle", 1.0f);
 					}
 					else
 					{
-						HEP_CORE_ERROR("Could not load texture: {0}", texturePath);
+						HEP_CORE_ERROR("    Could not load texture: {0}", texturePath);
 					}
 				}
 				else
 				{
-					HEP_CORE_TRACE("Mesh has no normal map");
+					HEP_MESH_LOG("    No normal map");
 				}
 
 				// Roughness map
@@ -306,22 +329,22 @@ namespace Hep
 					auto parentPath = path.parent_path();
 					parentPath /= std::string(aiTexPath.data);
 					std::string texturePath = parentPath.string();
-
+					HEP_MESH_LOG("    Roughness map path = {0}", texturePath);
 					auto texture = Texture2D::Create(texturePath);
 					if (texture->Loaded())
 					{
-						HEP_CORE_TRACE("  Roughness map path = {0}", texturePath);
 						mi->Set("u_RoughnessTexture", texture);
 						mi->Set("u_RoughnessTexToggle", 1.0f);
 					}
 					else
 					{
-						HEP_CORE_ERROR("Could not load texture: {0}", texturePath);
+						HEP_CORE_ERROR("    Could not load texture: {0}", texturePath);
 					}
 				}
 				else
 				{
-					HEP_CORE_TRACE("Mesh has no roughness texture");
+					HEP_MESH_LOG("    No roughness map");
+					mi->Set("u_Roughness", roughness);
 				}
 
 				// Metalness map
@@ -338,7 +361,7 @@ namespace Hep
 					auto texture = Texture2D::Create(texturePath);
 					if (texture->Loaded())
 					{
-						HEP_CORE_TRACE("  Metalness map path = {0}", texturePath);
+						HEP_MESH_LOG("    Metalness map path = {0}", texturePath);
 						mi->Set("u_MetalnessTexture", texture);
 						mi->Set("u_MetalnessTexToggle", 1.0f);
 					}
@@ -349,92 +372,107 @@ namespace Hep
 				}
 				else
 				{
-					HEP_CORE_TRACE("Mesh has no metalness texture");
+					HEP_MESH_LOG("    No metalness texture");
+					mi->Set("u_Metalness", metalness);
 				}
 
-				continue;
-
+				bool metalnessTextureFound = false;
 				for (uint32_t i = 0; i < aiMaterial->mNumProperties; i++)
 				{
 					auto prop = aiMaterial->mProperties[i];
-					HEP_CORE_TRACE("Material Property:");
-					HEP_CORE_TRACE("  Name = {0}", prop->mKey.data);
 
+#if DEBUG_PRINT_ALL_PROPS
+					HEP_MESH_LOG("Material Property:");
+					HEP_MESH_LOG("  Name = {0}", prop->mKey.data);
+					// HEP_MESH_LOG("  Type = {0}", prop->mType);
+					// HEP_MESH_LOG("  Size = {0}", prop->mDataLength);
+					float data = *(float*)prop->mData;
+					HEP_MESH_LOG("  Value = {0}", data);
 					switch (prop->mSemantic)
 					{
 						case aiTextureType_NONE:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_NONE");
+							HEP_MESH_LOG("  Semantic = aiTextureType_NONE");
 							break;
 						case aiTextureType_DIFFUSE:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_DIFFUSE");
+							HEP_MESH_LOG("  Semantic = aiTextureType_DIFFUSE");
 							break;
 						case aiTextureType_SPECULAR:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_SPECULAR");
+							HEP_MESH_LOG("  Semantic = aiTextureType_SPECULAR");
 							break;
 						case aiTextureType_AMBIENT:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_AMBIENT");
+							HEP_MESH_LOG("  Semantic = aiTextureType_AMBIENT");
 							break;
 						case aiTextureType_EMISSIVE:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_EMISSIVE");
+							HEP_MESH_LOG("  Semantic = aiTextureType_EMISSIVE");
 							break;
 						case aiTextureType_HEIGHT:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_HEIGHT");
+							HEP_MESH_LOG("  Semantic = aiTextureType_HEIGHT");
 							break;
 						case aiTextureType_NORMALS:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_NORMALS");
+							HEP_MESH_LOG("  Semantic = aiTextureType_NORMALS");
 							break;
 						case aiTextureType_SHININESS:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_SHININESS");
+							HEP_MESH_LOG("  Semantic = aiTextureType_SHININESS");
 							break;
 						case aiTextureType_OPACITY:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_OPACITY");
+							HEP_MESH_LOG("  Semantic = aiTextureType_OPACITY");
 							break;
 						case aiTextureType_DISPLACEMENT:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_DISPLACEMENT");
+							HEP_MESH_LOG("  Semantic = aiTextureType_DISPLACEMENT");
 							break;
 						case aiTextureType_LIGHTMAP:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_LIGHTMAP");
+							HEP_MESH_LOG("  Semantic = aiTextureType_LIGHTMAP");
 							break;
 						case aiTextureType_REFLECTION:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_REFLECTION");
+							HEP_MESH_LOG("  Semantic = aiTextureType_REFLECTION");
 							break;
 						case aiTextureType_UNKNOWN:
-							HEP_CORE_TRACE("  Semantic = aiTextureType_UNKNOWN");
+							HEP_MESH_LOG("  Semantic = aiTextureType_UNKNOWN");
 							break;
 					}
+#endif
 
 					if (prop->mType == aiPTI_String)
 					{
 						uint32_t strLength = *(uint32_t*)prop->mData;
 						std::string str(prop->mData + 4, strLength);
-						HEP_CORE_TRACE("  Value = {0}", str);
 
 						std::string key = prop->mKey.data;
 						if (key == "$raw.ReflectionFactor|file")
 						{
+							metalnessTextureFound = true;
+
 							// TODO: Temp - this should be handled by Hazel's filesystem
 							std::filesystem::path path = filename;
 							auto parentPath = path.parent_path();
 							parentPath /= str;
 							std::string texturePath = parentPath.string();
-
+							HEP_MESH_LOG("    Metalness map path = {0}", texturePath);
 							auto texture = Texture2D::Create(texturePath);
 							if (texture->Loaded())
 							{
-								HEP_CORE_TRACE("  Metalness map path = {0}", texturePath);
 								mi->Set("u_MetalnessTexture", texture);
 								mi->Set("u_MetalnessTexToggle", 1.0f);
 							}
 							else
 							{
-								HEP_CORE_ERROR("Could not load texture: {0}", texturePath);
-								mi->Set("u_Metalness", 0.5f);
-								mi->Set("u_MetalnessTexToggle", 1.0f);
+								HEP_CORE_ERROR("    Could not load texture: {0}", texturePath);
+								mi->Set("u_Metalness", metalness);
+								mi->Set("u_MetalnessTexToggle", 0.0f);
 							}
+							break;
 						}
 					}
 				}
+				if (!metalnessTextureFound)
+				{
+					HEP_MESH_LOG("    No metalness map");
+
+					mi->Set("u_Metalness", metalness);
+					mi->Set("u_MetalnessTexToggle", 0.0f);
+				}
 			}
+			HEP_MESH_LOG("------------------------");
 		}
 
 		m_VertexArray = VertexArray::Create();
@@ -468,7 +506,6 @@ namespace Hep
 
 		auto ib = IndexBuffer::Create(m_Indices.data(), m_Indices.size() * sizeof(Index));
 		m_VertexArray->SetIndexBuffer(ib);
-		m_Scene = scene;
 	}
 
 	Mesh::~Mesh()
@@ -508,10 +545,12 @@ namespace Hep
 		for (uint32_t i = 0; i < node->mNumMeshes; i++)
 		{
 			uint32_t mesh = node->mMeshes[i];
-			m_Submeshes[mesh].Transform = transform;
+			auto& submesh = m_Submeshes[mesh];
+			submesh.NodeName = node->mName.C_Str();
+			submesh.Transform = transform;
 		}
 
-		// HEP_CORE_TRACE("{0} {1}", LevelToSpaces(level), node->mName.C_Str());
+		// HEP_MESH_LOG("{0} {1}", LevelToSpaces(level), node->mName.C_Str());
 
 		for (uint32_t i = 0; i < node->mNumChildren; i++)
 			TraverseNodes(node->mChildren[i], transform, level + 1);
@@ -686,21 +725,21 @@ namespace Hep
 	void Mesh::DumpVertexBuffer()
 	{
 		// TODO: Convert to ImGui
-		HEP_CORE_TRACE("------------------------------------------------------");
-		HEP_CORE_TRACE("Vertex Buffer Dump");
-		HEP_CORE_TRACE("Mesh: {0}", m_FilePath);
+		HEP_MESH_LOG("------------------------------------------------------");
+		HEP_MESH_LOG("Vertex Buffer Dump");
+		HEP_MESH_LOG("Mesh: {0}", m_FilePath);
 		if (m_IsAnimated)
 		{
 			for (size_t i = 0; i < m_AnimatedVertices.size(); i++)
 			{
 				auto& vertex = m_AnimatedVertices[i];
-				HEP_CORE_TRACE("Vertex: {0}", i);
-				HEP_CORE_TRACE("Position: {0}, {1}, {2}", vertex.Position.x, vertex.Position.y, vertex.Position.z);
-				HEP_CORE_TRACE("Normal: {0}, {1}, {2}", vertex.Normal.x, vertex.Normal.y, vertex.Normal.z);
-				HEP_CORE_TRACE("Binormal: {0}, {1}, {2}", vertex.Binormal.x, vertex.Binormal.y, vertex.Binormal.z);
-				HEP_CORE_TRACE("Tangent: {0}, {1}, {2}", vertex.Tangent.x, vertex.Tangent.y, vertex.Tangent.z);
-				HEP_CORE_TRACE("TexCoord: {0}, {1}", vertex.Texcoord.x, vertex.Texcoord.y);
-				HEP_CORE_TRACE("--");
+				HEP_MESH_LOG("Vertex: {0}", i);
+				HEP_MESH_LOG("Position: {0}, {1}, {2}", vertex.Position.x, vertex.Position.y, vertex.Position.z);
+				HEP_MESH_LOG("Normal: {0}, {1}, {2}", vertex.Normal.x, vertex.Normal.y, vertex.Normal.z);
+				HEP_MESH_LOG("Binormal: {0}, {1}, {2}", vertex.Binormal.x, vertex.Binormal.y, vertex.Binormal.z);
+				HEP_MESH_LOG("Tangent: {0}, {1}, {2}", vertex.Tangent.x, vertex.Tangent.y, vertex.Tangent.z);
+				HEP_MESH_LOG("TexCoord: {0}, {1}", vertex.Texcoord.x, vertex.Texcoord.y);
+				HEP_MESH_LOG("--");
 			}
 		}
 		else
@@ -708,15 +747,15 @@ namespace Hep
 			for (size_t i = 0; i < m_StaticVertices.size(); i++)
 			{
 				auto& vertex = m_StaticVertices[i];
-				HEP_CORE_TRACE("Vertex: {0}", i);
-				HEP_CORE_TRACE("Position: {0}, {1}, {2}", vertex.Position.x, vertex.Position.y, vertex.Position.z);
-				HEP_CORE_TRACE("Normal: {0}, {1}, {2}", vertex.Normal.x, vertex.Normal.y, vertex.Normal.z);
-				HEP_CORE_TRACE("Binormal: {0}, {1}, {2}", vertex.Binormal.x, vertex.Binormal.y, vertex.Binormal.z);
-				HEP_CORE_TRACE("Tangent: {0}, {1}, {2}", vertex.Tangent.x, vertex.Tangent.y, vertex.Tangent.z);
-				HEP_CORE_TRACE("TexCoord: {0}, {1}", vertex.Texcoord.x, vertex.Texcoord.y);
-				HEP_CORE_TRACE("--");
+				HEP_MESH_LOG("Vertex: {0}", i);
+				HEP_MESH_LOG("Position: {0}, {1}, {2}", vertex.Position.x, vertex.Position.y, vertex.Position.z);
+				HEP_MESH_LOG("Normal: {0}, {1}, {2}", vertex.Normal.x, vertex.Normal.y, vertex.Normal.z);
+				HEP_MESH_LOG("Binormal: {0}, {1}, {2}", vertex.Binormal.x, vertex.Binormal.y, vertex.Binormal.z);
+				HEP_MESH_LOG("Tangent: {0}, {1}, {2}", vertex.Tangent.x, vertex.Tangent.y, vertex.Tangent.z);
+				HEP_MESH_LOG("TexCoord: {0}, {1}", vertex.Texcoord.x, vertex.Texcoord.y);
+				HEP_MESH_LOG("--");
 			}
 		}
-		HEP_CORE_TRACE("------------------------------------------------------");
+		HEP_MESH_LOG("------------------------------------------------------");
 	}
 }

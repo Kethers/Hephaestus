@@ -17,6 +17,7 @@ namespace Hep
 
 		unsigned int GetWidth() const override { return m_Data.Width; }
 		unsigned int GetHeight() const override { return m_Data.Height; }
+		std::pair<uint32_t, uint32_t> GetSize() const override { return { m_Data.Width, m_Data.Height }; }
 
 		std::pair<float, float> GetWindowPos() const override;
 
@@ -33,12 +34,13 @@ namespace Hep
 
 	private:
 		GLFWwindow* m_Window;
+		GLFWcursor* m_ImGuiMouseCursors[9] = { 0 };
 		GraphicsContext* m_Context;
 
 		struct WindowData
 		{
 			std::string Title;
-			unsigned int Width, Height;
+			uint32_t Width, Height;
 			bool VSync;
 
 			EventCallbackFn EventCallback;

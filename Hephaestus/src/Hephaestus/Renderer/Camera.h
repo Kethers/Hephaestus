@@ -40,6 +40,8 @@ namespace Hep
 		float& GetExposure() { return m_Exposure; }
 
 	private:
+		void UpdateCameraView();
+
 		bool OnMouseScroll(MouseScrolledEvent& e);
 
 		void MousePan(const glm::vec2& delta);

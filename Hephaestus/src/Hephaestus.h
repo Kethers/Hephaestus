@@ -14,6 +14,9 @@
 #include "Hephaestus/Core/Events/KeyEvent.h"
 #include "Hephaestus/Core/Events/MouseEvent.h"
 
+#include "Hephaestus/Core/Math/AABB.h"
+#include "Hephaestus/Core/Math/Ray.h"
+
 #include "imgui/imgui.h"
 
 // --- Hephaestus Render API ------------------------------

@@ -9,7 +9,7 @@ namespace Hep
 		OpenGLFramebuffer(const FramebufferSpecification& spec);
 		~OpenGLFramebuffer() override;
 
-		void Resize(uint32_t width, uint32_t height) override;
+		void Resize(uint32_t width, uint32_t height, bool forceRecreate = false) override;
 
 		void Bind() const override;
 		void Unbind() const override;

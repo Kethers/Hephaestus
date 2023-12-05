@@ -36,6 +36,7 @@ namespace Hep
 		void OnImGuiRender() override;
 		void OnEvent(Event& e) override;
 		bool OnKeyPressedEvent(KeyPressedEvent& e);
+		bool OnMouseButtonPressed(MouseButtonPressedEvent& e);
 
 		// ImGui UI helpers
 		bool Property(const std::string& name, bool& value);
@@ -52,6 +53,10 @@ namespace Hep
 			PropertyFlag flags = PropertyFlag::None);
 
 		void ShowBoundingBoxes(bool show, bool onTop = false);
+
+	private:
+		std::pair<float, float> GetMouseViewportSpace();
+		std::pair<glm::vec3, glm::vec3> CastRay(float mx, float my);
 
 	private:
 		Scope<SceneHierarchyPanel> m_SceneHierarchyPanel;
@@ -109,16 +114,6 @@ namespace Hep
 
 		RoughnessInput m_RoughnessInput;
 
-
-		struct Light
-		{
-			glm::vec3 Direction;
-			glm::vec3 Radiance;
-		};
-
-		Light m_Light;
-		float m_LightMultiplier = 0.3f;
-
 		// PBR params
 		bool m_RadiancePrefilter = false;
 
@@ -134,11 +129,22 @@ namespace Hep
 		// Editor resources
 		Ref<Texture2D> m_CheckerboardTex;
 
+		glm::vec2 m_ViewportBounds[2];
 		int m_GizmoType = -1; // -1 = no gizmo
+		float m_SnapValue = 0.5f;
 		bool m_AllowViewportCameraEvents = false;
 		bool m_DrawOnTopBoundingBoxes = false;
 
 		bool m_UIShowBoundingBoxes = false;
 		bool m_UIShowBoundingBoxesOnTop = false;
+
+		struct SelectedSubmesh
+		{
+			Submesh* Mesh;
+			float Distance;
+		};
+
+		std::vector<SelectedSubmesh> m_SelectedSubmeshes;
+		glm::mat4* m_CurrentlySelectedTransform = nullptr;
 	};
 }

@@ -204,7 +204,7 @@ BuildProject({
 })
 
 
-BuildProject({
+--[[BuildProject({
 	projectName = "Sandbox",
 	projectType = "binary",
 	macros = {},
@@ -225,4 +225,4 @@ BuildProject({
 	enableException = true,
 	staticruntime = true,
 	startproject = false,
-})
+})--]]

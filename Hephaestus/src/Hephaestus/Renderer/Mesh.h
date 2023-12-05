@@ -10,6 +10,8 @@
 #include "Hephaestus/Renderer/Shader.h"
 #include "Hephaestus/Renderer/Material.h"
 
+#include "Hephaestus/Core/Math/AABB.h"
+
 struct aiNode;
 struct aiAnimation;
 struct aiNodeAnim;
@@ -104,6 +106,14 @@ namespace Hep
 		}
 	};
 
+	struct Triangle
+	{
+		Vertex V0, V1, V2;
+
+		Triangle(const Vertex& v0, const Vertex& v1, const Vertex& v2)
+			: V0(v0), V1(v1), V2(v2) {}
+	};
+
 	class Submesh
 	{
 	public:
@@ -113,7 +123,9 @@ namespace Hep
 		uint32_t IndexCount;
 
 		glm::mat4 Transform;
-		glm::vec3 Min, Max;
+		AABB BoundingBox;
+
+		std::string NodeName, MeshName;
 	};
 
 	class Mesh
@@ -125,11 +137,16 @@ namespace Hep
 		void OnUpdate(Timestep ts);
 		void DumpVertexBuffer();
 
+		std::vector<Submesh>& GetSubmeshes() { return m_Submeshes; }
+		const std::vector<Submesh>& GetSubmeshes() const { return m_Submeshes; }
+
 		Ref<Shader> GetMeshShader() { return m_MeshShader; }
 		Ref<Material> GetMaterial() { return m_BaseMaterial; }
 		std::vector<Ref<MaterialInstance>>& GetMaterials() { return m_Materials; }
 		const std::vector<Ref<Texture2D>>& GetTextures() const { return m_Textures; }
 		const std::string& GetFilePath() const { return m_FilePath; }
+
+		const std::vector<Triangle>& GetTriangleCache(uint32_t index) const { return m_TriangleCache.at(index); }
 
 	private:
 		void BoneTransform(float time);
@@ -162,6 +179,8 @@ namespace Hep
 		std::unordered_map<std::string, uint32_t> m_BoneMapping;
 		std::vector<glm::mat4> m_BoneTransforms;
 		const aiScene* m_Scene;
+
+		std::unordered_map<uint32_t, std::vector<Triangle>> m_TriangleCache;
 
 		// Materials
 		Ref<Shader> m_MeshShader;

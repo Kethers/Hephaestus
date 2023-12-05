@@ -22,6 +22,7 @@ namespace Hep
 			// Resources
 			Ref<MaterialInstance> SkyboxMaterial;
 			Environment SceneEnvironment;
+			Light ActiveLight;
 		} SceneData;
 
 		Ref<Texture2D> BRDFLUT;
@@ -96,6 +97,7 @@ namespace Hep
 		s_Data.SceneData.SceneCamera = scene->m_Camera;
 		s_Data.SceneData.SkyboxMaterial = scene->m_SkyboxMaterial;
 		s_Data.SceneData.SceneEnvironment = scene->m_Environment;
+		s_Data.SceneData.ActiveLight = scene->m_Light;
 	}
 
 	void SceneRenderer::EndScene()
@@ -195,7 +197,6 @@ namespace Hep
 		// Skybox
 		auto skyboxShader = s_Data.SceneData.SkyboxMaterial->GetShader();
 		s_Data.SceneData.SkyboxMaterial->Set("u_InverseVP", glm::inverse(viewProjection));
-		// s_Data.SceneInfo.EnvironmentIrradianceMap->Bind(0);
 		Renderer::SubmitFullscreenQuad(s_Data.SceneData.SkyboxMaterial);
 
 		// Render entities
@@ -210,6 +211,8 @@ namespace Hep
 			baseMaterial->Set("u_EnvIrradianceTex", s_Data.SceneData.SceneEnvironment.IrradianceMap);
 			baseMaterial->Set("u_BRDFLUTTexture", s_Data.BRDFLUT);
 
+			// Set lights (TODO: move to light environment and don't do per mesh)
+			baseMaterial->Set("lights", s_Data.SceneData.ActiveLight);
 			auto overrideMaterial = nullptr; // dc.Material;
 			Renderer::SubmitMesh(dc.Mesh, dc.Transform, overrideMaterial);
 		}
@@ -228,7 +231,7 @@ namespace Hep
 		{
 			Renderer2D::BeginScene(viewProjection);
 			for (auto& dc : s_Data.DrawList)
-				Renderer::DrawAABB(dc.Mesh);
+				Renderer::DrawAABB(dc.Mesh, dc.Transform);
 			Renderer2D::EndScene();
 		}
 
