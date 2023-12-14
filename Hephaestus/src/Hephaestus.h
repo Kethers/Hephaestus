@@ -8,6 +8,7 @@
 #include "Hephaestus/Core/Log.h"
 #include "Hephaestus/Core/Input.h"
 #include "Hephaestus/Core/Timestep.h"
+#include "Hephaestus/Core/Timer.h"
 
 #include "Hephaestus/Core/Events/Event.h"
 #include "Hephaestus/Core/Events/ApplicationEvent.h"
@@ -36,3 +37,4 @@
 // Scenes
 #include "Hephaestus/Scene/Entity.h"
 #include "Hephaestus/Scene/Scene.h"
+#include "Hephaestus/Scene/Components.h"

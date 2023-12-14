@@ -42,7 +42,7 @@ namespace Hep
 
 		BufferElement(ShaderDataType type, const std::string& name, bool normalized = false)
 			: Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized)
-		{ }
+		{}
 
 		uint32_t GetComponentCount() const
 		{
@@ -108,7 +108,7 @@ namespace Hep
 		None = 0, Static = 1, Dynamic = 2
 	};
 
-	class VertexBuffer
+	class VertexBuffer : public RefCounted
 	{
 	public:
 		virtual ~VertexBuffer() = default;
@@ -126,7 +126,7 @@ namespace Hep
 		static Ref<VertexBuffer> Create(uint32_t size, VertexBufferUsage usage = VertexBufferUsage::Dynamic);
 	};
 
-	class IndexBuffer
+	class IndexBuffer : public RefCounted
 	{
 	public:
 		virtual ~IndexBuffer() = default;
@@ -139,6 +139,7 @@ namespace Hep
 		virtual uint32_t GetSize() const = 0;
 		virtual RendererID GetRendererID() const = 0;
 
+		static Ref<IndexBuffer> Create(uint32_t size);
 		static Ref<IndexBuffer> Create(void* data, uint32_t size = 0);
 	};
 }

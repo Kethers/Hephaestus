@@ -15,7 +15,7 @@ namespace Hep
 				HEP_CORE_ASSERT(false, "RendererAPI::API::None is currently not supported!");
 				return nullptr;
 			}
-			case RendererAPIType::OpenGL: return std::make_shared<OpenGLVertexArray>();
+			case RendererAPIType::OpenGL: return Ref<OpenGLVertexArray>::Create();
 		}
 
 		HEP_CORE_ASSERT(false, "Unknown Renderer API!");

@@ -46,14 +46,16 @@ namespace Hep
 
 	void OpenGLVertexArray::Bind() const
 	{
-		Renderer::Submit([this]()
+		Ref<const OpenGLVertexArray> instance = this;
+		Renderer::Submit([instance]()
 		{
-			glBindVertexArray(m_RendererID);
+			glBindVertexArray(instance->m_RendererID);
 		});
 	}
 
 	void OpenGLVertexArray::Unbind() const
 	{
+		Ref<const OpenGLVertexArray> instance = this;
 		Renderer::Submit([this]()
 		{
 			glBindVertexArray(0);
@@ -67,16 +69,17 @@ namespace Hep
 		Bind();
 		vertexBuffer->Bind();
 
-		Renderer::Submit([this, vertexBuffer]()
+		Ref<OpenGLVertexArray> instance = this;
+		Renderer::Submit([instance, vertexBuffer]() mutable
 		{
 			const auto& layout = vertexBuffer->GetLayout();
 			for (const auto& element : layout)
 			{
 				auto glBaseType = ShaderDataTypeToOpenGLBaseType(element.Type);
-				glEnableVertexAttribArray(m_VertexBufferIndex);
+				glEnableVertexAttribArray(instance->m_VertexBufferIndex);
 				if (glBaseType == GL_INT)
 				{
-					glVertexAttribIPointer(m_VertexBufferIndex,
+					glVertexAttribIPointer(instance->m_VertexBufferIndex,
 						element.GetComponentCount(),
 						glBaseType,
 						layout.GetStride(),
@@ -84,14 +87,14 @@ namespace Hep
 				}
 				else
 				{
-					glVertexAttribPointer(m_VertexBufferIndex,
+					glVertexAttribPointer(instance->m_VertexBufferIndex,
 						element.GetComponentCount(),
 						glBaseType,
 						element.Normalized ? GL_TRUE : GL_FALSE,
 						layout.GetStride(),
 						(const void*)(intptr_t)element.Offset);
 				}
-				m_VertexBufferIndex++;
+				instance->m_VertexBufferIndex++;
 			}
 		});
 		m_VertexBuffers.push_back(vertexBuffer);

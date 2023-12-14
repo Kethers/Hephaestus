@@ -14,7 +14,7 @@ namespace Hep
 		switch (RendererAPI::Current())
 		{
 			case RendererAPIType::None: return nullptr;
-			case RendererAPIType::OpenGL: result = std::make_shared<OpenGLShader>(filepath);
+			case RendererAPIType::OpenGL: result = Ref<OpenGLShader>::Create(filepath);
 		}
 		s_AllShaders.push_back(result);
 		return result;
@@ -54,9 +54,9 @@ namespace Hep
 		m_Shaders[name] = Ref<Shader>(Shader::Create(path));
 	}
 
-	Ref<Shader>& ShaderLibrary::Get(const std::string& name)
+	const Ref<Shader>& ShaderLibrary::Get(const std::string& name) const
 	{
 		HEP_CORE_ASSERT(m_Shaders.find(name) != m_Shaders.end());
-		return m_Shaders[name];
+		return m_Shaders.at(name);
 	}
 }

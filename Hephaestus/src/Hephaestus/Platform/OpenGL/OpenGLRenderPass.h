@@ -10,6 +10,7 @@ namespace Hep
 		OpenGLRenderPass(const RenderPassSpecification& spec);
 		~OpenGLRenderPass() override;
 
+		RenderPassSpecification& GetSpecification() override { return m_Specification; }
 		const RenderPassSpecification& GetSpecification() const override { return m_Specification; }
 
 	private:

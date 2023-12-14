@@ -17,7 +17,7 @@ namespace Hep
 	{
 		Ref<RenderPass> m_ActiveRenderPass;
 		RenderCommandQueue m_CommandQueue;
-		Scope<ShaderLibrary> m_ShaderLibrary;
+		Ref<ShaderLibrary> m_ShaderLibrary;
 		Ref<VertexArray> m_FullscreenQuadVertexArray;
 	};
 
@@ -25,7 +25,7 @@ namespace Hep
 
 	void Renderer::Init()
 	{
-		s_Data.m_ShaderLibrary = std::make_unique<ShaderLibrary>();
+		s_Data.m_ShaderLibrary = Ref<ShaderLibrary>::Create();
 		Submit([]() { RendererAPI::Init(); });
 
 		GetShaderLibrary()->Load("assets/shaders/HazelPBR_Static.glsl");
@@ -73,7 +73,7 @@ namespace Hep
 		Renderer2D::Init();
 	}
 
-	const Scope<ShaderLibrary>& Renderer::GetShaderLibrary()
+	Ref<ShaderLibrary> Renderer::GetShaderLibrary()
 	{
 		return s_Data.m_ShaderLibrary;
 	}
@@ -100,7 +100,7 @@ namespace Hep
 	}
 
 	void Renderer::SetClearColor(float r, float g, float b, float a)
-	{ }
+	{}
 
 	void Renderer::DrawIndexed(uint32_t count, PrimitiveType type, bool depthTest)
 	{
@@ -123,7 +123,7 @@ namespace Hep
 		s_Data.m_CommandQueue.Execute();
 	}
 
-	void Renderer::BeginRenderPass(const Ref<RenderPass>& renderPass, bool clear)
+	void Renderer::BeginRenderPass(Ref<RenderPass> renderPass, bool clear)
 	{
 		HEP_CORE_ASSERT(renderPass, "Render pass cannot be null!");
 
@@ -149,7 +149,7 @@ namespace Hep
 		s_Data.m_ActiveRenderPass = nullptr;
 	}
 
-	void Renderer::SubmitQuad(const Ref<MaterialInstance>& material, const glm::mat4& transform)
+	void Renderer::SubmitQuad(Ref<MaterialInstance> material, const glm::mat4& transform)
 	{
 		bool depthTest = true;
 		if (material)
@@ -165,7 +165,7 @@ namespace Hep
 		Renderer::DrawIndexed(6, PrimitiveType::Triangles, depthTest);
 	}
 
-	void Renderer::SubmitFullscreenQuad(const Ref<MaterialInstance>& material)
+	void Renderer::SubmitFullscreenQuad(Ref<MaterialInstance> material)
 	{
 		bool depthTest = true;
 		if (material)
@@ -178,8 +178,7 @@ namespace Hep
 		Renderer::DrawIndexed(6, PrimitiveType::Triangles, depthTest);
 	}
 
-	void Renderer::SubmitMesh(const Ref<Mesh>& mesh, const glm::mat4& transform,
-		const Ref<MaterialInstance>& overrideMaterial)
+	void Renderer::SubmitMesh(Ref<Mesh> mesh, const glm::mat4& transform, Ref<MaterialInstance> overrideMaterial)
 	{
 		// auto material = overrideMaterial ? overrideMaterial : mesh->GetMaterialInstance();
 		// auto shader = material->GetShader();
@@ -217,7 +216,7 @@ namespace Hep
 		}
 	}
 
-	void Renderer::DrawAABB(const Ref<Mesh>& mesh, const glm::mat4& transform, const glm::vec4& color)
+	void Renderer::DrawAABB(Ref<Mesh> mesh, const glm::mat4& transform, const glm::vec4& color)
 	{
 		for (Submesh& submesh : mesh->m_Submeshes)
 		{

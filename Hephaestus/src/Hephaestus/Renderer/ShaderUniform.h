@@ -33,7 +33,7 @@ namespace Hep
 
 	using ShaderUniformList = std::vector<ShaderUniformDeclaration*>;
 
-	class ShaderUniformBufferDeclaration
+	class ShaderUniformBufferDeclaration : public RefCounted
 	{
 	public:
 		virtual const std::string& GetName() const = 0;
@@ -60,7 +60,7 @@ namespace Hep
 	public:
 		ShaderStruct(const std::string& name)
 			: m_Name(name), m_Size(0), m_Offset(0)
-		{ }
+		{}
 
 		void AddField(ShaderUniformDeclaration* field)
 		{

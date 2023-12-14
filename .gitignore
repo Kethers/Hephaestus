@@ -1,5 +1,6 @@
 # Binaries
 **bin/
+!external/mono/bin
 **bin-int/
 
 # xmake

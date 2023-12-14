@@ -17,11 +17,11 @@ namespace Hep
 			uint32_t width = 1600,
 			uint32_t height = 900)
 			: Title(title), Width(width), Height(height)
-		{ }
+		{}
 	};
 
 	// Interface representing a desktop system based Window
-	class Window
+	class Window : public RefCounted
 	{
 	public:
 		using EventCallbackFn = std::function<void(Event&)>;

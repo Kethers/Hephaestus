@@ -72,6 +72,7 @@ function BuildProject(config)
 		set_rundir(runDir)
 	end
 
+	Execute(config.customRules, add_rules)
 	Execute(config.packages, add_packages)
 	Execute(config.languages, set_languages)
 	Execute(config.macros, add_defines)
@@ -149,6 +150,12 @@ IncludeDir["ImGui"] = "external/imgui"
 IncludeDir["glm"] = "external/glm"
 IncludeDir["assimp"] = "external/assimp/include"
 IncludeDir['stb'] = "external/stb"
+IncludeDir["entt"] = "external/entt/include"
+IncludeDir["FastNoise"] = "external/FastNoise"
+IncludeDir["mono"] = "external/mono/include"
+
+LibraryDir = {}
+LibraryDir["mono"] = "external/mono/lib/Debug/mono-2.0-sgen.lib"
 
 BuildProject({
 	projectName = "Hephaestus",
@@ -156,7 +163,7 @@ BuildProject({
 	macros = {"HEP_BUILD_DLL"},
 	languages = {"clatest", "cxx20"},
 	depends = {"Glad", "ImGui"},
-	files = {"Hephaestus/src/**.cpp", "external/stb/**.cpp"},
+	files = {"Hephaestus/src/**.cpp", "external/stb/**.cpp", "external/FastNoise/**.cpp"},
 	headerfiles = {
 		"Hephaestus/src/**.h", 
 		"Hephaestus/src/**.hpp",
@@ -170,14 +177,39 @@ BuildProject({
 		IncludeDir.glm,
 		IncludeDir.assimp,
 		IncludeDir.stb,
+		IncludeDir.entt,
+		IncludeDir.FastNoise,
+		IncludeDir.mono,
 	},
 	packages = {"glfw"},
 	debugLink = {},
 	releaseLink = {},
-	link = {"kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib"},
+    link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", LibraryDir.mono },
+	cxflags = {},
 	afterBuildFunc = nil,
 	enableException = true,
 	staticruntime = true,
+})
+
+BuildProject({
+	projectName = "Hephaestus-ScriptCore",
+	projectType = "shared",
+	macros = {},
+	languages = {"csharp"},
+	depends = {},
+	files = {"Hephaestus-ScriptCore/src/**.cs"},
+	headerfiles = {},
+	pchHeader = nil,
+	includePaths = {},
+	rundir = "$(projectdir)/Hephaestus-ScriptCore",
+	packages = {},
+	debugLink = {},
+	releaseLink = {},
+	link = {},
+	afterBuildFunc = nil,
+	enableException = true,
+	staticruntime = false,
+	customRules = {"win.sdk.dotnet"},
 })
 
 BuildProject({
@@ -191,18 +223,49 @@ BuildProject({
 	pchHeader = nil,
 	includePaths = {"external", "Hephaestus/src", "Poseidon/src",
 		IncludeDir.glm,
+		IncludeDir.entt,
 	},
 	rundir = "$(projectdir)/Poseidon",
 	packages = {"assimp"},
 	debugLink = {},
 	releaseLink = {},
 	link = {"kernel32", "User32", "Gdi32", "Shell32"},
-	afterBuildFunc = nil,
+	afterBuildFunc = function (target)
+		if is_plat("windows") then
+			src_path = ""
+			if (is_mode("debug")) then
+				src_path = "external/mono/bin/Debug/mono-2.0-sgen.dll"
+			else
+				src_path = "external/mono/bin/Release/mono-2.0-sgen.dll"
+			end
+			os.cp(src_path, target:targetdir())
+		end
+	end,
 	enableException = true,
 	staticruntime = true,
 	startproject = true,
 })
 
+BuildProject({
+	projectName = "ExampleApp",
+	projectType = "shared",
+	macros = {},
+	languages = {"csharp"},
+	depends = {"Hephaestus-ScriptCore"},
+	files = {"ExampleApp/src/**.cs"},
+	headerfiles = {},
+	pchHeader = nil,
+	includePaths = {},
+	rundir = "$(projectdir)/ExampleApp",
+	packages = {},
+	debugLink = {},
+	releaseLink = {},
+	link = {},
+	afterBuildFunc = nil,
+	enableException = true,
+	staticruntime = false,
+	customRules = {"win.sdk.dotnet"},
+})
 
 --[[BuildProject({
 	projectName = "Sandbox",
