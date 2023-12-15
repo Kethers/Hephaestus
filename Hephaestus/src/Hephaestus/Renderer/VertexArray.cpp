@@ -12,13 +12,13 @@ namespace Hep
 		{
 			case RendererAPIType::None:
 			{
-				HEP_CORE_ASSERT(false, "RendererAPI::API::None is currently not supported!");
+				HEP_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
 				return nullptr;
 			}
 			case RendererAPIType::OpenGL: return Ref<OpenGLVertexArray>::Create();
 		}
 
-		HEP_CORE_ASSERT(false, "Unknown Renderer API!");
+		HEP_CORE_ASSERT(false, "Unknown Renderer API");
 		return nullptr;
 	}
 }

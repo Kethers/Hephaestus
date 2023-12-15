@@ -11,7 +11,7 @@ namespace Hep
 	{
 		Log::Init();
 
-		HEP_CORE_TRACE("Hazel Engine {}", HEP_BUILD_ID);
+		HEP_CORE_TRACE("Hephaestus Engine {}", HEP_BUILD_ID);
 		HEP_CORE_TRACE("Initializing...");
 	}
 

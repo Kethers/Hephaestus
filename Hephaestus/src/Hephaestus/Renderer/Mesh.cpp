@@ -349,9 +349,8 @@ namespace Hep
 					mi->Set("u_Roughness", roughness);
 				}
 
+#if 0
 				// Metalness map
-				// mi->Set("u_Metalness", 0.0f);
-				// mi->Set("u_MetalnessTexToggle", 0.0f);
 				if (aiMaterial->Get("$raw.ReflectionFactor|file", aiPTI_String, 0, aiTexPath) == AI_SUCCESS)
 				{
 					// TODO: Temp - this should be handled by Hazel's filesystem
@@ -377,6 +376,7 @@ namespace Hep
 					HEP_MESH_LOG("    No metalness texture");
 					mi->Set("u_Metalness", metalness);
 				}
+#endif
 
 				bool metalnessTextureFound = false;
 				for (uint32_t i = 0; i < aiMaterial->mNumProperties; i++)

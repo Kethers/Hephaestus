@@ -10,8 +10,8 @@
 
 extern "C"
 {
-	using MonoObject = struct _MonoObject;
-	using MonoClassField = struct _MonoClassField;
+	typedef struct _MonoObject MonoObject;
+	typedef struct _MonoClassField MonoClassField;
 }
 
 namespace Hep

@@ -39,9 +39,6 @@ namespace Hep
 			glGenFramebuffers(1, &m_RendererID);
 			glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
 
-			glGenTextures(1, &m_ColorAttachment);
-			glBindTexture(GL_TEXTURE_2D, m_ColorAttachment);
-
 			bool multisample = m_Specification.Samples > 1;
 			if (multisample)
 			{

@@ -222,7 +222,7 @@ namespace Hep
 		{
 			auto& aabb = submesh.BoundingBox;
 			auto aabbTransform = transform * submesh.Transform;
-			DrawAABB(aabb, aabbTransform, color);
+			DrawAABB(aabb, aabbTransform);
 		}
 	}
 

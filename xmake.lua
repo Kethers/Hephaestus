@@ -47,8 +47,14 @@ function BuildProject(config)
 		after_build(afterBuildFunc)
 	end
 
-	set_targetdir("$(buildir)/bin/$(mode)-$(plat)-$(arch)/" .. config.projectName)
-	-- set_objectdir("$(buildir)/bin-int/$(mode)-$(plat)-$(arch)/" .. config.projectName)
+	targetdir = config.targetdir
+	if targetdir ~= nil then
+		set_targetdir(targetdir)
+	else
+		set_targetdir("$(buildir)/bin/$(mode)-$(plat)-$(arch)/" .. config.projectName)
+	end
+	
+	set_objectdir("$(buildir)/bin-int/$(mode)-$(plat)-$(arch)/" .. config.projectName)
 	projectType = config.projectType
 	if projectType ~= nil then
 		set_kind(projectType)
@@ -184,7 +190,7 @@ BuildProject({
 	packages = {"glfw"},
 	debugLink = {},
 	releaseLink = {},
-    link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", LibraryDir.mono },
+	link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", LibraryDir.mono },
 	cxflags = {},
 	afterBuildFunc = nil,
 	enableException = true,
@@ -209,7 +215,6 @@ BuildProject({
 	afterBuildFunc = nil,
 	enableException = true,
 	staticruntime = false,
-	customRules = {"win.sdk.dotnet"},
 })
 
 BuildProject({
@@ -264,7 +269,7 @@ BuildProject({
 	afterBuildFunc = nil,
 	enableException = true,
 	staticruntime = false,
-	customRules = {"win.sdk.dotnet"},
+	targetdir = "Poseidon/assets/scripts"
 })
 
 --[[BuildProject({

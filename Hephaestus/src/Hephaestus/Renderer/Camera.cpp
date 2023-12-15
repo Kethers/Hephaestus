@@ -76,8 +76,6 @@ namespace Hep
 			glm::vec2 delta = mouse - m_InitialMousePosition * 0.003f;
 			m_InitialMousePosition = mouse;
 
-			delta *= ts.GetSeconds();
-
 			if (Input::IsMouseButtonPressed(HEP_MOUSE_BUTTON_MIDDLE))
 				MousePan(delta);
 			else if (Input::IsMouseButtonPressed(HEP_MOUSE_BUTTON_LEFT))

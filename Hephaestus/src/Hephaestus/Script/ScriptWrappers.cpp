@@ -35,7 +35,7 @@ namespace Hep::Script
 	// Math ////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
-	float Hazel_Noise_PerlinNoise(float x, float y)
+	float Hep_Noise_PerlinNoise(float x, float y)
 	{
 		return Noise::PerlinNoise(x, y);
 	}
@@ -46,7 +46,7 @@ namespace Hep::Script
 	// Input ///////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
-	bool Hazel_Input_IsKeyPressed(KeyCode key)
+	bool Hep_Input_IsKeyPressed(KeyCode key)
 	{
 		return Input::IsKeyPressed(key);
 	}
@@ -57,7 +57,7 @@ namespace Hep::Script
 	// Entity //////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 
-	void Hazel_Entity_GetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* outTransform)
+	void Hep_Entity_GetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* outTransform)
 	{
 		HEP_CORE_ASSERT(s_ActiveScenes.find(sceneID) != s_ActiveScenes.end(), "Invalid Scene ID!");
 
@@ -67,7 +67,7 @@ namespace Hep::Script
 		memcpy(outTransform, glm::value_ptr(transformComponent.Transform), sizeof(glm::mat4));
 	}
 
-	void Hazel_Entity_SetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* inTransform)
+	void Hep_Entity_SetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* inTransform)
 	{
 		HEP_CORE_ASSERT(s_ActiveScenes.find(sceneID) != s_ActiveScenes.end(), "Invalid Scene ID!");
 
@@ -77,7 +77,7 @@ namespace Hep::Script
 		memcpy(glm::value_ptr(transformComponent.Transform), inTransform, sizeof(glm::mat4));
 	}
 
-	void Hazel_Entity_CreateComponent(uint32_t sceneID, uint32_t entityID, void* type)
+	void Hep_Entity_CreateComponent(uint32_t sceneID, uint32_t entityID, void* type)
 	{
 		HEP_CORE_ASSERT(s_ActiveScenes.find(sceneID) != s_ActiveScenes.end(), "Invalid Scene ID!");
 		MonoType* monoType = mono_reflection_type_get_type((MonoReflectionType*)type);
@@ -87,7 +87,7 @@ namespace Hep::Script
 		s_CreateComponentFuncs[monoType](entity);
 	}
 
-	bool Hazel_Entity_HasComponent(uint32_t sceneID, uint32_t entityID, void* type)
+	bool Hep_Entity_HasComponent(uint32_t sceneID, uint32_t entityID, void* type)
 	{
 		HEP_CORE_ASSERT(s_ActiveScenes.find(sceneID) != s_ActiveScenes.end(), "Invalid Scene ID!");
 		MonoType* monoType = mono_reflection_type_get_type((MonoReflectionType*)type);
@@ -98,7 +98,7 @@ namespace Hep::Script
 		return result;
 	}
 
-	void* Hazel_MeshComponent_GetMesh(uint32_t sceneID, uint32_t entityID)
+	void* Hep_MeshComponent_GetMesh(uint32_t sceneID, uint32_t entityID)
 	{
 		HEP_CORE_ASSERT(s_ActiveScenes.find(sceneID) != s_ActiveScenes.end(), "Invalid Scene ID!");
 
@@ -108,7 +108,7 @@ namespace Hep::Script
 		return new Ref<Mesh>(meshComponent.Mesh);
 	}
 
-	void Hazel_MeshComponent_SetMesh(uint32_t sceneID, uint32_t entityID, Ref<Mesh>* inMesh)
+	void Hep_MeshComponent_SetMesh(uint32_t sceneID, uint32_t entityID, Ref<Mesh>* inMesh)
 	{
 		HEP_CORE_ASSERT(s_ActiveScenes.find(sceneID) != s_ActiveScenes.end(), "Invalid Scene ID!");
 
@@ -118,24 +118,24 @@ namespace Hep::Script
 		meshComponent.Mesh = inMesh ? *inMesh : nullptr;
 	}
 
-	Ref<Mesh>* Hazel_Mesh_Constructor(MonoString* filepath)
+	Ref<Mesh>* Hep_Mesh_Constructor(MonoString* filepath)
 	{
 		return new Ref<Mesh>(new Mesh(mono_string_to_utf8(filepath)));
 	}
 
-	void Hazel_Mesh_Destructor(Ref<Mesh>* _this)
+	void Hep_Mesh_Destructor(Ref<Mesh>* _this)
 	{
 		Ref<Mesh>* instance = (Ref<Mesh>*)_this;
 		delete _this;
 	}
 
-	Ref<Material>* Hazel_Mesh_GetMaterial(Ref<Mesh>* inMesh)
+	Ref<Material>* Hep_Mesh_GetMaterial(Ref<Mesh>* inMesh)
 	{
 		Ref<Mesh>& mesh = *(Ref<Mesh>*)inMesh;
 		return new Ref<Material>(mesh->GetMaterial());
 	}
 
-	Ref<MaterialInstance>* Hazel_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index)
+	Ref<MaterialInstance>* Hep_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index)
 	{
 		Ref<Mesh>& mesh = *(Ref<Mesh>*)inMesh;
 		const auto& materials = mesh->GetMaterials();
@@ -144,25 +144,25 @@ namespace Hep::Script
 		return new Ref<MaterialInstance>(materials[index]);
 	}
 
-	int Hazel_Mesh_GetMaterialCount(Ref<Mesh>* inMesh)
+	int Hep_Mesh_GetMaterialCount(Ref<Mesh>* inMesh)
 	{
 		Ref<Mesh>& mesh = *(Ref<Mesh>*)inMesh;
 		const auto& materials = mesh->GetMaterials();
 		return materials.size();
 	}
 
-	void* Hazel_Texture2D_Constructor(uint32_t width, uint32_t height)
+	void* Hep_Texture2D_Constructor(uint32_t width, uint32_t height)
 	{
 		auto result = Texture2D::Create(TextureFormat::RGBA, width, height);
 		return new Ref<Texture2D>(result);
 	}
 
-	void Hazel_Texture2D_Destructor(Ref<Texture2D>* _this)
+	void Hep_Texture2D_Destructor(Ref<Texture2D>* _this)
 	{
 		delete _this;
 	}
 
-	void Hazel_Texture2D_SetData(Ref<Texture2D>* _this, MonoArray* inData, int32_t count)
+	void Hep_Texture2D_SetData(Ref<Texture2D>* _this, MonoArray* inData, int32_t count)
 	{
 		Ref<Texture2D>& instance = *_this;
 
@@ -186,47 +186,47 @@ namespace Hep::Script
 		instance->Unlock();
 	}
 
-	void Hazel_Material_Destructor(Ref<Material>* _this)
+	void Hep_Material_Destructor(Ref<Material>* _this)
 	{
 		delete _this;
 	}
 
-	void Hazel_Material_SetFloat(Ref<Material>* _this, MonoString* uniform, float value)
+	void Hep_Material_SetFloat(Ref<Material>* _this, MonoString* uniform, float value)
 	{
 		Ref<Material>& instance = *(Ref<Material>*)_this;
 		instance->Set(mono_string_to_utf8(uniform), value);
 	}
 
-	void Hazel_Material_SetTexture(Ref<Material>* _this, MonoString* uniform, Ref<Texture2D>* texture)
+	void Hep_Material_SetTexture(Ref<Material>* _this, MonoString* uniform, Ref<Texture2D>* texture)
 	{
 		Ref<Material>& instance = *(Ref<Material>*)_this;
 		instance->Set(mono_string_to_utf8(uniform), *texture);
 	}
 
-	void Hazel_MaterialInstance_Destructor(Ref<MaterialInstance>* _this)
+	void Hep_MaterialInstance_Destructor(Ref<MaterialInstance>* _this)
 	{
 		delete _this;
 	}
 
-	void Hazel_MaterialInstance_SetFloat(Ref<MaterialInstance>* _this, MonoString* uniform, float value)
+	void Hep_MaterialInstance_SetFloat(Ref<MaterialInstance>* _this, MonoString* uniform, float value)
 	{
 		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
 		instance->Set(mono_string_to_utf8(uniform), value);
 	}
 
-	void Hazel_MaterialInstance_SetVector3(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec3* value)
+	void Hep_MaterialInstance_SetVector3(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec3* value)
 	{
 		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
 		instance->Set(mono_string_to_utf8(uniform), *value);
 	}
 
-	void Hazel_MaterialInstance_SetTexture(Ref<MaterialInstance>* _this, MonoString* uniform, Ref<Texture2D>* texture)
+	void Hep_MaterialInstance_SetTexture(Ref<MaterialInstance>* _this, MonoString* uniform, Ref<Texture2D>* texture)
 	{
 		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
 		instance->Set(mono_string_to_utf8(uniform), *texture);
 	}
 
-	void* Hazel_MeshFactory_CreatePlane(float width, float height)
+	void* Hep_MeshFactory_CreatePlane(float width, float height)
 	{
 		// TODO: Implement properly with MeshFactory class!
 		return new Ref<Mesh>(new Mesh("assets/models/Plane1m.obj"));

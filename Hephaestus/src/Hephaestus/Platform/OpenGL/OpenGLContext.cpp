@@ -20,10 +20,10 @@ namespace Hep
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		HEP_CORE_ASSERT(status, "Failed to initialized Glad!")
 
-		HEP_CORE_INFO("OpenGL Info:");
-		HEP_CORE_INFO("  Vendor: {0}", (const char*)glGetString(GL_VENDOR));
-		HEP_CORE_INFO("  Renderer: {0}", (const char*)glGetString(GL_RENDERER));
-		HEP_CORE_INFO("  Version: {0}", (const char*)glGetString(GL_VERSION));
+		// HEP_CORE_INFO("OpenGL Info:");
+		// HEP_CORE_INFO("  Vendor: {0}", (const char*)glGetString(GL_VENDOR));
+		// HEP_CORE_INFO("  Renderer: {0}", (const char*)glGetString(GL_RENDERER));
+		// HEP_CORE_INFO("  Version: {0}", (const char*)glGetString(GL_VERSION));
 	}
 
 	void OpenGLContext::SwapBuffers()

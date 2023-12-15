@@ -16,7 +16,7 @@ namespace Hep
 {
 	ImGuiLayer::ImGuiLayer()
 		: Layer("ImGuiLayer")
-	{ }
+	{}
 
 	ImGuiLayer::ImGuiLayer(const std::string& name) {}
 
@@ -70,6 +70,7 @@ namespace Hep
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+		ImGuizmo::BeginFrame();
 	}
 
 	void ImGuiLayer::End()
@@ -93,5 +94,5 @@ namespace Hep
 
 
 	void ImGuiLayer::OnImGuiRender()
-	{ }
+	{}
 }

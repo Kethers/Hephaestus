@@ -113,9 +113,9 @@ namespace Hep
 	{
 		mono_set_assemblies_path("mono/lib");
 		// mono_jit_set_trace_options("--verbose");
-		auto domain = mono_jit_init("Hazel");
+		auto domain = mono_jit_init("Hephaestus");
 
-		char* name = (char*)"HazelRuntime";
+		char* name = (char*)"HephaestusRuntime";
 		s_MonoDomain = mono_domain_create_appdomain(name, nullptr);
 	}
 
@@ -221,18 +221,18 @@ namespace Hep
 		return mono_string_new(s_MonoDomain, "Hello!");
 	}
 
-	static void LoadHazelRuntimeAssembly(const std::string& path)
+	static void LoadHephaestusRuntimeAssembly(const std::string& path)
 	{
 		if (s_AppAssembly)
 		{
 			mono_domain_unload(s_MonoDomain);
 			mono_assembly_close(s_AppAssembly);
 
-			char* name = (char*)"HazelRuntime";
+			char* name = (char*)"HephaestusRuntime";
 			s_MonoDomain = mono_domain_create_appdomain(name, nullptr);
 		}
 
-		s_CoreAssembly = LoadAssembly("assets/scripts/Hazel-ScriptCore.dll");
+		s_CoreAssembly = LoadAssembly("assets/scripts/Hephaestus-ScriptCore.dll");
 		s_CoreAssemblyImage = GetAssemblyImage(s_CoreAssembly);
 
 		s_AppAssembly = LoadAssembly(path);
@@ -246,7 +246,7 @@ namespace Hep
 
 		InitMono();
 
-		LoadHazelRuntimeAssembly(s_AssemblyPath);
+		LoadHephaestusRuntimeAssembly(s_AssemblyPath);
 	}
 
 	void ScriptEngine::Shutdown()
@@ -274,7 +274,7 @@ namespace Hep
 		}
 	}
 
-	static FieldType GetHazelFieldType(MonoType* monoType)
+	static FieldType GetHephaestusFieldType(MonoType* monoType)
 	{
 		int type = mono_type_get_type(monoType);
 		switch (type)
@@ -286,9 +286,9 @@ namespace Hep
 			case MONO_TYPE_VALUETYPE:
 			{
 				char* name = mono_type_get_name(monoType);
-				if (strcmp(name, "Hazel.Vector2") == 0) return FieldType::Vec2;
-				if (strcmp(name, "Hazel.Vector3") == 0) return FieldType::Vec3;
-				if (strcmp(name, "Hazel.Vector4") == 0) return FieldType::Vec4;
+				if (strcmp(name, "Hep.Vector2") == 0) return FieldType::Vec2;
+				if (strcmp(name, "Hep.Vector3") == 0) return FieldType::Vec3;
+				if (strcmp(name, "Hep.Vector4") == 0) return FieldType::Vec4;
 			}
 		}
 		return FieldType::None;
@@ -342,12 +342,12 @@ namespace Hep
 					continue;
 
 				MonoType* fieldType = mono_field_get_type(iter);
-				FieldType hazelFieldType = GetHazelFieldType(fieldType);
+				FieldType hepFieldType = GetHephaestusFieldType(fieldType);
 
 				// TODO: Attributes
 				MonoCustomAttrInfo* attr = mono_custom_attrs_from_field(scriptClass.Class, iter);
 
-				auto& publicField = s_PublicFields[script.ModuleName].emplace_back(name, hazelFieldType);
+				auto& publicField = s_PublicFields[script.ModuleName].emplace_back(name, hepFieldType);
 				publicField.m_EntityInstance = &entityInstance;
 				publicField.m_MonoClassField = iter;
 				// mono_field_set_value(entityInstance.Instance, iter, )

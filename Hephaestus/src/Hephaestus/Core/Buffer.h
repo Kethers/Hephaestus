@@ -11,11 +11,11 @@ namespace Hep
 
 		Buffer()
 			: Data(nullptr), Size(0)
-		{ }
+		{}
 
 		Buffer(byte* data, uint32_t size)
 			: Data(data), Size(size)
-		{ }
+		{}
 
 		static Buffer Copy(void* data, uint32_t size)
 		{
@@ -54,12 +54,12 @@ namespace Hep
 			return Data;
 		}
 
-		byte& operator[](const uint32_t index)
+		byte& operator[](int index)
 		{
 			return Data[index];
 		}
 
-		byte operator[](const uint32_t index) const
+		byte operator[](int index) const
 		{
 			return Data[index];
 		}

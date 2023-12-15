@@ -61,7 +61,7 @@ namespace Hep
 		std::string m_DebugName;
 
 		Light m_Light;
-		float m_LightMultiplier;
+		float m_LightMultiplier = 0.3f;
 
 		Environment m_Environment;
 		Ref<TextureCube> m_SkyboxTexture;

@@ -14,42 +14,42 @@ extern "C"
 namespace Hep::Script
 {
 	// Math
-	float Hazel_Noise_PerlinNoise(float x, float y);
+	float Hep_Noise_PerlinNoise(float x, float y);
 
 	// Input
-	bool Hazel_Input_IsKeyPressed(KeyCode key);
+	bool Hep_Input_IsKeyPressed(KeyCode key);
 
 	// Entity
-	void Hazel_Entity_GetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* outTransform);
-	void Hazel_Entity_SetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* inTransform);
-	void Hazel_Entity_CreateComponent(uint32_t sceneID, uint32_t entityID, void* type);
-	bool Hazel_Entity_HasComponent(uint32_t sceneID, uint32_t entityID, void* type);
+	void Hep_Entity_GetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* outTransform);
+	void Hep_Entity_SetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* inTransform);
+	void Hep_Entity_CreateComponent(uint32_t sceneID, uint32_t entityID, void* type);
+	bool Hep_Entity_HasComponent(uint32_t sceneID, uint32_t entityID, void* type);
 
-	void* Hazel_MeshComponent_GetMesh(uint32_t sceneID, uint32_t entityID);
-	void Hazel_MeshComponent_SetMesh(uint32_t sceneID, uint32_t entityID, Ref<Mesh>* inMesh);
+	void* Hep_MeshComponent_GetMesh(uint32_t sceneID, uint32_t entityID);
+	void Hep_MeshComponent_SetMesh(uint32_t sceneID, uint32_t entityID, Ref<Mesh>* inMesh);
 
 	// Renderer
 	// Texture2D
-	void* Hazel_Texture2D_Constructor(uint32_t width, uint32_t height);
-	void Hazel_Texture2D_Destructor(Ref<Texture2D>* _this);
-	void Hazel_Texture2D_SetData(Ref<Texture2D>* _this, MonoArray* inData, int32_t count);
+	void* Hep_Texture2D_Constructor(uint32_t width, uint32_t height);
+	void Hep_Texture2D_Destructor(Ref<Texture2D>* _this);
+	void Hep_Texture2D_SetData(Ref<Texture2D>* _this, MonoArray* inData, int32_t count);
 
 	// Material
-	void Hazel_Material_Destructor(Ref<Material>* _this);
-	void Hazel_Material_SetFloat(Ref<Material>* _this, MonoString* uniform, float value);
-	void Hazel_Material_SetTexture(Ref<Material>* _this, MonoString* uniform, Ref<Texture2D>* texture);
+	void Hep_Material_Destructor(Ref<Material>* _this);
+	void Hep_Material_SetFloat(Ref<Material>* _this, MonoString* uniform, float value);
+	void Hep_Material_SetTexture(Ref<Material>* _this, MonoString* uniform, Ref<Texture2D>* texture);
 
-	void Hazel_MaterialInstance_Destructor(Ref<MaterialInstance>* _this);
-	void Hazel_MaterialInstance_SetFloat(Ref<MaterialInstance>* _this, MonoString* uniform, float value);
-	void Hazel_MaterialInstance_SetVector3(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec3* value);
-	void Hazel_MaterialInstance_SetTexture(Ref<MaterialInstance>* _this, MonoString* uniform, Ref<Texture2D>* texture);
+	void Hep_MaterialInstance_Destructor(Ref<MaterialInstance>* _this);
+	void Hep_MaterialInstance_SetFloat(Ref<MaterialInstance>* _this, MonoString* uniform, float value);
+	void Hep_MaterialInstance_SetVector3(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec3* value);
+	void Hep_MaterialInstance_SetTexture(Ref<MaterialInstance>* _this, MonoString* uniform, Ref<Texture2D>* texture);
 
 	// Mesh
-	Ref<Mesh>* Hazel_Mesh_Constructor(MonoString* filepath);
-	void Hazel_Mesh_Destructor(Ref<Mesh>* _this);
-	Ref<Material>* Hazel_Mesh_GetMaterial(Ref<Mesh>* inMesh);
-	Ref<MaterialInstance>* Hazel_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index);
-	int Hazel_Mesh_GetMaterialCount(Ref<Mesh>* inMesh);
+	Ref<Mesh>* Hep_Mesh_Constructor(MonoString* filepath);
+	void Hep_Mesh_Destructor(Ref<Mesh>* _this);
+	Ref<Material>* Hep_Mesh_GetMaterial(Ref<Mesh>* inMesh);
+	Ref<MaterialInstance>* Hep_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index);
+	int Hep_Mesh_GetMaterialCount(Ref<Mesh>* inMesh);
 
-	void* Hazel_MeshFactory_CreatePlane(float width, float height);
+	void* Hep_MeshFactory_CreatePlane(float width, float height);
 }
