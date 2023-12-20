@@ -1,0 +1,22 @@
+BuildProject({
+	projectName = "yaml-cpp",
+	projectType = "static",
+	macros = {"YAML_CPP_STATIC_DEFINE"},
+	languages = {"clatest", "cxx20"},
+	depends = {},
+	files = {"src/**.cpp"},
+	headerfiles = {
+		"src/**.h", 
+		"include/**.h",
+	},
+	pchHeader = nil,
+	includePaths = {"include"},
+	packages = {},
+	debugLink = {},
+	releaseLink = {},
+	link = {},
+	afterBuildFunc = nil,
+	enableException = true,
+	staticruntime = false,
+	group = "Dependencies",
+})

@@ -274,7 +274,7 @@ namespace Hep
 		}
 	}
 
-	static FieldType GetHephaestusFieldType(MonoType* monoType)
+	static FieldType GetHepFieldType(MonoType* monoType)
 	{
 		int type = mono_type_get_type(monoType);
 		switch (type)
@@ -342,7 +342,7 @@ namespace Hep
 					continue;
 
 				MonoType* fieldType = mono_field_get_type(iter);
-				FieldType hepFieldType = GetHephaestusFieldType(fieldType);
+				FieldType hepFieldType = GetHepFieldType(fieldType);
 
 				// TODO: Attributes
 				MonoCustomAttrInfo* attr = mono_custom_attrs_from_field(scriptClass.Class, iter);

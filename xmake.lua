@@ -53,6 +53,10 @@ function BuildProject(config)
 	else
 		set_targetdir("$(buildir)/bin/$(mode)-$(plat)-$(arch)/" .. config.projectName)
 	end
+
+	if config.group then
+		set_group(config.group)
+	end
 	
 	set_objectdir("$(buildir)/bin-int/$(mode)-$(plat)-$(arch)/" .. config.projectName)
 	projectType = config.projectType
@@ -141,6 +145,7 @@ end
 includes("external/Glad")
 includes("external/GLFW")
 includes("external/imgui")
+includes("external/yaml-cpp")
 add_repositories("glfw external/GLFW", {rootdir = os.scriptdir()})
 add_requires("glfw")
 if (is_mode("debug")) then
@@ -159,6 +164,7 @@ IncludeDir['stb'] = "external/stb"
 IncludeDir["entt"] = "external/entt/include"
 IncludeDir["FastNoise"] = "external/FastNoise"
 IncludeDir["mono"] = "external/mono/include"
+IncludeDir["yaml-cpp"] = "external/yaml-cpp/include"
 
 LibraryDir = {}
 LibraryDir["mono"] = "external/mono/lib/Debug/mono-2.0-sgen.lib"
@@ -168,7 +174,7 @@ BuildProject({
 	projectType = "static",
 	macros = {"HEP_BUILD_DLL"},
 	languages = {"clatest", "cxx20"},
-	depends = {"Glad", "ImGui"},
+	depends = {"Glad", "ImGui", "yaml-cpp"},
 	files = {"Hephaestus/src/**.cpp", "external/stb/**.cpp", "external/FastNoise/**.cpp"},
 	headerfiles = {
 		"Hephaestus/src/**.h", 
@@ -186,6 +192,7 @@ BuildProject({
 		IncludeDir.entt,
 		IncludeDir.FastNoise,
 		IncludeDir.mono,
+		IncludeDir["yaml-cpp"],
 	},
 	packages = {"glfw"},
 	debugLink = {},
@@ -195,6 +202,7 @@ BuildProject({
 	afterBuildFunc = nil,
 	enableException = true,
 	staticruntime = true,
+	group = "Core",
 })
 
 BuildProject({
@@ -215,6 +223,7 @@ BuildProject({
 	afterBuildFunc = nil,
 	enableException = true,
 	staticruntime = false,
+	group = "Core",
 })
 
 BuildProject({
@@ -249,6 +258,7 @@ BuildProject({
 	enableException = true,
 	staticruntime = true,
 	startproject = true,
+	group = "Tools",
 })
 
 BuildProject({
@@ -269,7 +279,8 @@ BuildProject({
 	afterBuildFunc = nil,
 	enableException = true,
 	staticruntime = false,
-	targetdir = "Poseidon/assets/scripts"
+	targetdir = "Poseidon/assets/scripts",
+	group = "Examples",
 })
 
 --[[BuildProject({

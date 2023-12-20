@@ -15,7 +15,7 @@ namespace Hep
 	Material::Material(const Ref<Shader>& shader)
 		: m_Shader(shader)
 	{
-		m_Shader->AddShaderReloadedCallback(std::bind(&Material::OnShaderReloaded, this));
+		m_Shader->AddShaderReloadedCallback(HEP_BIND_EVENT_FN(Material::OnShaderReloaded));
 		AllocateStorage();
 
 		m_MaterialFlags |= (uint32_t)MaterialFlag::DepthTest;

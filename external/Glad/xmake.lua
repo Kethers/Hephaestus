@@ -15,4 +15,5 @@ BuildProject({
 	afterBuildFunc = nil,
 	enableException = true,
 	staticruntime = true,
+	group = "Dependencies",
 })
