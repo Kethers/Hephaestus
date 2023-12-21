@@ -37,4 +37,6 @@
 // Scenes
 #include "Hephaestus/Scene/Entity.h"
 #include "Hephaestus/Scene/Scene.h"
+#include "Hephaestus/Scene/SceneCamera.h"
+#include "Hephaestus/Scene/SceneSerializer.h"
 #include "Hephaestus/Scene/Components.h"

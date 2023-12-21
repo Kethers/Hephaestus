@@ -3,72 +3,81 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using Hep;
 
 namespace Example
 {
-    public class MapGenerator : Entity
-    {
-        // TODO: [EditorSlider("MapWidth Custom Name", 2, 0, 1024)]
-        public int MapWidth = 128;
-        public int MapHeight = 128;
-        public int Octaves = 4;
-        public float Persistance = 0.74f;
-        public int Seed = 21;
-        public float Lacunarity = 3.0f;
-        public Vector2 Offset = new Vector2(13.4f, 6.26f);
-        public float NoiseScale = 0.5f;
+	public class MapGenerator : Entity
+	{
+		// [EditorSlider("MapWidth Custom Name", 2, 0, 1024)]
+		public int MapWidth = 128;
+		public int MapHeight = 128;
+		public int Octaves = 4;
+		public float Persistance = 0.74f;
+		public int Seed = 21;
+		public float Lacunarity = 3.0f;
+		public Vector2 Offset = new Vector2(13.4f, 6.26f);
+		public float NoiseScale = 0.5f;
 
-        public void GenerateMap()
-        {
-            //float[,] noiseMap = Noise.GenerateNoiseMap(mapWidth, mapHeight, noiseScale);
-            float[,] noiseMap = Noise.GenerateNoiseMap(MapWidth, MapHeight, Seed, NoiseScale, Octaves, Persistance, Lacunarity, Offset);
+		public float Speed = 0.0f;
 
-            uint width = (uint)noiseMap.GetLength(0);
-            uint height = (uint)noiseMap.GetLength(1);
+		public void GenerateMap()
+		{
+			//float[,] noiseMap = Noise.GenerateNoiseMap(mapWidth, mapHeight, noiseScale);
+			float[,] noiseMap = Noise.GenerateNoiseMap(MapWidth, MapHeight, Seed, NoiseScale, Octaves, Persistance, Lacunarity, Offset);
 
-            Texture2D texture = new Texture2D(width, height);
-            Vector4[] colorMap = new Vector4[width * height];
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    colorMap[x + y * width] = Vector4.Lerp(Color.Black, Color.White, noiseMap[x, y]);
-                }
-            }
+			uint width = (uint)noiseMap.GetLength(0);
+			uint height = (uint)noiseMap.GetLength(1);
 
-            texture.SetData(colorMap);
+			Texture2D texture = new Texture2D(width, height);
+			Vector4[] colorMap = new Vector4[width * height];
+			for (int y = 0; y < height; y++)
+			{
+				for (int x = 0; x < width; x++)
+				{
+					colorMap[x + y * width] = Vector4.Lerp(Color.Black, Color.White, noiseMap[x, y]);
+				}
+			}
 
-            Console.WriteLine("HasComponent - TransformComponent = {0}", HasComponent<TransformComponent>());
-            Console.WriteLine("HasComponent - ScriptComponent = {0}", HasComponent<ScriptComponent>());
-            Console.WriteLine("HasComponent - MeshComponent = {0}", HasComponent<MeshComponent>());
+			texture.SetData(colorMap);
 
-            MeshComponent meshComponent = GetComponent<MeshComponent>();
-            if (meshComponent == null)
-            {
-                Console.WriteLine("MeshComponent is null!");
-                meshComponent = CreateComponent<MeshComponent>();
-            }
-            meshComponent.Mesh = MeshFactory.CreatePlane(1.0f, 1.0f);
+			Console.WriteLine("HasComponent - TransformComponent = {0}", HasComponent<TransformComponent>());
+			Console.WriteLine("HasComponent - ScriptComponent = {0}", HasComponent<ScriptComponent>());
+			Console.WriteLine("HasComponent - MeshComponent = {0}", HasComponent<MeshComponent>());
 
-            Console.WriteLine("Mesh has {0} materials!", meshComponent.Mesh.GetMaterialCount());
+			MeshComponent meshComponent = GetComponent<MeshComponent>();
+			if (meshComponent == null)
+			{
+				Console.WriteLine("MeshComponent is null!");
+				meshComponent = CreateComponent<MeshComponent>();
+			}
 
-            MaterialInstance material = meshComponent.Mesh.GetMaterial(1);
-            material.Set("u_AlbedoTexToggle", 1.0f);
-            material.Set("u_AlbedoTexture", texture);
-        }
+			meshComponent.Mesh = MeshFactory.CreatePlane(1.0f, 1.0f);
 
-        void OnCreate()
-        {
-            GenerateMap();
-        }
+			Console.WriteLine("Mesh has {0} materials!", meshComponent.Mesh.GetMaterialCount());
 
-        void OnUpdate(float ts)
-        {
+			MaterialInstance material = meshComponent.Mesh.GetMaterial(1);
+			material.Set("u_AlbedoTexToggle", 1.0f);
+			material.Set("u_AlbedoTexture", texture);
+		}
 
-        }
+		void OnCreate()
+		{
+			GenerateMap();
+		}
 
+		void OnUpdate(float ts)
+		{
+			Matrix4 transform = GetTransform();
+			Vector3 translation = transform.Translation;
+			translation.Y += ts * Speed;
+			if (Input.IsKeyPressed(KeyCode.Space))
+			{
+				translation.Y -= 10.0f;
+			}
 
-    }
+			transform.Translation = translation;
+			SetTransform(transform);
+		}
+	}
 }

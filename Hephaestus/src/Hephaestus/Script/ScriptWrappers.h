@@ -20,13 +20,13 @@ namespace Hep::Script
 	bool Hep_Input_IsKeyPressed(KeyCode key);
 
 	// Entity
-	void Hep_Entity_GetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* outTransform);
-	void Hep_Entity_SetTransform(uint32_t sceneID, uint32_t entityID, glm::mat4* inTransform);
-	void Hep_Entity_CreateComponent(uint32_t sceneID, uint32_t entityID, void* type);
-	bool Hep_Entity_HasComponent(uint32_t sceneID, uint32_t entityID, void* type);
+	void Hep_Entity_GetTransform(uint64_t entityID, glm::mat4* outTransform);
+	void Hep_Entity_SetTransform(uint64_t entityID, glm::mat4* inTransform);
+	void Hep_Entity_CreateComponent(uint64_t entityID, void* type);
+	bool Hep_Entity_HasComponent(uint64_t entityID, void* type);
 
-	void* Hep_MeshComponent_GetMesh(uint32_t sceneID, uint32_t entityID);
-	void Hep_MeshComponent_SetMesh(uint32_t sceneID, uint32_t entityID, Ref<Mesh>* inMesh);
+	void* Hep_MeshComponent_GetMesh(uint64_t entityID);
+	void Hep_MeshComponent_SetMesh(uint64_t entityID, Ref<Mesh>* inMesh);
 
 	// Renderer
 	// Texture2D

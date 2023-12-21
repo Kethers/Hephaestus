@@ -38,9 +38,10 @@ namespace Hep
 
 	OpenGLVertexArray::~OpenGLVertexArray()
 	{
-		Renderer::Submit([this]()
+		GLuint rendererID = m_RendererID;
+		Renderer::Submit([rendererID]()
 		{
-			glDeleteVertexArrays(1, &m_RendererID);
+			glDeleteVertexArrays(1, &rendererID);
 		});
 	}
 

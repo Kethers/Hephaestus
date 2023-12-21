@@ -27,28 +27,31 @@ namespace Hep
 	{
 		m_LocalData = Buffer::Copy(data, size);
 
-		Renderer::Submit([=]()
+		Ref<OpenGLVertexBuffer> instance = this;
+		Renderer::Submit([instance]() mutable
 		{
-			glCreateBuffers(1, &m_RendererID);
-			glNamedBufferData(m_RendererID, m_Size, m_LocalData.Data, OpenGLUsage(m_Usage));
+			glCreateBuffers(1, &instance->m_RendererID);
+			glNamedBufferData(instance->m_RendererID, instance->m_Size, instance->m_LocalData.Data, OpenGLUsage(instance->m_Usage));
 		});
 	}
 
 	OpenGLVertexBuffer::OpenGLVertexBuffer(uint32_t size, VertexBufferUsage usage)
 		: m_Size(size), m_Usage(usage)
 	{
-		Renderer::Submit([this]()
+		Ref<OpenGLVertexBuffer> instance = this;
+		Renderer::Submit([instance]() mutable
 		{
-			glCreateBuffers(1, &m_RendererID);
-			glNamedBufferData(m_RendererID, m_Size, nullptr, OpenGLUsage(m_Usage));
+			glCreateBuffers(1, &instance->m_RendererID);
+			glNamedBufferData(instance->m_RendererID, instance->m_Size, nullptr, OpenGLUsage(instance->m_Usage));
 		});
 	}
 
 	OpenGLVertexBuffer::~OpenGLVertexBuffer()
 	{
-		Renderer::Submit([this]()
+		GLuint rendererID = m_RendererID;
+		Renderer::Submit([rendererID]()
 		{
-			glDeleteBuffers(1, &m_RendererID);
+			glDeleteBuffers(1, &rendererID);
 		});
 	}
 
@@ -56,17 +59,19 @@ namespace Hep
 	{
 		m_LocalData = Buffer::Copy(data, size);
 		m_Size = size;
-		Renderer::Submit([this, offset]()
+		Ref<OpenGLVertexBuffer> instance = this;
+		Renderer::Submit([instance, offset]()
 		{
-			glNamedBufferSubData(m_RendererID, offset, m_Size, m_LocalData.Data);
+			glNamedBufferSubData(instance->m_RendererID, offset, instance->m_Size, instance->m_LocalData.Data);
 		});
 	}
 
 	void OpenGLVertexBuffer::Bind() const
 	{
-		Renderer::Submit([this]()
+		Ref<const OpenGLVertexBuffer> instance = this;
+		Renderer::Submit([instance]()
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
+			glBindBuffer(GL_ARRAY_BUFFER, instance->m_RendererID);
 		});
 	}
 

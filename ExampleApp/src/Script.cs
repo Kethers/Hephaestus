@@ -1,37 +1,39 @@
 ﻿using System;
-
 using Hep;
 
 namespace Example
 {
-    public class Script : Entity
-    {
-        public float Speed = 5.0f;
+	public class Script : Entity
+	{
+		public float VerticalSpeed = 5.0f;
+		public float Speed = 5.0f;
+		public float Rotation = 0.0f;
 
-        public void OnCreate()
-        {
-            Console.WriteLine("Script.OnCreate");
-        }
+		public Vector3 Velocity;
+		public float SinkRate;
 
-        public void OnUpdate(float ts)
-        {
-            Matrix4 transform = GetTransform();
-            Vector3 translation = transform.Translation;
+		public void OnCreate()
+		{
+			Console.WriteLine("Script.OnCreate");
+		}
 
-            float speed = Speed * ts;
+		public void OnUpdate(float ts)
+		{
+			Rotation += ts;
 
-            if (Input.IsKeyPressed(KeyCode.Up))
-                translation.Y += speed;
-            else if (Input.IsKeyPressed(KeyCode.Down))
-                translation.Y -= speed;
-            if (Input.IsKeyPressed(KeyCode.Right))
-                translation.X += speed;
-            else if (Input.IsKeyPressed(KeyCode.Left))
-                translation.X -= speed;
+			Matrix4 transform = GetTransform();
+			Vector3 translation = transform.Translation;
 
-            transform.Translation = translation;
-            SetTransform(transform);
-        }
+			float speed = Speed * ts;
 
-    }
+			translation.X += Velocity.X * ts;
+			translation.Y += Velocity.Y * ts;
+			translation.Z += Velocity.Z * ts;
+
+			translation.Y -= SinkRate * ts;
+
+			transform.Translation = translation;
+			SetTransform(transform);
+		}
+	}
 }
