@@ -242,7 +242,7 @@ namespace Hep
 				auto aiMaterial = scene->mMaterials[i];
 				auto aiMaterialName = aiMaterial->GetName();
 
-				auto mi = Ref<MaterialInstance>::Create(m_BaseMaterial);
+				auto mi = Ref<MaterialInstance>::Create(m_BaseMaterial, aiMaterialName.data);
 				m_Materials[i] = mi;
 
 				HEP_MESH_LOG("Material Name = {0}; Index = {1}", aiMaterialName.data, i);
@@ -609,14 +609,13 @@ namespace Hep
 		HEP_CORE_ASSERT(NextPositionIndex < nodeAnim->mNumPositionKeys);
 		float DeltaTime = nodeAnim->mPositionKeys[NextPositionIndex].mTime - nodeAnim->mPositionKeys[PositionIndex].
 			mTime;
-		float Factor = (animationTime - (float)nodeAnim->mPositionKeys[PositionIndex].mTime) / DeltaTime;
-		if (Factor < 0.0f)
-			Factor = 0.0f;
-		HEP_CORE_ASSERT(Factor <= 1.0f, "Factor must be below 1.0f");
+		float factor = (animationTime - (float)nodeAnim->mPositionKeys[PositionIndex].mTime) / DeltaTime;
+		HEP_CORE_ASSERT(factor <= 1.0f, "Factor must be below 1.0f");
+		factor = glm::clamp(factor, 0.0f, 1.0f);
 		const aiVector3D& Start = nodeAnim->mPositionKeys[PositionIndex].mValue;
 		const aiVector3D& End = nodeAnim->mPositionKeys[NextPositionIndex].mValue;
 		aiVector3D Delta = End - Start;
-		auto aiVec = Start + Factor * Delta;
+		auto aiVec = Start + factor * Delta;
 		return { aiVec.x, aiVec.y, aiVec.z };
 	}
 
@@ -634,14 +633,13 @@ namespace Hep
 		HEP_CORE_ASSERT(NextRotationIndex < nodeAnim->mNumRotationKeys);
 		float DeltaTime = nodeAnim->mRotationKeys[NextRotationIndex].mTime - nodeAnim->mRotationKeys[RotationIndex].
 			mTime;
-		float Factor = (animationTime - (float)nodeAnim->mRotationKeys[RotationIndex].mTime) / DeltaTime;
-		if (Factor < 0.0f)
-			Factor = 0.0f;
-		HEP_CORE_ASSERT(Factor <= 1.0f, "Factor must be below 1.0f");
+		float factor = (animationTime - (float)nodeAnim->mRotationKeys[RotationIndex].mTime) / DeltaTime;
+		HEP_CORE_ASSERT(factor <= 1.0f, "Factor must be below 1.0f");
+		factor = glm::clamp(factor, 0.0f, 1.0f);
 		const aiQuaternion& StartRotationQ = nodeAnim->mRotationKeys[RotationIndex].mValue;
 		const aiQuaternion& EndRotationQ = nodeAnim->mRotationKeys[NextRotationIndex].mValue;
 		auto q = aiQuaternion();
-		aiQuaternion::Interpolate(q, StartRotationQ, EndRotationQ, Factor);
+		aiQuaternion::Interpolate(q, StartRotationQ, EndRotationQ, factor);
 		q = q.Normalize();
 		return glm::quat(q.w, q.x, q.y, q.z);
 	}
@@ -660,9 +658,8 @@ namespace Hep
 		HEP_CORE_ASSERT(nextIndex < nodeAnim->mNumScalingKeys);
 		float deltaTime = nodeAnim->mScalingKeys[nextIndex].mTime - nodeAnim->mScalingKeys[index].mTime;
 		float factor = (animationTime - (float)nodeAnim->mScalingKeys[index].mTime) / deltaTime;
-		if (factor < 0.0f)
-			factor = 0.0f;
 		HEP_CORE_ASSERT(factor <= 1.0f, "Factor must be below 1.0f");
+		factor = glm::clamp(factor, 0.0f, 1.0f);
 		const auto& start = nodeAnim->mScalingKeys[index].mValue;
 		const auto& end = nodeAnim->mScalingKeys[nextIndex].mValue;
 		auto delta = end - start;

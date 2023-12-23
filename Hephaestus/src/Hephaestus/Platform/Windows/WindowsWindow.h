@@ -26,6 +26,9 @@ namespace Hep
 		void SetVSync(bool enabled) override;
 		bool IsVSync() const override;
 
+		const std::string& GetTitle() const override { return m_Data.Title; }
+		void SetTitle(const std::string& title) override;
+
 		void* GetNativeWindow() const override { return m_Window; }
 
 	private:

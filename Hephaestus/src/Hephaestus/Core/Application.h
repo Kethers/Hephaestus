@@ -43,6 +43,9 @@ namespace Hep
 
 		float GetTime() const; // TODO: This should be in "Platform"
 
+		static const char* GetConfigurationName();
+		static const char* GetPlatformName();
+
 	private:
 		bool OnWindowResize(WindowResizeEvent& e);
 		bool OnWindowClose(WindowCloseEvent& e);

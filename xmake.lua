@@ -146,6 +146,7 @@ includes("external/Glad")
 includes("external/GLFW")
 includes("external/imgui")
 includes("external/yaml-cpp")
+includes("external/Box2D")
 add_repositories("glfw external/GLFW", {rootdir = os.scriptdir()})
 add_requires("glfw")
 if (is_mode("debug")) then
@@ -165,6 +166,7 @@ IncludeDir["entt"] = "external/entt/include"
 IncludeDir["FastNoise"] = "external/FastNoise"
 IncludeDir["mono"] = "external/mono/include"
 IncludeDir["yaml-cpp"] = "external/yaml-cpp/include"
+IncludeDir["Box2D"] = "external/Box2D/include"
 
 LibraryDir = {}
 LibraryDir["mono"] = "external/mono/lib/Debug/mono-2.0-sgen.lib"
@@ -174,7 +176,7 @@ BuildProject({
 	projectType = "static",
 	macros = {"HEP_BUILD_DLL"},
 	languages = {"clatest", "cxx20"},
-	depends = {"Glad", "ImGui", "yaml-cpp"},
+	depends = {"Glad", "ImGui", "yaml-cpp", "Box2D"},
 	files = {"Hephaestus/src/**.cpp", "external/stb/**.cpp", "external/FastNoise/**.cpp"},
 	headerfiles = {
 		"Hephaestus/src/**.h", 
@@ -193,6 +195,7 @@ BuildProject({
 		IncludeDir.FastNoise,
 		IncludeDir.mono,
 		IncludeDir["yaml-cpp"],
+		IncludeDir.Box2D,
 	},
 	packages = {"glfw"},
 	debugLink = {},

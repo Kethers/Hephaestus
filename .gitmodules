@@ -4,3 +4,6 @@
 [submodule "FastNoise"]
 	path = external/FastNoise
 	url = https://github.com/Auburn/FastNoise
+[submodule "Box2D"]
+	path = external/Box2D
+	url = https://github.com/Kethers/Box2D.git

@@ -180,4 +180,26 @@ namespace Hep
 	{
 		return (float)glfwGetTime();
 	}
+
+	const char* Application::GetConfigurationName()
+	{
+#if defined(HEP_DEBUG)
+		return "Debug";
+#elif defined(HEP_RELEASE)
+		return "Release";
+#elif defined(HEP_DIST)
+		return "Dist";
+#else
+	#error Undefined configuration?
+#endif
+	}
+
+	const char* Application::GetPlatformName()
+	{
+#if defined(HEP_PLATFORM_WINDOWS)
+		return "Windows x64";
+#else
+	#error Undefined platform?
+#endif
+	}
 }
