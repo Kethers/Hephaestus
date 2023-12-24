@@ -11,12 +11,14 @@ namespace Hep
 {
 	static GLenum ToOpenGLTextureFormat(TextureFormat format)
 	{
+		// @formatter:off
 		switch (format)
 		{
-			case TextureFormat::RGB: return GL_RGB;
-			case TextureFormat::RGBA: return GL_RGBA;
-			case TextureFormat::Float16: return GL_RGBA16F;
+			case TextureFormat::RGB:		return GL_RGB;
+			case TextureFormat::RGBA:		return GL_RGBA;
+			case TextureFormat::Float16:	return GL_RGBA16F;
 		}
+		// @formatter:on
 		HEP_CORE_ASSERT(false, "Unknown texture format!");
 		return 0;
 	}

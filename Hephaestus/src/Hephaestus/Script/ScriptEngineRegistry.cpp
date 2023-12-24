@@ -52,12 +52,17 @@ namespace Hep
 		mono_add_internal_call("Hep.Entity::SetTransform_Native", Hep::Script::Hep_Entity_SetTransform);
 		mono_add_internal_call("Hep.Entity::CreateComponent_Native", Hep::Script::Hep_Entity_CreateComponent);
 		mono_add_internal_call("Hep.Entity::HasComponent_Native", Hep::Script::Hep_Entity_HasComponent);
+		mono_add_internal_call("Hep.Entity::FindEntityByTag_Native", Hep::Script::Hep_Entity_FindEntityByTag);
 
 		mono_add_internal_call("Hep.MeshComponent::GetMesh_Native", Hep::Script::Hep_MeshComponent_GetMesh);
 		mono_add_internal_call("Hep.MeshComponent::SetMesh_Native", Hep::Script::Hep_MeshComponent_SetMesh);
 
 		mono_add_internal_call("Hep.RigidBody2DComponent::ApplyLinearImpulse_Native",
 			Hep::Script::Hep_RigidBody2DComponent_ApplyLinearImpulse);
+		mono_add_internal_call("Hep.RigidBody2DComponent::GetLinearVelocity_Native",
+			Hep::Script::Hep_RigidBody2DComponent_GetLinearVelocity);
+		mono_add_internal_call("Hep.RigidBody2DComponent::SetLinearVelocity_Native",
+			Hep::Script::Hep_RigidBody2DComponent_SetLinearVelocity);
 
 		mono_add_internal_call("Hep.Input::IsKeyPressed_Native", Hep::Script::Hep_Input_IsKeyPressed);
 

@@ -68,7 +68,7 @@ namespace Hep
 		uint32_t GetCount() const override { return m_Count; }
 		uint32_t GetOffset() const override { return m_Offset; }
 		uint32_t GetAbsoluteOffset() const { return m_Struct ? m_Struct->GetOffset() + m_Offset : m_Offset; }
-		ShaderDomain GetDomain() const { return m_Domain; }
+		ShaderDomain GetDomain() const override { return m_Domain; }
 
 		int32_t GetLocation() const { return m_Location; }
 		Type GetType() const { return m_Type; }

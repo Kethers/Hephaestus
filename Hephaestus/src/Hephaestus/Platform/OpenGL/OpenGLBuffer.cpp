@@ -107,9 +107,10 @@ namespace Hep
 
 	OpenGLIndexBuffer::~OpenGLIndexBuffer()
 	{
-		Renderer::Submit([this]()
+		GLuint rendererID = m_RendererID;
+		Renderer::Submit([rendererID]()
 		{
-			glDeleteBuffers(1, &m_RendererID);
+			glDeleteBuffers(1, &rendererID);
 		});
 	}
 
@@ -126,9 +127,10 @@ namespace Hep
 
 	void OpenGLIndexBuffer::Bind() const
 	{
-		Renderer::Submit([this]()
+		Ref<const OpenGLIndexBuffer> instance = this;
+		Renderer::Submit([instance]()
 		{
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_RendererID);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, instance->m_RendererID);
 		});
 	}
 }

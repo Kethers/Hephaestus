@@ -329,6 +329,27 @@ namespace Hep
 		ImGui::NextColumn();
 	}
 
+	static bool Property(const char* label, bool& value)
+	{
+		bool modified = false;
+
+		ImGui::Text(label);
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+
+		s_IDBuffer[0] = '#';
+		s_IDBuffer[1] = '#';
+		memset(s_IDBuffer + 2, 0, 14);
+		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		if (ImGui::Checkbox(s_IDBuffer, &value))
+			modified = true;
+
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
+
+		return modified;
+	}
+
 	static bool Property(const char* label, int& value)
 	{
 		bool modified = false;
@@ -779,7 +800,7 @@ namespace Hep
 			if (rb2dc.BodyType == RigidBody2DComponent::Type::Dynamic)
 			{
 				BeginPropertyGrid();
-				Property("Mass", rb2dc.Mass);
+				Property("Fixed Rotation", rb2dc.FixedRotation);
 				EndPropertyGrid();
 			}
 		});
@@ -790,6 +811,8 @@ namespace Hep
 
 			Property("Offset", bc2dc.Offset);
 			Property("Size", bc2dc.Size);
+			Property("Density", bc2dc.Density);
+			Property("Friction", bc2dc.Friction);
 
 			EndPropertyGrid();
 		});
@@ -800,6 +823,8 @@ namespace Hep
 
 			Property("Offset", cc2dc.Offset);
 			Property("Radius", cc2dc.Radius);
+			Property("Density", cc2dc.Density);
+			Property("Friction", cc2dc.Friction);
 
 			EndPropertyGrid();
 		});
