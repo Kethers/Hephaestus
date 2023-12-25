@@ -8,9 +8,10 @@
 #include "Hephaestus/Script/ScriptEngine.h"
 #include <assimp/scene.h>
 
+#include "Hephaestus/Core/Math/Mat4.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
+// #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 // TODO:
@@ -219,16 +220,6 @@ namespace Hep
 			MeshNodeHierarchy(mesh, rootNode);
 			ImGui::TreePop();
 		}
-	}
-
-	static std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
-	{
-		glm::vec3 scale, translation, skew;
-		glm::vec4 perspective;
-		glm::quat orientation;
-		glm::decompose(transform, scale, orientation, translation, skew, perspective);
-
-		return { translation, orientation, scale };
 	}
 
 	void SceneHierarchyPanel::MeshNodeHierarchy(const Ref<Mesh>& mesh, aiNode* node,

@@ -40,6 +40,9 @@ namespace Hep
 		Component_RegisterType(SpriteRendererComponent);
 		Component_RegisterType(RigidBody2DComponent);
 		Component_RegisterType(BoxCollider2DComponent);
+		Component_RegisterType(RigidBodyComponent);
+		Component_RegisterType(BoxColliderComponent);
+		Component_RegisterType(SphereColliderComponent);
 	}
 
 	void ScriptEngineRegistry::RegisterAll()
@@ -50,6 +53,9 @@ namespace Hep
 
 		mono_add_internal_call("Hep.Entity::GetTransform_Native", Hep::Script::Hep_Entity_GetTransform);
 		mono_add_internal_call("Hep.Entity::SetTransform_Native", Hep::Script::Hep_Entity_SetTransform);
+		mono_add_internal_call("Hep.Entity::GetForwardDirection_Native", Hep::Script::Hep_Entity_GetForwardDirection);
+		mono_add_internal_call("Hep.Entity::GetRightDirection_Native", Hep::Script::Hep_Entity_GetRightDirection);
+		mono_add_internal_call("Hep.Entity::GetUpDirection_Native", Hep::Script::Hep_Entity_GetUpDirection);
 		mono_add_internal_call("Hep.Entity::CreateComponent_Native", Hep::Script::Hep_Entity_CreateComponent);
 		mono_add_internal_call("Hep.Entity::HasComponent_Native", Hep::Script::Hep_Entity_HasComponent);
 		mono_add_internal_call("Hep.Entity::FindEntityByTag_Native", Hep::Script::Hep_Entity_FindEntityByTag);
@@ -63,6 +69,11 @@ namespace Hep
 			Hep::Script::Hep_RigidBody2DComponent_GetLinearVelocity);
 		mono_add_internal_call("Hep.RigidBody2DComponent::SetLinearVelocity_Native",
 			Hep::Script::Hep_RigidBody2DComponent_SetLinearVelocity);
+
+		mono_add_internal_call("Hep.RigidBodyComponent::AddForce_Native", Hep::Script::Hep_RigidBodyComponent_AddForce);
+		mono_add_internal_call("Hep.RigidBodyComponent::AddTorque_Native", Hep::Script::Hep_RigidBodyComponent_AddTorque);
+		mono_add_internal_call("Hep.RigidBodyComponent::GetLinearVelocity_Native", Hep::Script::Hep_RigidBodyComponent_GetLinearVelocity);
+		mono_add_internal_call("Hep.RigidBodyComponent::SetLinearVelocity_Native", Hep::Script::Hep_RigidBodyComponent_SetLinearVelocity);
 
 		mono_add_internal_call("Hep.Input::IsKeyPressed_Native", Hep::Script::Hep_Input_IsKeyPressed);
 

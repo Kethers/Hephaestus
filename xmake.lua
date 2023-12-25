@@ -12,6 +12,7 @@ if is_os("windows") then
 end
 
 if is_mode("debug") then
+	add_defines("_DEBUG")
 	add_defines("HEP_DEBUG")
 elseif is_mode("release") then
 	add_defines("HEP_RELEASE")

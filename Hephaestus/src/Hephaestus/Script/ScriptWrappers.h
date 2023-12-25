@@ -2,6 +2,7 @@
 
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Core/KeyCodes.h"
+#include "Hephaestus/Physics/Physics3D.h"
 
 #include <glm/glm.hpp>
 
@@ -22,6 +23,9 @@ namespace Hep::Script
 	// Entity
 	void Hep_Entity_GetTransform(uint64_t entityID, glm::mat4* outTransform);
 	void Hep_Entity_SetTransform(uint64_t entityID, glm::mat4* inTransform);
+	void Hep_Entity_GetForwardDirection(uint64_t entityID, glm::vec3* outForward);
+	void Hep_Entity_GetRightDirection(uint64_t entityID, glm::vec3* outRight);
+	void Hep_Entity_GetUpDirection(uint64_t entityID, glm::vec3* outUp);
 	void Hep_Entity_CreateComponent(uint64_t entityID, void* type);
 	bool Hep_Entity_HasComponent(uint64_t entityID, void* type);
 	uint64_t Hep_Entity_FindEntityByTag(MonoString* tag);
@@ -32,6 +36,11 @@ namespace Hep::Script
 	void Hep_RigidBody2DComponent_ApplyLinearImpulse(uint64_t entityID, glm::vec2* impulse, glm::vec2* offset, bool wake);
 	void Hep_RigidBody2DComponent_GetLinearVelocity(uint64_t entityID, glm::vec2* outVelocity);
 	void Hep_RigidBody2DComponent_SetLinearVelocity(uint64_t entityID, glm::vec2* velocity);
+
+	void Hep_RigidBodyComponent_AddForce(uint64_t entityID, glm::vec3* force, ForceMode foceMode);
+	void Hep_RigidBodyComponent_AddTorque(uint64_t entityID, glm::vec3* torque, ForceMode forceMode);
+	void Hep_RigidBodyComponent_GetLinearVelocity(uint64_t entityID, glm::vec3* outVelocity);
+	void Hep_RigidBodyComponent_SetLinearVelocity(uint64_t entityID, glm::vec3* velocity);
 
 	// Renderer
 	// Texture2D

@@ -3,6 +3,11 @@
 
 #include <assimp/matrix4x4.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 namespace Hep
 {
 	/*glm::mat4 Mat4::FromAssimpMat4(const aiMatrix4x4& matrix)
@@ -15,4 +20,14 @@ namespace Hep
 		result[0][3] = matrix.d1; result[1][3] = matrix.d2; result[2][3] = matrix.d3; result[3][3] = matrix.d4;
 		return result;
 	}*/
+
+	std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
+	{
+		glm::vec3 scale, translation, skew;
+		glm::vec4 perspective;
+		glm::quat orientation;
+		glm::decompose(transform, scale, orientation, translation, skew, perspective);
+
+		return { translation, orientation, scale };
+	}
 }

@@ -8,6 +8,7 @@
 
 #include <filesystem>
 
+#include "Hephaestus/Core/Math/Mat4.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
@@ -26,16 +27,6 @@ namespace Hep
 			ImGui::PopTextWrapPos();
 			ImGui::EndTooltip();
 		}
-	}
-
-	static std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
-	{
-		glm::vec3 scale, translation, skew;
-		glm::vec4 perspective;
-		glm::quat orientation;
-		glm::decompose(transform, scale, orientation, translation, skew, perspective);
-
-		return { translation, orientation, scale };
 	}
 
 	EditorLayer::EditorLayer()
@@ -104,12 +95,15 @@ namespace Hep
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(HEP_BIND_EVENT_FN(EditorLayer::SelectEntity));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(HEP_BIND_EVENT_FN(EditorLayer::OnEntityDeleted));
 		SceneSerializer serializer(m_EditorScene);
-		serializer.Deserialize("assets/scenes/levels/Physics2D-Game.hsc");
-		UpdateWindowTitle("Physics2D-Game");
+		std::filesystem::path filepath = "assets/scenes/Physics3DTest.hsc";
+		serializer.Deserialize(filepath.string());
+		UpdateWindowTitle(filepath.filename().string());
 	}
 
 	void EditorLayer::OnDetach()
-	{}
+	{
+		m_EditorScene->OnShutdown();
+	}
 
 	void EditorLayer::OnScenePlay()
 	{

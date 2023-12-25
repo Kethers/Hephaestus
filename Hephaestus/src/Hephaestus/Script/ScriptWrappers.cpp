@@ -2,11 +2,14 @@
 #include "ScriptWrappers.h"
 
 #include "Hephaestus/Core/Math/Noise.h"
+#include "Hephaestus/Core/Math/Mat4.h"
 
 #include "Hephaestus/Scene/Scene.h"
 #include "Hephaestus/Scene/Entity.h"
 #include "Hephaestus/Scene/Components.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Hephaestus/Core/Input.h"
@@ -92,6 +95,48 @@ namespace Hep::Script
 		Entity entity = entityMap.at(entityID);
 		MonoType* monoType = mono_reflection_type_get_type((MonoReflectionType*)type);
 		s_CreateComponentFuncs[monoType](entity);
+	}
+
+	void Hep_Entity_GetForwardDirection(uint64_t entityID, glm::vec3* outForward)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		auto& transformComponent = entity.GetComponent<TransformComponent>();
+
+		auto [position, rotation, scale] = GetTransformDecomposition(transformComponent.Transform);
+		*outForward = glm::rotate(glm::inverse(glm::normalize(rotation)), glm::vec3(0, 0, -1));
+	}
+
+	void Hep_Entity_GetRightDirection(uint64_t entityID, glm::vec3* outRight)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		auto& transformComponent = entity.GetComponent<TransformComponent>();
+
+		auto [position, rotation, scale] = GetTransformDecomposition(transformComponent.Transform);
+		*outRight = glm::rotate(glm::inverse(glm::normalize(rotation)), glm::vec3(1, 0, 0));
+	}
+
+	void Hep_Entity_GetUpDirection(uint64_t entityID, glm::vec3* outUp)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		auto& transformComponent = entity.GetComponent<TransformComponent>();
+
+		auto [position, rotation, scale] = GetTransformDecomposition(transformComponent.Transform);
+		*outUp = glm::rotate(glm::inverse(glm::normalize(rotation)), glm::vec3(0, 1, 0));
 	}
 
 	bool Hep_Entity_HasComponent(uint64_t entityID, void* type)
@@ -186,6 +231,95 @@ namespace Hep::Script
 		b2Body* body = (b2Body*)component.RuntimeBody;
 		HEP_CORE_ASSERT(velocity);
 		body->SetLinearVelocity({ velocity->x, velocity->y });
+	}
+
+	void Hep_RigidBodyComponent_AddForce(uint64_t entityID, glm::vec3* force, ForceMode forceMode)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
+		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+
+		// We don't want to assert since scripts might want to be able to switch
+		// between a static and dynamic actor at runtime
+		if (!dynamicActor)
+			return;
+
+		HEP_CORE_ASSERT(force);
+		dynamicActor->addForce({ force->x, force->y, force->z }, (physx::PxForceMode::Enum)forceMode);
+	}
+
+	void Hep_RigidBodyComponent_AddTorque(uint64_t entityID, glm::vec3* torque, ForceMode forceMode)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
+		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+
+		// We don't want to assert since scripts might want to be able to switch
+		// between a static and dynamic actor at runtime
+		if (!dynamicActor)
+			return;
+
+		HEP_CORE_ASSERT(torque);
+		dynamicActor->addTorque({ torque->x, torque->y, torque->z }, (physx::PxForceMode::Enum)forceMode);
+	}
+
+	void Hep_RigidBodyComponent_GetLinearVelocity(uint64_t entityID, glm::vec3* outVelocity)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
+		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+
+		// We don't want to assert since scripts might want to be able to switch
+		// between a static and dynamic actor at runtime
+		if (!dynamicActor)
+			return;
+
+		HEP_CORE_ASSERT(outVelocity);
+		physx::PxVec3 velocity = dynamicActor->getLinearVelocity();
+		*outVelocity = { velocity.x, velocity.y, velocity.z };
+	}
+
+	void Hep_RigidBodyComponent_SetLinearVelocity(uint64_t entityID, glm::vec3* velocity)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+		physx::PxRigidActor* actor = (physx::PxRigidActor*)component.RuntimeActor;
+		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+
+		// We don't want to assert since scripts might want to be able to switch
+		// between a static and dynamic actor at runtime
+		if (!dynamicActor)
+			return;
+
+		HEP_CORE_ASSERT(velocity);
+		dynamicActor->setLinearVelocity({ velocity->x, velocity->y, velocity->z });
 	}
 
 	Ref<Mesh>* Hep_Mesh_Constructor(MonoString* filepath)

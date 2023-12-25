@@ -9,6 +9,7 @@
 #include <imgui/imgui.h>
 
 #include "Hephaestus/Script/ScriptEngine.h"
+#include "Hephaestus/Physics/Physics3D.h"
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -27,10 +28,12 @@ namespace Hep
 		m_Window->SetEventCallback(HEP_BIND_EVENT_FN(Application::OnEvent));
 		m_Window->SetVSync(true);
 
+		m_LayerStack = new LayerStack();
 		m_ImGuiLayer = new ImGuiLayer("ImGui");
 		PushOverlay(m_ImGuiLayer);
 
 		ScriptEngine::Init("assets/scripts/ExampleApp.dll");
+		Physics3D::Init();
 
 		Renderer::Init();
 		Renderer::WaitAndRender();
@@ -38,18 +41,21 @@ namespace Hep
 
 	Application::~Application()
 	{
+		delete m_LayerStack;
+
+		Physics3D::Shutdown();
 		ScriptEngine::Shutdown();
 	}
 
 	void Application::PushLayer(Layer* layer)
 	{
-		m_LayerStack.PushLayer(layer);
+		m_LayerStack->PushLayer(layer);
 		layer->OnAttach();
 	}
 
 	void Application::PushOverlay(Layer* layer)
 	{
-		m_LayerStack.PushOverlay(layer);
+		m_LayerStack->PushOverlay(layer);
 		layer->OnAttach();
 	}
 
@@ -65,7 +71,7 @@ namespace Hep
 		ImGui::Text("Frame Time: %.2fms\n", m_TimeStep.GetMilliseconds());
 		ImGui::End();
 
-		for (Layer* layer : m_LayerStack)
+		for (Layer* layer : *m_LayerStack)
 			layer->OnImGuiRender();
 
 		m_ImGuiLayer->End();
@@ -78,7 +84,7 @@ namespace Hep
 		{
 			if (!m_Minimized)
 			{
-				for (Layer* layer : m_LayerStack)
+				for (Layer* layer : *m_LayerStack)
 					layer->OnUpdate(m_TimeStep);
 
 				// Render ImGui on render thread
@@ -102,7 +108,7 @@ namespace Hep
 		dispatcher.Dispatch<WindowResizeEvent>(HEP_BIND_EVENT_FN(Application::OnWindowResize));
 		dispatcher.Dispatch<WindowCloseEvent>(HEP_BIND_EVENT_FN(Application::OnWindowClose));
 
-		for (auto it = m_LayerStack.end(); it != m_LayerStack.begin();)
+		for (auto it = m_LayerStack->end(); it != m_LayerStack->begin();)
 		{
 			(*--it)->OnEvent(event);
 			if (event.Handled)

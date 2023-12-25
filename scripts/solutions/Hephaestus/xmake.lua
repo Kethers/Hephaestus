@@ -7,11 +7,12 @@ includes("../../../external/yaml-cpp")
 includes("../../../external/Box2D")
 add_repositories("glfw /external/GLFW", {rootdir = os.projectdir()})
 add_requires("glfw")
-if (is_mode("debug")) then
-	add_requires("assimp >= 5.2.4")
-else
-	add_requires("assimp >= 5.2.4")
-end
+-- TEMP: bug on 5.2.4 MTd, disable for, emm... now?
+-- if is_mode("debug") then
+-- 	add_requires("assimp >= 5.2.4", {configs = {debug = true, vs_runtime = "MTd"}} )
+-- else
+-- 	add_requires("assimp >= 5.2.4", {configs = {debug = false, vs_runtime = "MT"}} )
+-- end
 
 IncludeDir = {}
 IncludeDir["GLFW"] 		= "$(projectdir)/external/GLFW/include"
@@ -25,14 +26,31 @@ IncludeDir["FastNoise"] = "$(projectdir)/external/FastNoise"
 IncludeDir["mono"] 		= "$(projectdir)/external/mono/include"
 IncludeDir["yaml-cpp"] 	= "$(projectdir)/external/yaml-cpp/include"
 IncludeDir["Box2D"] 	= "$(projectdir)/external/Box2D/include"
+IncludeDir["PhysX"]		= "$(projectdir)/external/PhysX/include"
 
 LibraryDir = {}
-LibraryDir["mono"] = "$(projectdir)/external/mono/lib/Debug/mono-2.0-sgen.lib"
+LibraryDir["mono"] 							= "$(projectdir)/external/mono/lib/Debug/mono-2.0-sgen.lib"
+
+-- PhysX TODO: Release dir doesn't exist yet
+LibraryDir["PhysX_LowLevel"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/LowLevel.lib"
+LibraryDir["PhysX_LowLevelAABB"] 			= "$(projectdir)/external/PhysX/lib/$(mode)/LowLevelAABB.lib"
+LibraryDir["PhysX_LowLevelDynamics"] 		= "$(projectdir)/external/PhysX/lib/$(mode)/LowLevelDynamics.lib"
+LibraryDir["PhysX"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysX_static_64.lib"
+LibraryDir["PhysXCharacterKinematic"] 		= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCharacterKinematic_static_64.lib"
+LibraryDir["PhysXCommon"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCommon_static_64.lib"
+LibraryDir["PhysXCooking"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCooking_static_64.lib"
+LibraryDir["PhysXExtensions"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXExtensions_static_64.lib"
+LibraryDir["PhysXFoundation"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXFoundation_static_64.lib"
+LibraryDir["PhysXPvd"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXPvdSDK_static_64.lib"
+LibraryDir["PhysXTask"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXTask.lib"
+LibraryDir["PhysXVehicle"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXVehicle_static_64.lib"
+LibraryDir["PhysX_SceneQuery"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/SceneQuery.lib"
+LibraryDir["PhysX_SimulationController"] 	= "$(projectdir)/external/PhysX/lib/$(mode)/SimulationController.lib"
 
 BuildProject({
 	projectName = "Hephaestus",
 	projectType = "static",
-	macros = {"HEP_BUILD_DLL"},
+	macros = {"HEP_BUILD_DLL", "PX_PHYSX_STATIC_LIB"},
 	languages = {"clatest", "cxx20"},
 	depends = {"Glad", "ImGui", "yaml-cpp", "Box2D"},
 	files = {
@@ -60,11 +78,28 @@ BuildProject({
 		IncludeDir.mono,
 		IncludeDir["yaml-cpp"],
 		IncludeDir.Box2D,
+		IncludeDir.PhysX,
 	},
 	packages = {"glfw"},
 	debugLink = {},
 	releaseLink = {},
-	link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", LibraryDir.mono },
+	link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", 
+		LibraryDir.mono,
+		-- LibraryDir.PhysX_LowLevel,
+		-- LibraryDir.PhysX_LowLevelAABB,
+		-- LibraryDir.PhysX_LowLevelDynamics,
+		LibraryDir.PhysX,
+		LibraryDir.PhysXCharacterKinematic,
+		LibraryDir.PhysXCommon,
+		LibraryDir.PhysXCooking,
+		LibraryDir.PhysXExtensions,
+		LibraryDir.PhysXFoundation,
+		LibraryDir.PhysXPvd,
+		-- LibraryDir.PhysXTask,
+		-- LibraryDir.PhysXVehicle,
+		-- LibraryDir.PhysX_SceneQuery,
+		-- LibraryDir.PhysX_SimulationController
+	},
 	cxflags = {},
 	afterBuildFunc = nil,
 	enableException = true,
@@ -110,19 +145,19 @@ BuildProject({
 		IncludeDir.entt,
 	},
 	rundir = "$(projectdir)/Poseidon",
-	packages = {"assimp"},
-	debugLink = {},
-	releaseLink = {},
+	packages = {--[["assimp"]]},
+	debugLink = {"$(projectdir)/external/assimp/bin/Debug/assimp-vc143-mtd.lib"},
+	releaseLink = {"$(projectdir)/external/assimp/bin/Release/assimp-vc143-mt.lib"},
 	link = {"kernel32", "User32", "Gdi32", "Shell32"},
 	afterBuildFunc = function (target)
 		if is_plat("windows") then
-			src_path = ""
 			if (is_mode("debug")) then
-				src_path = "$(projectdir)/external/mono/bin/Debug/mono-2.0-sgen.dll"
+				os.cp("$(projectdir)/external/assimp/bin/Debug/assimp-vc143-mtd.dll", target:targetdir())
+				os.cp("$(projectdir)/external/mono/bin/Debug/mono-2.0-sgen.dll", target:targetdir())
 			else
-				src_path = "$(projectdir)/external/mono/bin/Release/mono-2.0-sgen.dll"
+				os.cp("$(projectdir)/external/assimp/bin/Release/assimp-vc143-mt.dll", target:targetdir())
+				os.cp("$(projectdir)/external/mono/bin/Release/mono-2.0-sgen.dll", target:targetdir())
 			end
-			os.cp(src_path, target:targetdir())
 		end
 	end,
 	enableException = true,

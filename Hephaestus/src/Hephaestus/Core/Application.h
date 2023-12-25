@@ -54,7 +54,7 @@ namespace Hep
 		std::unique_ptr<Window> m_Window;
 		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running = true, m_Minimized = false;
-		LayerStack m_LayerStack;
+		LayerStack* m_LayerStack;
 		Timestep m_TimeStep;
 		float m_LastFrameTime = 0.0f;
 
