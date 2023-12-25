@@ -104,7 +104,8 @@ namespace Hep
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(HEP_BIND_EVENT_FN(EditorLayer::SelectEntity));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(HEP_BIND_EVENT_FN(EditorLayer::OnEntityDeleted));
 		SceneSerializer serializer(m_EditorScene);
-		serializer.Deserialize("assets/scenes/Physics2DTest.hsc");
+		serializer.Deserialize("assets/scenes/levels/Physics2D-Game.hsc");
+		UpdateWindowTitle("Physics2D-Game");
 	}
 
 	void EditorLayer::OnDetach()

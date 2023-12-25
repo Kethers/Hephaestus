@@ -60,7 +60,7 @@ namespace Hep
 		geoFramebufferSpec.ClearColor = { 0.1f, 0.1f, 0.1f, 1.0f };
 
 		RenderPassSpecification geoRenderPassSpec;
-		geoRenderPassSpec.TargetFramebuffer = Hep::Framebuffer::Create(geoFramebufferSpec);
+		geoRenderPassSpec.TargetFramebuffer = Framebuffer::Create(geoFramebufferSpec);
 		s_Data.GeoPass = RenderPass::Create(geoRenderPassSpec);
 
 		FramebufferSpecification compFramebufferSpec;
@@ -70,7 +70,7 @@ namespace Hep
 		compFramebufferSpec.ClearColor = { 0.5f, 0.1f, 0.1f, 1.0f };
 
 		RenderPassSpecification compRenderPassSpec;
-		compRenderPassSpec.TargetFramebuffer = Hep::Framebuffer::Create(compFramebufferSpec);
+		compRenderPassSpec.TargetFramebuffer = Framebuffer::Create(compFramebufferSpec);
 		s_Data.CompositePass = RenderPass::Create(compRenderPassSpec);
 
 		s_Data.CompositeShader = Shader::Create("assets/shaders/SceneComposite.glsl");

@@ -5,8 +5,9 @@
 
 #include "Hephaestus/Core/Timestep.h"
 
-#include "Hephaestus/Renderer/VertexArray.h"
-#include "Hephaestus/Renderer/Buffer.h"
+#include "Hephaestus/Renderer/Pipeline.h"
+#include "Hephaestus/Renderer/IndexBuffer.h"
+#include "Hephaestus/Renderer/VertexBuffer.h"
 #include "Hephaestus/Renderer/Shader.h"
 #include "Hephaestus/Renderer/Material.h"
 
@@ -171,7 +172,9 @@ namespace Hep
 		uint32_t m_BoneCount = 0;
 		std::vector<BoneInfo> m_BoneInfo;
 
-		Ref<VertexArray> m_VertexArray;
+		Ref<Pipeline> m_Pipeline;
+		Ref<VertexBuffer> m_VertexBuffer;
+		Ref<IndexBuffer> m_IndexBuffer;
 
 		std::vector<Vertex> m_StaticVertices;
 		std::vector<AnimatedVertex> m_AnimatedVertices;
