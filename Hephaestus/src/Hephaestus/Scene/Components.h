@@ -130,10 +130,11 @@ namespace Hep
 
 	struct RigidBodyComponent
 	{
-		enum class Type { Static, Dynamic, Kinematic };
+		enum class Type { Static, Dynamic };
 
 		Type BodyType;
 		float Mass = 1.0F;
+		bool IsKinematic = false;
 
 		bool LockPositionX = false;
 		bool LockPositionY = false;
@@ -183,5 +184,18 @@ namespace Hep
 
 		CapsuleColliderComponent() = default;
 		CapsuleColliderComponent(const CapsuleColliderComponent& other) = default;
+	};
+
+	struct MeshColliderComponent
+	{
+		Ref<Hep::Mesh> CollisionMesh;
+
+		MeshColliderComponent() = default;
+		MeshColliderComponent(const MeshColliderComponent& other) = default;
+		MeshColliderComponent(const Ref<Hep::Mesh>& mesh)
+			: CollisionMesh(mesh)
+		{}
+
+		operator Ref<Hep::Mesh>() { return CollisionMesh; }
 	};
 }

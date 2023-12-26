@@ -53,12 +53,14 @@ namespace Hep
 
 		mono_add_internal_call("Hep.Entity::GetTransform_Native", Hep::Script::Hep_Entity_GetTransform);
 		mono_add_internal_call("Hep.Entity::SetTransform_Native", Hep::Script::Hep_Entity_SetTransform);
-		mono_add_internal_call("Hep.Entity::GetForwardDirection_Native", Hep::Script::Hep_Entity_GetForwardDirection);
-		mono_add_internal_call("Hep.Entity::GetRightDirection_Native", Hep::Script::Hep_Entity_GetRightDirection);
-		mono_add_internal_call("Hep.Entity::GetUpDirection_Native", Hep::Script::Hep_Entity_GetUpDirection);
 		mono_add_internal_call("Hep.Entity::CreateComponent_Native", Hep::Script::Hep_Entity_CreateComponent);
 		mono_add_internal_call("Hep.Entity::HasComponent_Native", Hep::Script::Hep_Entity_HasComponent);
 		mono_add_internal_call("Hep.Entity::FindEntityByTag_Native", Hep::Script::Hep_Entity_FindEntityByTag);
+
+		mono_add_internal_call("Hep.TransformComponent::GetTransform_Native", Hep::Script::Hep_Entity_GetTransform);
+		mono_add_internal_call("Hep.TransformComponent::SetTransform_Native", Hep::Script::Hep_Entity_SetTransform);
+		mono_add_internal_call("Hep.TransformComponent::GetRelativeDirection_Native",
+			Hep::Script::Hep_TransformComponent_GetRelativeDirection);
 
 		mono_add_internal_call("Hep.MeshComponent::GetMesh_Native", Hep::Script::Hep_MeshComponent_GetMesh);
 		mono_add_internal_call("Hep.MeshComponent::SetMesh_Native", Hep::Script::Hep_MeshComponent_SetMesh);

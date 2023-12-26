@@ -14,6 +14,8 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Hephaestus/Physics/Physics3D.h"
+
 namespace Hep
 {
 	static void ImGuiShowHelpMarker(const char* desc)
@@ -358,7 +360,12 @@ namespace Hep
 		SelectedSubmesh selection;
 		if (entity.HasComponent<MeshComponent>())
 		{
-			selection.Mesh = entity.GetComponent<MeshComponent>().Mesh->GetSubmeshes().data();
+			auto& meshComp = entity.GetComponent<MeshComponent>();
+
+			if (meshComp.Mesh)
+			{
+				selection.Mesh = meshComp.Mesh->GetSubmeshes().data();
+			}
 		}
 		selection.Entity = entity;
 		m_SelectionContext.clear();
@@ -691,6 +698,17 @@ namespace Hep
 				ImGui::MenuItem("Reload assembly on play", nullptr, &m_ReloadScriptOnPlay);
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Debug"))
+			{
+				if (ImGui::MenuItem("Connect To PVD"))
+				{
+					Physics3D::ConnectToPhysXDebugger();
+				}
+
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenuBar();
 		}
 

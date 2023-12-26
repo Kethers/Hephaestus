@@ -6,6 +6,31 @@ Environment:
     Radiance: [1, 1, 1]
     Multiplier: 0.514999986
 Entities:
+  - Entity: 11149966982516343187
+    TagComponent:
+      Tag: Mesh Collider
+    TransformComponent:
+      Position: [-6, 1, -0.00171399117]
+      Rotation: [1, 0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Sphere1m.fbx
+    RigidBodyComponent:
+      BodyType: 1
+      Mass: 0.100000001
+      Constraints:
+        LockPositionX: false
+        LockPositionY: false
+        LockPositionZ: false
+        LockRotationX: false
+        LockRotationY: false
+        LockRotationZ: false
+    PhysicsMaterialComponent:
+      StaticFriction: 1
+      DynamicFriction: 1
+      Bounciness: 0.100000001
+    MeshColliderComponent:
+      AssetPath: assets\meshes\Sphere1m.fbx
   - Entity: 10169503531257462571
     TagComponent:
       Tag: Box
@@ -18,6 +43,13 @@ Entities:
     RigidBodyComponent:
       BodyType: 1
       Mass: 0.5
+      Constraints:
+        LockPositionX: false
+        LockPositionY: false
+        LockPositionZ: false
+        LockRotationX: false
+        LockRotationY: false
+        LockRotationZ: false
     PhysicsMaterialComponent:
       StaticFriction: 1
       DynamicFriction: 1
@@ -49,10 +81,17 @@ Entities:
     RigidBodyComponent:
       BodyType: 1
       Mass: 1
+      Constraints:
+        LockPositionX: false
+        LockPositionY: false
+        LockPositionZ: false
+        LockRotationX: true
+        LockRotationY: true
+        LockRotationZ: true
     PhysicsMaterialComponent:
-      StaticFriction: 1
-      DynamicFriction: 1
-      Bounciness: 0
+      StaticFriction: 0.100000001
+      DynamicFriction: 0.100000001
+      Bounciness: 0.100000001
     SphereColliderComponent:
       Radius: 0.5
   - Entity: 5178862374589434728
@@ -70,7 +109,7 @@ Entities:
           Data: 12
         - Name: DistanceFromPlayer
           Type: 1
-          Data: 15
+          Data: 10
     CameraComponent:
       Camera: some camera data...
       Primary: true
@@ -86,6 +125,13 @@ Entities:
     RigidBodyComponent:
       BodyType: 0
       Mass: 1
+      Constraints:
+        LockPositionX: false
+        LockPositionY: false
+        LockPositionZ: false
+        LockRotationX: false
+        LockRotationY: false
+        LockRotationZ: false
     PhysicsMaterialComponent:
       StaticFriction: 1
       DynamicFriction: 1

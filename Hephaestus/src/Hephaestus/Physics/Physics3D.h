@@ -3,7 +3,21 @@
 #include "Hephaestus/Core/Base.h"
 #include "Hephaestus/Scene/Components.h"
 
-#include <PhysX/PxPhysicsAPI.h>
+namespace physx
+{
+	class PxSceneDesc;
+	class PxScene;
+	class PxRigidActor;
+	class PxMaterial;
+	class PxConvexMesh;
+	class PxTransform;
+	class PxDefaultErrorCallback;
+	class PxDefaultAllocator;
+	class PxFoundation;
+	class PxPhysics;
+	class PxPvd;
+	class PxCooking;
+}
 
 namespace Hep
 {
@@ -34,10 +48,15 @@ namespace Hep
 		static physx::PxRigidActor* CreateAndAddActor(physx::PxScene* scene, const RigidBodyComponent& rigidbody,
 			const glm::mat4& transform);
 		static physx::PxMaterial* CreateMaterial(float staticFriction, float dynamicFriction, float restitution);
+		//static physx::PxTriangleMesh* CreateMeshCollider(const Ref<Mesh>& mesh);
+		static physx::PxConvexMesh* CreateMeshCollider(const Ref<Mesh>& mesh);
 
 		static physx::PxTransform CreatePose(const glm::mat4& transform);
 
 		static void SetCollisionFilters(physx::PxRigidActor* actor, uint32_t filterGroup, uint32_t filterMask);
+
+		static void ConnectToPhysXDebugger();
+		static void DisconnectFromPhysXDebugger();
 
 	private:
 		static physx::PxDefaultErrorCallback s_PXErrorCallback;
@@ -45,5 +64,6 @@ namespace Hep
 		static physx::PxFoundation* s_PXFoundation;
 		static physx::PxPhysics* s_PXPhysicsFactory;
 		static physx::PxPvd* s_PXPvd;
+		static physx::PxCooking* s_PXCookingFactory;
 	};
 }

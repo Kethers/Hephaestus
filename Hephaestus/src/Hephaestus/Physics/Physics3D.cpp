@@ -1,20 +1,78 @@
 ﻿#include "heppch.h"
 #include "Physics3D.h"
+#include "Hephaestus/Script/ScriptEngine.h"
+
 #include <glm/glm.hpp>
 
 #include <Hephaestus/Core/Math/Mat4.h>
 
-#define PHYSX_DEBUGGER 1
+#include <PhysX/PxPhysicsAPI.h>
+
+#ifdef HEP_DEBUG
+	#define PHYSX_DEBUGGER 1
+#endif
 
 namespace Hep
 {
-	// TODO: Kinematic Actors
-	// TODO: Rotation/Position Locking
-	// TODO: Collision "layers"
-	// TODO: Expose more of the API to scripts
-	// TODO: Connect/Disconnect PVD
-	// TODO: Collider Shape Rendering
-	// TODO: Relative Transformations for scripts
+	class PhysXContactListener : public physx::PxSimulationEventCallback
+	{
+	public:
+		void onConstraintBreak(physx::PxConstraintInfo* constraints, physx::PxU32 count) override
+		{
+			PX_UNUSED(constraints);
+			PX_UNUSED(count);
+		}
+
+		void onWake(physx::PxActor** actors, physx::PxU32 count) override
+		{
+			PX_UNUSED(actors);
+			PX_UNUSED(count);
+		}
+
+		void onSleep(physx::PxActor** actors, physx::PxU32 count) override
+		{
+			PX_UNUSED(actors);
+			PX_UNUSED(count);
+		}
+
+		void onContact(const physx::PxContactPairHeader& pairHeader, const physx::PxContactPair* pairs, physx::PxU32 nbPairs) override
+		{
+			Entity& a = *(Entity*)pairHeader.actors[0]->userData;
+			Entity& b = *(Entity*)pairHeader.actors[1]->userData;
+
+			if (pairs->flags == physx::PxContactPairFlag::eACTOR_PAIR_HAS_FIRST_TOUCH)
+			{
+				if (a.HasComponent<ScriptComponent>() && ScriptEngine::ModuleExists(a.GetComponent<ScriptComponent>().ModuleName))
+					ScriptEngine::OnCollisionBegin(a);
+
+				if (b.HasComponent<ScriptComponent>() && ScriptEngine::ModuleExists(b.GetComponent<ScriptComponent>().ModuleName))
+					ScriptEngine::OnCollisionBegin(b);
+			}
+			else if (pairs->flags == physx::PxContactPairFlag::eACTOR_PAIR_LOST_TOUCH)
+			{
+				if (a.HasComponent<ScriptComponent>() && ScriptEngine::ModuleExists(a.GetComponent<ScriptComponent>().ModuleName))
+					ScriptEngine::OnCollisionEnd(a);
+
+				if (b.HasComponent<ScriptComponent>() && ScriptEngine::ModuleExists(b.GetComponent<ScriptComponent>().ModuleName))
+					ScriptEngine::OnCollisionEnd(b);
+			}
+		}
+
+		void onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count) override
+		{
+			PX_UNUSED(pairs);
+			PX_UNUSED(count);
+		}
+
+		void onAdvance(const physx::PxRigidBody* const* bodyBuffer, const physx::PxTransform* poseBuffer, const physx::PxU32 count) override
+		{
+			PX_UNUSED(bodyBuffer);
+			PX_UNUSED(poseBuffer);
+			PX_UNUSED(count);
+		}
+	};
+
+	static PhysXContactListener s_PhysXContactListener;
 
 	static physx::PxSimulationFilterShader s_DefaultFilterShader = physx::PxDefaultSimulationFilterShader;
 
@@ -48,15 +106,20 @@ namespace Hep
 
 #if PHYSX_DEBUGGER
 		s_PXPvd = PxCreatePvd(*s_PXFoundation);
-		physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("localhost", 5425, 10);
-		s_PXPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
+		ConnectToPhysXDebugger();
 #endif
+
 		s_PXPhysicsFactory = PxCreatePhysics(PX_PHYSICS_VERSION, *s_PXFoundation, physx::PxTolerancesScale(), true, s_PXPvd);
 		HEP_CORE_ASSERT(s_PXPhysicsFactory, "PxCreatePhysics Failed!");
+
+		s_PXCookingFactory = PxCreateCooking(PX_PHYSICS_VERSION, *s_PXFoundation, s_PXPhysicsFactory->getTolerancesScale());
+		HEP_CORE_ASSERT(s_PXCookingFactory, "PxCreatePhysics Failed!");
 	}
 
 	void Physics3D::Shutdown()
 	{
+		DisconnectFromPhysXDebugger();
+
 		s_PXPhysicsFactory->release();
 		s_PXFoundation->release();
 	}
@@ -64,16 +127,13 @@ namespace Hep
 	physx::PxSceneDesc Physics3D::CreateSceneDesc()
 	{
 		physx::PxSceneDesc sceneDesc(s_PXPhysicsFactory->getTolerancesScale());
-		if (!sceneDesc.cpuDispatcher)
-		{
-			physx::PxDefaultCpuDispatcher* mCpuDispatcher = physx::PxDefaultCpuDispatcherCreate(1);
-			if (!mCpuDispatcher)
-				HEP_CORE_ASSERT(false);
-			sceneDesc.cpuDispatcher = mCpuDispatcher;
-		}
 
-		if (!sceneDesc.filterShader)
-			sceneDesc.filterShader = HepFilterShader;
+		physx::PxDefaultCpuDispatcher* mCpuDispatcher = physx::PxDefaultCpuDispatcherCreate(1);
+		if (!mCpuDispatcher)
+			HEP_CORE_ASSERT(false);
+		sceneDesc.cpuDispatcher = mCpuDispatcher;
+		sceneDesc.filterShader = HepFilterShader;
+		sceneDesc.simulationEventCallback = &s_PhysXContactListener;
 
 		return sceneDesc;
 	}
@@ -95,7 +155,8 @@ namespace Hep
 		else if (rigidbody.BodyType == RigidBodyComponent::Type::Dynamic)
 		{
 			physx::PxRigidDynamic* dynamicActor = s_PXPhysicsFactory->createRigidDynamic(CreatePose(transform));
-			physx::PxRigidBodyExt::updateMassAndInertia(*dynamicActor, rigidbody.Mass);
+
+			dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, rigidbody.IsKinematic);
 
 			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_X, rigidbody.LockPositionX);
 			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Y, rigidbody.LockPositionY);
@@ -104,6 +165,7 @@ namespace Hep
 			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y, rigidbody.LockRotationY);
 			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, rigidbody.LockRotationZ);
 
+			physx::PxRigidBodyExt::updateMassAndInertia(*dynamicActor, rigidbody.Mass);
 			actor = dynamicActor;
 		}
 
@@ -116,6 +178,52 @@ namespace Hep
 	{
 		return s_PXPhysicsFactory->createMaterial(staticFriction, dynamicFriction, restitution);
 	}
+
+	physx::PxConvexMesh* Physics3D::CreateMeshCollider(const Ref<Mesh>& mesh)
+	{
+		// TODO: Possibly take a look at https://github.com/kmammou/v-hacd for computing convex meshes from triangle meshes...
+
+		const auto& vertices = mesh->GetStaticVertices();
+		const auto& indices = mesh->GetIndices();
+
+		physx::PxConvexMeshDesc convexDesc;
+		convexDesc.points.count = vertices.size();
+		convexDesc.points.stride = sizeof(Vertex);
+		convexDesc.points.data = vertices.data();
+		convexDesc.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX;
+
+		physx::PxDefaultMemoryOutputStream buf;
+		physx::PxConvexMeshCookingResult::Enum result;
+		if (!s_PXCookingFactory->cookConvexMesh(convexDesc, buf, &result))
+			return nullptr;
+
+		physx::PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
+		return s_PXPhysicsFactory->createConvexMesh(input);
+	}
+
+	/*physx::PxTriangleMesh* Physics3D::CreateMeshCollider(const Ref<Mesh>& mesh)
+	{
+		const auto& vertices = mesh->GetStaticVertices();
+		const auto& indices = mesh->GetIndices();
+
+		physx::PxTriangleMeshDesc meshDesc;
+		meshDesc.points.count = vertices.size();
+		meshDesc.points.stride = sizeof(Vertex);
+		meshDesc.points.data = vertices.data();
+
+		meshDesc.triangles.count = indices.size();
+		meshDesc.triangles.stride = sizeof(Index);
+		meshDesc.triangles.data = indices.data();
+
+		physx::PxDefaultMemoryOutputStream writeBuffer;
+		physx::PxTriangleMeshCookingResult::Enum result;
+		bool status = s_PXCookingFactory->cookTriangleMesh(meshDesc, writeBuffer, &result);
+		if (!status)
+			return nullptr;
+
+		physx::PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+		return s_PXPhysicsFactory->createTriangleMesh(readBuffer);
+	}*/
 
 	physx::PxTransform Physics3D::CreatePose(const glm::mat4& transform)
 	{
@@ -144,9 +252,26 @@ namespace Hep
 		s_PXAllocator.deallocate(shapes);
 	}
 
+	void Physics3D::ConnectToPhysXDebugger()
+	{
+	#if PHYSX_DEBUGGER
+		physx::PxPvdTransport* transport = physx::PxDefaultPvdSocketTransportCreate("localhost", 5425, 10);
+		s_PXPvd->connect(*transport, physx::PxPvdInstrumentationFlag::eALL);
+	#endif
+	}
+
+	void Physics3D::DisconnectFromPhysXDebugger()
+	{
+	#if PHYSX_DEBUGGER
+		if (s_PXPvd->isConnected(false))
+			s_PXPvd->disconnect();
+	#endif
+	}
+
 	physx::PxDefaultErrorCallback Physics3D::s_PXErrorCallback;
 	physx::PxDefaultAllocator Physics3D::s_PXAllocator;
 	physx::PxFoundation* Physics3D::s_PXFoundation;
 	physx::PxPhysics* Physics3D::s_PXPhysicsFactory;
 	physx::PxPvd* Physics3D::s_PXPvd;
+	physx::PxCooking* Physics3D::s_PXCookingFactory;
 }

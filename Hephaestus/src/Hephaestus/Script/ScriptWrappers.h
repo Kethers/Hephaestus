@@ -23,12 +23,11 @@ namespace Hep::Script
 	// Entity
 	void Hep_Entity_GetTransform(uint64_t entityID, glm::mat4* outTransform);
 	void Hep_Entity_SetTransform(uint64_t entityID, glm::mat4* inTransform);
-	void Hep_Entity_GetForwardDirection(uint64_t entityID, glm::vec3* outForward);
-	void Hep_Entity_GetRightDirection(uint64_t entityID, glm::vec3* outRight);
-	void Hep_Entity_GetUpDirection(uint64_t entityID, glm::vec3* outUp);
 	void Hep_Entity_CreateComponent(uint64_t entityID, void* type);
 	bool Hep_Entity_HasComponent(uint64_t entityID, void* type);
 	uint64_t Hep_Entity_FindEntityByTag(MonoString* tag);
+
+	void Hep_TransformComponent_GetRelativeDirection(uint64_t entityID, glm::vec3* outDirection, glm::vec3* inAbsoluteDirection);
 
 	void* Hep_MeshComponent_GetMesh(uint64_t entityID);
 	void Hep_MeshComponent_SetMesh(uint64_t entityID, Ref<Mesh>* inMesh);
