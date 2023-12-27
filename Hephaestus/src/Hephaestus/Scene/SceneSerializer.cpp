@@ -633,12 +633,12 @@ namespace Hep
 					component.Mass = rigidBodyComponent["Mass"].as<float>();
 					component.IsKinematic = rigidBodyComponent["IsKinematic"] ? rigidBodyComponent["IsKinematic"].as<bool>() : false;
 
-					component.LockPositionX = rigidBodyComponent["LockPositionX"] ? rigidBodyComponent["LockPositionX"].as<bool>() : false;
-					component.LockPositionY = rigidBodyComponent["LockPositionY"] ? rigidBodyComponent["LockPositionY"].as<bool>() : false;
-					component.LockPositionZ = rigidBodyComponent["LockPositionZ"] ? rigidBodyComponent["LockPositionZ"].as<bool>() : false;
-					component.LockRotationX = rigidBodyComponent["LockRotationX"] ? rigidBodyComponent["LockRotationX"].as<bool>() : false;
-					component.LockRotationY = rigidBodyComponent["LockRotationY"] ? rigidBodyComponent["LockRotationY"].as<bool>() : false;
-					component.LockRotationZ = rigidBodyComponent["LockRotationZ"] ? rigidBodyComponent["LockRotationZ"].as<bool>() : false;
+					component.LockPositionX = rigidBodyComponent["Constraints"]["LockPositionX"].as<bool>();
+					component.LockPositionY = rigidBodyComponent["Constraints"]["LockPositionY"].as<bool>();
+					component.LockPositionZ = rigidBodyComponent["Constraints"]["LockPositionZ"].as<bool>();
+					component.LockRotationX = rigidBodyComponent["Constraints"]["LockRotationX"].as<bool>();
+					component.LockRotationY = rigidBodyComponent["Constraints"]["LockRotationY"].as<bool>();
+					component.LockRotationZ = rigidBodyComponent["Constraints"]["LockRotationZ"].as<bool>();
 				}
 
 				auto physicsMaterialComponent = entity["PhysicsMaterialComponent"];

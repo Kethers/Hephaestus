@@ -428,6 +428,11 @@ namespace Hep
 		}
 	}
 
+	bool ScriptEngine::IsEntityModuleValid(Entity entity)
+	{
+		return entity.HasComponent<ScriptComponent>() && ModuleExists(entity.GetComponent<ScriptComponent>().ModuleName);
+	}
+
 	void ScriptEngine::OnScriptComponentDestroyed(UUID sceneID, UUID entityID)
 	{
 		HEP_CORE_ASSERT(s_EntityInstanceMap.contains(sceneID));

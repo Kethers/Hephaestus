@@ -1,23 +1,7 @@
 ﻿#pragma once
 
 #include "Hephaestus/Core/Base.h"
-#include "Hephaestus/Scene/Components.h"
-
-namespace physx
-{
-	class PxSceneDesc;
-	class PxScene;
-	class PxRigidActor;
-	class PxMaterial;
-	class PxConvexMesh;
-	class PxTransform;
-	class PxDefaultErrorCallback;
-	class PxDefaultAllocator;
-	class PxFoundation;
-	class PxPhysics;
-	class PxPvd;
-	class PxCooking;
-}
+#include "Hephaestus/Scene/Entity.h"
 
 namespace Hep
 {
@@ -37,33 +21,25 @@ namespace Hep
 		All       = Static | Dynamic | Kinematic
 	};
 
+	struct SceneParams
+	{
+		glm::vec3 Gravity = { 0.0f, -9.81f, 0.0f };
+	};
+
 	class Physics3D
 	{
 	public:
 		static void Init();
 		static void Shutdown();
 
-		static physx::PxSceneDesc CreateSceneDesc();
-		static physx::PxScene* CreateScene(const physx::PxSceneDesc& sceneDesc);
-		static physx::PxRigidActor* CreateAndAddActor(physx::PxScene* scene, const RigidBodyComponent& rigidbody,
-			const glm::mat4& transform);
-		static physx::PxMaterial* CreateMaterial(float staticFriction, float dynamicFriction, float restitution);
-		//static physx::PxTriangleMesh* CreateMeshCollider(const Ref<Mesh>& mesh);
-		static physx::PxConvexMesh* CreateMeshCollider(const Ref<Mesh>& mesh);
+		static void CreateScene(const SceneParams& params);
+		static void CreateActor(Entity e, int entityCount);
 
-		static physx::PxTransform CreatePose(const glm::mat4& transform);
+		static void Simulate();
 
-		static void SetCollisionFilters(physx::PxRigidActor* actor, uint32_t filterGroup, uint32_t filterMask);
+		static void DestroyScene();
 
-		static void ConnectToPhysXDebugger();
-		static void DisconnectFromPhysXDebugger();
-
-	private:
-		static physx::PxDefaultErrorCallback s_PXErrorCallback;
-		static physx::PxDefaultAllocator s_PXAllocator;
-		static physx::PxFoundation* s_PXFoundation;
-		static physx::PxPhysics* s_PXPhysicsFactory;
-		static physx::PxPvd* s_PXPvd;
-		static physx::PxCooking* s_PXCookingFactory;
+		static void ConnectVisualDebugger();
+		static void DisconnectVisualDebugger();
 	};
 }

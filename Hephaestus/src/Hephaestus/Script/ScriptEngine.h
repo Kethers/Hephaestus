@@ -132,6 +132,8 @@ namespace Hep
 		static void OnCollisionEnd(Entity entity);
 		static void OnCollisionEnd(UUID sceneID, UUID entityID);
 
+		static bool IsEntityModuleValid(Entity entity);
+
 		static void OnScriptComponentDestroyed(UUID sceneID, UUID entityID);
 
 		static bool ModuleExists(const std::string& moduleName);

@@ -20,15 +20,10 @@
 
 // PhysX
 #include "Hephaestus/Physics/Physics3D.h"
-#include <PhysX/PxPhysicsAPI.h>
 
 namespace Hep
 {
 	static const std::string DefaultEntityName = "Entity";
-
-	static physx::PxDefaultErrorCallback s_PXErrorCallback;
-	static physx::PxDefaultAllocator s_PXAllocator;
-	static physx::PxFoundation* s_PXFoundation;
 
 	std::unordered_map<UUID, Scene*> s_ActiveScenes;
 
@@ -104,12 +99,6 @@ namespace Hep
 		std::unique_ptr<b2World> World;
 	};
 
-	struct PhysXSceneComponent
-	{
-		// NOTE: PhysX does some internal ref counting, and thus doesn't allow unique_ptr
-		physx::PxScene* World;
-	};
-
 	static void OnScriptComponentConstruct(entt::registry& registry, entt::entity entity)
 	{
 		auto sceneView = registry.view<SceneComponent>();
@@ -133,7 +122,7 @@ namespace Hep
 		ScriptEngine::OnScriptComponentDestroyed(sceneID, entityID);
 	}
 
-	Scene::Scene(const std::string& debugName)
+	Scene::Scene(const std::string& debugName, bool isEditorScene)
 		: m_DebugName(debugName)
 	{
 		m_Registry.on_construct<ScriptComponent>().connect<&OnScriptComponentConstruct>();
@@ -148,11 +137,12 @@ namespace Hep
 
 		s_ActiveScenes[m_SceneID] = this;
 
-		physx::PxSceneDesc sceneDesc = Physics3D::CreateSceneDesc();
-		sceneDesc.gravity = physx::PxVec3(0.0F, -9.8F, 0.0F);
-
-		PhysXSceneComponent& physxWorld = m_Registry.emplace<PhysXSceneComponent>(m_SceneEntity, Physics3D::CreateScene(sceneDesc));
-		HEP_CORE_ASSERT(physxWorld.World);
+		if (!isEditorScene)
+		{
+			SceneParams sceneDesc;
+			sceneDesc.Gravity = glm::vec3(0.0F, -9.81F, 0.0F);
+			Physics3D::CreateScene(sceneDesc);
+		}
 
 		Init();
 	}
@@ -171,12 +161,6 @@ namespace Hep
 		auto skyboxShader = Shader::Create("assets/shaders/Skybox.glsl");
 		m_SkyboxMaterial = MaterialInstance::Create(Material::Create(skyboxShader));
 		m_SkyboxMaterial->SetFlag(MaterialFlag::DepthTest, false);
-	}
-
-	void Scene::OnShutdown()
-	{
-		auto physxView = m_Registry.view<PhysXSceneComponent>();
-		m_Registry.get<PhysXSceneComponent>(m_SceneEntity).World->release();
 	}
 
 	// Merge OnUpdate/Render into one function?
@@ -222,48 +206,7 @@ namespace Hep
 			}
 		}
 
-		// PhysX Physics
-		auto physxView = m_Registry.view<PhysXSceneComponent>();
-		physx::PxScene* physxScene = m_Registry.get<PhysXSceneComponent>(physxView.front()).World;
-		constexpr float stepSize = 0.016666660f;
-		physxScene->simulate(stepSize);
-		physxScene->fetchResults(true);
-
-		{
-			auto view = m_Registry.view<RigidBodyComponent>();
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				auto& transform = e.Transform();
-				RigidBodyComponent& rb = e.GetComponent<RigidBodyComponent>();
-				physx::PxRigidActor* actor = static_cast<physx::PxRigidActor*>(rb.RuntimeActor);
-				auto&& position = actor->getGlobalPose().p;
-				physx::PxQuat&& physicsBodyRotation = actor->getGlobalPose().q;
-
-				auto [translation, rotationQuat, scale] = GetTransformDecomposition(transform);
-				glm::vec3 rotation = glm::eulerAngles(rotationQuat);
-
-				if (rb.BodyType == RigidBodyComponent::Type::Dynamic)
-				{
-					// If the rigidbody is dynamic, the position of the entity is determined by the rigidbody
-					// TODO: Get rotation from RigidActor
-					float xAngle, yAngle, zAngle;
-					physx::PxVec3 axis;
-					physicsBodyRotation.toRadiansAndUnitAxis(xAngle, axis);
-					physicsBodyRotation.toRadiansAndUnitAxis(yAngle, axis);
-					physicsBodyRotation.toRadiansAndUnitAxis(zAngle, axis);
-
-					transform = glm::translate(glm::mat4(1.0f), { position.x, position.y, position.z }) *
-						glm::toMat4(glm::quat({ xAngle, yAngle, zAngle })) *
-						glm::scale(glm::mat4(1.0f), scale);
-				}
-				else if (rb.BodyType == RigidBodyComponent::Type::Static)
-				{
-					// If the rigidbody is static, make sure the actor is at the entitys position
-					actor->setGlobalPose(Physics3D::CreatePose(transform));
-				}
-			}
-		}
+		Physics3D::Simulate();
 	}
 
 	void Scene::OnRenderRuntime(Timestep ts)
@@ -464,146 +407,13 @@ namespace Hep
 			}
 		}
 
-		auto physxView = m_Registry.view<PhysXSceneComponent>();
-		physx::PxScene* physxWorld = m_Registry.get<PhysXSceneComponent>(physxView.front()).World;
-
 		{
 			auto view = m_Registry.view<RigidBodyComponent>();
-			m_Physics3DBodyEntityBuffer = new Entity[view.size()];
-			uint32_t physicsBodyEntityBufferIndex = 0;
 
 			for (auto entity : view)
 			{
 				Entity e = { entity, this };
-				UUID entityID = e.GetComponent<IDComponent>().ID;
-				auto& transform = e.Transform();
-				auto& rigidbody = m_Registry.get<RigidBodyComponent>(entity);
-
-				physx::PxRigidActor* actor = Physics3D::CreateAndAddActor(physxWorld, rigidbody, transform);
-				HEP_CORE_ASSERT(actor);
-
-				Entity* entityStorage = &m_Physics3DBodyEntityBuffer[physicsBodyEntityBufferIndex++];
-				*entityStorage = e;
-				actor->userData = (void*)entityStorage;
-
-				rigidbody.RuntimeActor = actor;
-			}
-		}
-
-		{
-			auto view = m_Registry.view<BoxColliderComponent>();
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				auto& transform = e.Transform();
-
-				auto& boxCollider = m_Registry.get<BoxColliderComponent>(entity);
-				if (e.HasComponent<RigidBodyComponent>())
-				{
-					auto& rigidBody = e.GetComponent<RigidBodyComponent>();
-					auto& physicsMaterial = e.GetComponent<PhysicsMaterialComponent>();
-					HEP_CORE_ASSERT(rigidBody.RuntimeActor);
-					physx::PxRigidActor* actor = static_cast<physx::PxRigidActor*>(rigidBody.RuntimeActor);
-
-					physx::PxBoxGeometry boxGeometry = physx::PxBoxGeometry(boxCollider.Size.x / 2.0F, boxCollider.Size.y / 2.0F,
-						boxCollider.Size.z / 2.0F);
-					physx::PxMaterial* material = Physics3D::CreateMaterial(physicsMaterial.StaticFriction, physicsMaterial.DynamicFriction,
-						physicsMaterial.Bounciness);
-					physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor, boxGeometry, *material);
-					shape->setLocalPose(Physics3D::CreatePose(glm::translate(glm::mat4(1.0F), boxCollider.Offset)));
-				}
-			}
-		}
-
-		{
-			auto view = m_Registry.view<SphereColliderComponent>();
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				auto& transform = e.Transform();
-
-				auto& sphereCollider = m_Registry.get<SphereColliderComponent>(entity);
-				if (e.HasComponent<RigidBodyComponent>())
-				{
-					auto& rigidBody = e.GetComponent<RigidBodyComponent>();
-					auto& physicsMaterial = e.GetComponent<PhysicsMaterialComponent>();
-					HEP_CORE_ASSERT(rigidBody.RuntimeActor);
-					physx::PxRigidActor* actor = static_cast<physx::PxRigidActor*>(rigidBody.RuntimeActor);
-					physx::PxSphereGeometry sphereGeometry = physx::PxSphereGeometry(sphereCollider.Radius);
-					physx::PxMaterial* material = Physics3D::CreateMaterial(physicsMaterial.StaticFriction, physicsMaterial.DynamicFriction,
-						physicsMaterial.Bounciness);
-					physx::PxRigidActorExt::createExclusiveShape(*actor, sphereGeometry, *material);
-				}
-			}
-		}
-
-		{
-			auto view = m_Registry.view<CapsuleColliderComponent>();
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				auto& transform = e.Transform();
-
-				auto& capsuleCollider = m_Registry.get<CapsuleColliderComponent>(entity);
-				if (e.HasComponent<RigidBodyComponent>())
-				{
-					auto& rigidBody = e.GetComponent<RigidBodyComponent>();
-					auto& physicsMaterial = e.GetComponent<PhysicsMaterialComponent>();
-					HEP_CORE_ASSERT(rigidBody.RuntimeActor);
-					physx::PxRigidActor* actor = static_cast<physx::PxRigidActor*>(rigidBody.RuntimeActor);
-					physx::PxCapsuleGeometry capsuleGeometry = physx::PxCapsuleGeometry(capsuleCollider.Radius,
-						capsuleCollider.Height / 2.0F);
-					physx::PxMaterial* material = Physics3D::CreateMaterial(physicsMaterial.StaticFriction, physicsMaterial.DynamicFriction,
-						physicsMaterial.Bounciness);
-					physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor, capsuleGeometry, *material);
-
-					// Make sure that the capsule is facing up (+Y)
-					shape->setLocalPose(physx::PxTransform(physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0, 0, 1))));
-				}
-			}
-		}
-
-		{
-			auto view = m_Registry.view<MeshColliderComponent>();
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				auto& transform = e.Transform();
-
-				auto& meshCollider = m_Registry.get<MeshColliderComponent>(entity);
-				if (e.HasComponent<RigidBodyComponent>())
-				{
-					auto& rigidBody = e.GetComponent<RigidBodyComponent>();
-					auto& physicsMaterial = e.GetComponent<PhysicsMaterialComponent>();
-					HEP_CORE_ASSERT(rigidBody.RuntimeActor);
-					physx::PxRigidActor* actor = static_cast<physx::PxRigidActor*>(rigidBody.RuntimeActor);
-
-					physx::PxConvexMesh* triangleMesh = Physics3D::CreateMeshCollider(meshCollider);
-					HEP_CORE_ASSERT(triangleMesh);
-
-					physx::PxConvexMeshGeometry triangleGeometry = physx::PxConvexMeshGeometry(triangleMesh);
-					triangleGeometry.meshFlags = physx::PxConvexMeshGeometryFlag::eTIGHT_BOUNDS;
-					physx::PxMaterial* material = Physics3D::CreateMaterial(physicsMaterial.StaticFriction, physicsMaterial.DynamicFriction,
-						physicsMaterial.Bounciness);
-					physx::PxRigidActorExt::createExclusiveShape(*actor, triangleGeometry, *material);
-				}
-			}
-		}
-
-		// Setup Collision Filters
-		{
-			auto view = m_Registry.view<RigidBodyComponent>();
-			for (auto entity : view)
-			{
-				Entity e = { entity, this };
-				auto& rigidBody = e.GetComponent<RigidBodyComponent>();
-				HEP_CORE_ASSERT(rigidBody.RuntimeActor);
-				physx::PxRigidActor* actor = static_cast<physx::PxRigidActor*>(rigidBody.RuntimeActor);
-
-				if (rigidBody.BodyType == RigidBodyComponent::Type::Static)
-					Physics3D::SetCollisionFilters(actor, (uint32_t)FilterGroup::Static, (uint32_t)FilterGroup::All);
-				else if (rigidBody.BodyType == RigidBodyComponent::Type::Dynamic)
-					Physics3D::SetCollisionFilters(actor, (uint32_t)FilterGroup::Dynamic, (uint32_t)FilterGroup::All);
+				Physics3D::CreateActor(e, view.size());
 			}
 		}
 
@@ -612,11 +422,8 @@ namespace Hep
 
 	void Scene::OnRuntimeStop()
 	{
-		auto physxView = m_Registry.view<PhysXSceneComponent>();
-		m_Registry.get<PhysXSceneComponent>(m_SceneEntity).World->release();
-
-		delete[] m_Physics3DBodyEntityBuffer;
 		delete[] m_Physics2DBodyEntityBuffer;
+		Physics3D::DestroyScene();
 		m_IsPlaying = false;
 	}
 
