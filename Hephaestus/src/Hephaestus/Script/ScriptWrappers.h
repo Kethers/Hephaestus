@@ -2,7 +2,7 @@
 
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Core/KeyCodes.h"
-#include "Hephaestus/Physics/Physics3D.h"
+#include "Hephaestus/Physics/Physics.h"
 
 #include <glm/glm.hpp>
 

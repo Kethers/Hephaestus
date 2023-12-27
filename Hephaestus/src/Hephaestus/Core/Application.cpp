@@ -9,7 +9,7 @@
 #include <imgui/imgui.h>
 
 #include "Hephaestus/Script/ScriptEngine.h"
-#include "Hephaestus/Physics/Physics3D.h"
+#include "Hephaestus/Physics/Physics.h"
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
@@ -33,7 +33,7 @@ namespace Hep
 		PushOverlay(m_ImGuiLayer);
 
 		ScriptEngine::Init("assets/scripts/ExampleApp.dll");
-		Physics3D::Init();
+		Physics::Init();
 
 		Renderer::Init();
 		Renderer::WaitAndRender();
@@ -43,7 +43,7 @@ namespace Hep
 	{
 		delete m_LayerStack;
 
-		Physics3D::Shutdown();
+		Physics::Shutdown();
 		ScriptEngine::Shutdown();
 	}
 

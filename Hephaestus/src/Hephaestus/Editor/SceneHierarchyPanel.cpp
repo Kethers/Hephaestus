@@ -167,6 +167,14 @@ namespace Hep
 							ImGui::CloseCurrentPopup();
 						}
 					}
+					if (!m_SelectionContext.HasComponent<CapsuleColliderComponent>())
+					{
+						if (ImGui::Button("Capsule Collider"))
+						{
+							m_SelectionContext.AddComponent<CapsuleColliderComponent>();
+							ImGui::CloseCurrentPopup();
+						}
+					}
 					if (!m_SelectionContext.HasComponent<MeshColliderComponent>())
 					{
 						if (ImGui::Button("Mesh Collider"))
@@ -921,6 +929,7 @@ namespace Hep
 
 			Property("Size", bcc.Size);
 			//Property("Offset", bcc.Offset);
+			Property("Is Trigger", bcc.IsTrigger);
 
 			EndPropertyGrid();
 		});
@@ -930,11 +939,23 @@ namespace Hep
 			BeginPropertyGrid();
 
 			Property("Radius", scc.Radius);
+			Property("Is Trigger", scc.IsTrigger);
 
 			EndPropertyGrid();
 		});
 
-		DrawComponent<MeshColliderComponent>("Mesh Collider", entity, [](MeshColliderComponent& mc)
+		DrawComponent<CapsuleColliderComponent>("Capsule Collider", entity, [](CapsuleColliderComponent& ccc)
+		{
+			BeginPropertyGrid();
+
+			Property("Radius", ccc.Radius);
+			Property("Height", ccc.Height);
+			Property("Is Trigger", ccc.IsTrigger);
+
+			EndPropertyGrid();
+		});
+
+		DrawComponent<MeshColliderComponent>("Mesh Collider", entity, [](MeshColliderComponent& mcc)
 		{
 			ImGui::Columns(3);
 			ImGui::SetColumnWidth(0, 100);
@@ -943,8 +964,8 @@ namespace Hep
 			ImGui::Text("File Path");
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(-1);
-			if (mc.CollisionMesh)
-				ImGui::InputText("##meshfilepath", (char*)mc.CollisionMesh->GetFilePath().c_str(), 256, ImGuiInputTextFlags_ReadOnly);
+			if (mcc.CollisionMesh)
+				ImGui::InputText("##meshfilepath", (char*)mcc.CollisionMesh->GetFilePath().c_str(), 256, ImGuiInputTextFlags_ReadOnly);
 			else
 				ImGui::InputText("##meshfilepath", (char*)"Null", 256, ImGuiInputTextFlags_ReadOnly);
 			ImGui::PopItemWidth();
@@ -953,8 +974,12 @@ namespace Hep
 			{
 				std::string file = Application::Get().OpenFile();
 				if (!file.empty())
-					mc.CollisionMesh = Ref<Mesh>::Create(file);
+					mcc.CollisionMesh = Ref<Mesh>::Create(file);
 			}
+
+			BeginPropertyGrid();
+			Property("Is Trigger", mcc.IsTrigger);
+			EndPropertyGrid();
 		});
 	}
 }

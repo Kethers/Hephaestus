@@ -39,6 +39,7 @@ namespace Hep
 		std::string NamespaceName;
 
 		MonoClass* Class = nullptr;
+		MonoMethod* Constructor = nullptr;
 		MonoMethod* OnCreateMethod = nullptr;
 		MonoMethod* OnDestroyMethod = nullptr;
 		MonoMethod* OnUpdateMethod = nullptr;
@@ -46,17 +47,22 @@ namespace Hep
 		// Physics
 		MonoMethod* OnCollisionBeginMethod = nullptr;
 		MonoMethod* OnCollisionEndMethod = nullptr;
+		MonoMethod* OnTriggerBeginMethod = nullptr;
+		MonoMethod* OnTriggerEndMethod = nullptr;
 		MonoMethod* OnCollision2DBeginMethod = nullptr;
 		MonoMethod* OnCollision2DEndMethod = nullptr;
 
 		void InitClassMethods(MonoImage* image)
 		{
+			Constructor = GetMethod(s_CoreAssemblyImage, "Hep.Entity:.ctor(ulong)");
 			OnCreateMethod = GetMethod(image, FullName + ":OnCreate()");
 			OnUpdateMethod = GetMethod(image, FullName + ":OnUpdate(single)");
 
 			// Physics (Entity class)
 			OnCollisionBeginMethod = GetMethod(s_CoreAssemblyImage, "Hep.Entity:OnCollisionBegin(single)");
 			OnCollisionEndMethod = GetMethod(s_CoreAssemblyImage, "Hep.Entity:OnCollisionEnd(single)");
+			OnTriggerBeginMethod = GetMethod(s_CoreAssemblyImage, "Hep.Entity:OnTriggerBegin(single)");
+			OnTriggerEndMethod = GetMethod(s_CoreAssemblyImage, "Hep.Entity:OnTriggerEnd(single)");
 			OnCollision2DBeginMethod = GetMethod(s_CoreAssemblyImage, "Hep.Entity:OnCollision2DBegin(single)");
 			OnCollision2DEndMethod = GetMethod(s_CoreAssemblyImage, "Hep.Entity:OnCollision2DEnd(single)");
 		}
@@ -344,19 +350,14 @@ namespace Hep
 
 	void ScriptEngine::OnCreateEntity(Entity entity)
 	{
-		OnCreateEntity(entity.m_Scene->GetUUID(), entity.GetComponent<IDComponent>().ID);
-	}
-
-	void ScriptEngine::OnCreateEntity(UUID sceneID, UUID entityID)
-	{
-		EntityInstance& entityInstance = GetEntityInstanceData(sceneID, entityID).Instance;
+		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
 		if (entityInstance.ScriptClass->OnCreateMethod)
 			CallMethod(entityInstance.GetInstance(), entityInstance.ScriptClass->OnCreateMethod);
 	}
 
-	void ScriptEngine::OnUpdateEntity(UUID sceneID, UUID entityID, Timestep ts)
+	void ScriptEngine::OnUpdateEntity(Entity entity, Timestep ts)
 	{
-		EntityInstance& entityInstance = GetEntityInstanceData(sceneID, entityID).Instance;
+		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
 		if (entityInstance.ScriptClass->OnUpdateMethod)
 		{
 			void* args[] = { &ts };
@@ -366,12 +367,7 @@ namespace Hep
 
 	void ScriptEngine::OnCollision2DBegin(Entity entity)
 	{
-		OnCollision2DBegin(entity.m_Scene->GetUUID(), entity.GetComponent<IDComponent>().ID);
-	}
-
-	void ScriptEngine::OnCollision2DBegin(UUID sceneID, UUID entityID)
-	{
-		EntityInstance& entityInstance = GetEntityInstanceData(sceneID, entityID).Instance;
+		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
 		if (entityInstance.ScriptClass->OnCollision2DBeginMethod)
 		{
 			float value = 5.0f;
@@ -382,12 +378,7 @@ namespace Hep
 
 	void ScriptEngine::OnCollision2DEnd(Entity entity)
 	{
-		OnCollision2DEnd(entity.m_Scene->GetUUID(), entity.GetComponent<IDComponent>().ID);
-	}
-
-	void ScriptEngine::OnCollision2DEnd(UUID sceneID, UUID entityID)
-	{
-		EntityInstance& entityInstance = GetEntityInstanceData(sceneID, entityID).Instance;
+		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
 		if (entityInstance.ScriptClass->OnCollision2DEndMethod)
 		{
 			float value = 5.0f;
@@ -398,12 +389,7 @@ namespace Hep
 
 	void ScriptEngine::OnCollisionBegin(Entity entity)
 	{
-		OnCollisionBegin(entity.m_Scene->GetUUID(), entity.GetComponent<IDComponent>().ID);
-	}
-
-	void ScriptEngine::OnCollisionBegin(UUID sceneID, UUID entityID)
-	{
-		EntityInstance& entityInstance = GetEntityInstanceData(sceneID, entityID).Instance;
+		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
 		if (entityInstance.ScriptClass->OnCollisionBeginMethod)
 		{
 			float value = 5.0f;
@@ -414,17 +400,34 @@ namespace Hep
 
 	void ScriptEngine::OnCollisionEnd(Entity entity)
 	{
-		OnCollisionEnd(entity.m_Scene->GetUUID(), entity.GetComponent<IDComponent>().ID);
-	}
-
-	void ScriptEngine::OnCollisionEnd(UUID sceneID, UUID entityID)
-	{
-		EntityInstance& entityInstance = GetEntityInstanceData(sceneID, entityID).Instance;
+		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
 		if (entityInstance.ScriptClass->OnCollisionEndMethod)
 		{
 			float value = 5.0f;
 			void* args[] = { &value };
 			CallMethod(entityInstance.GetInstance(), entityInstance.ScriptClass->OnCollisionEndMethod, args);
+		}
+	}
+
+	void ScriptEngine::OnTriggerBegin(Entity entity)
+	{
+		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
+		if (entityInstance.ScriptClass->OnTriggerBeginMethod)
+		{
+			float value = 5.0f;
+			void* args[] = { &value };
+			CallMethod(entityInstance.GetInstance(), entityInstance.ScriptClass->OnTriggerBeginMethod, args);
+		}
+	}
+
+	void ScriptEngine::OnTriggerEnd(Entity entity)
+	{
+		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
+		if (entityInstance.ScriptClass->OnTriggerEndMethod)
+		{
+			float value = 5.0f;
+			void* args[] = { &value };
+			CallMethod(entityInstance.GetInstance(), entityInstance.ScriptClass->OnTriggerEndMethod, args);
 		}
 	}
 

@@ -14,7 +14,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Hephaestus/Physics/Physics3D.h"
+#include "Hephaestus/Physics/Physics.h"
 
 namespace Hep
 {
@@ -192,7 +192,7 @@ namespace Hep
 					}
 				}
 
-				if (m_SelectionContext.size())
+				if (!m_SelectionContext.empty())
 				{
 					auto& selection = m_SelectionContext[0];
 
@@ -701,7 +701,7 @@ namespace Hep
 			{
 				if (ImGui::MenuItem("Connect To PVD"))
 				{
-					Physics3D::ConnectVisualDebugger();
+					Physics::ConnectVisualDebugger();
 				}
 
 				ImGui::EndMenu();

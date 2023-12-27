@@ -19,7 +19,7 @@
 #include <box2d/box2d.h>
 
 // PhysX
-#include "Hephaestus/Physics/Physics3D.h"
+#include "Hephaestus/Physics/Physics.h"
 
 namespace Hep
 {
@@ -141,7 +141,7 @@ namespace Hep
 		{
 			SceneParams sceneDesc;
 			sceneDesc.Gravity = glm::vec3(0.0F, -9.81F, 0.0F);
-			Physics3D::CreateScene(sceneDesc);
+			Physics::CreateScene(sceneDesc);
 		}
 
 		Init();
@@ -171,10 +171,9 @@ namespace Hep
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto entity : view)
 			{
-				UUID entityID = m_Registry.get<IDComponent>(entity).ID;
 				Entity e = { entity, this };
 				if (ScriptEngine::ModuleExists(e.GetComponent<ScriptComponent>().ModuleName))
-					ScriptEngine::OnUpdateEntity(m_SceneID, entityID, ts);
+					ScriptEngine::OnUpdateEntity(e, ts);
 			}
 		}
 
@@ -206,7 +205,7 @@ namespace Hep
 			}
 		}
 
-		Physics3D::Simulate();
+		Physics::Simulate();
 	}
 
 	void Scene::OnRenderRuntime(Timestep ts)
@@ -413,7 +412,7 @@ namespace Hep
 			for (auto entity : view)
 			{
 				Entity e = { entity, this };
-				Physics3D::CreateActor(e, view.size());
+				Physics::CreateActor(e, view.size());
 			}
 		}
 
@@ -423,7 +422,7 @@ namespace Hep
 	void Scene::OnRuntimeStop()
 	{
 		delete[] m_Physics2DBodyEntityBuffer;
-		Physics3D::DestroyScene();
+		Physics::DestroyScene();
 		m_IsPlaying = false;
 	}
 

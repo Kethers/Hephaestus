@@ -117,8 +117,19 @@ namespace Hep
 
 	void ContactListener::onTrigger(physx::PxTriggerPair* pairs, physx::PxU32 count)
 	{
-		PX_UNUSED(pairs);
-		PX_UNUSED(count);
+		Entity& a = *(Entity*)pairs->triggerActor->userData;
+		Entity& b = *(Entity*)pairs->otherActor->userData;
+
+		if (pairs->status == physx::PxPairFlag::eNOTIFY_TOUCH_FOUND)
+		{
+			if (ScriptEngine::IsEntityModuleValid(a)) ScriptEngine::OnTriggerBegin(a);
+			if (ScriptEngine::IsEntityModuleValid(b)) ScriptEngine::OnTriggerBegin(b);
+		}
+		else if (pairs->status == physx::PxPairFlag::eNOTIFY_TOUCH_LOST)
+		{
+			if (ScriptEngine::IsEntityModuleValid(a)) ScriptEngine::OnTriggerEnd(a);
+			if (ScriptEngine::IsEntityModuleValid(b)) ScriptEngine::OnTriggerEnd(b);
+		}
 	}
 
 	void ContactListener::onAdvance(const physx::PxRigidBody* const* bodyBuffer, const physx::PxTransform* poseBuffer,

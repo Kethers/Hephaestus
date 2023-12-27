@@ -26,7 +26,7 @@ namespace Hep
 		glm::vec3 Gravity = { 0.0f, -9.81f, 0.0f };
 	};
 
-	class Physics3D
+	class Physics
 	{
 	public:
 		static void Init();
