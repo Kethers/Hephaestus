@@ -4,6 +4,7 @@
 #include "Entity.h"
 #include "Components.h"
 #include "Hephaestus/Script/ScriptEngine.h"
+#include "Hephaestus/Physics/Physics.h"
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
 #include "Hephaestus/Renderer/MeshFactory.h"
 
@@ -324,6 +325,7 @@ namespace Hep
 			out << YAML::Key << "BodyType" << YAML::Value << (int)rigidbodyComponent.BodyType;
 			out << YAML::Key << "Mass" << YAML::Value << rigidbodyComponent.Mass;
 			out << YAML::Key << "IsKinematic" << YAML::Value << rigidbodyComponent.IsKinematic;
+			out << YAML::Key << "Layer" << YAML::Value << rigidbodyComponent.Layer;
 
 			out << YAML::Key << "Constraints";
 			out << YAML::BeginMap; // Constraints
@@ -429,6 +431,7 @@ namespace Hep
 		out << YAML::Key << "Scene";
 		out << YAML::Value << "Scene Name";
 		SerializeEnvironment(out, m_Scene);
+		
 		out << YAML::Key << "Entities";
 		out << YAML::Value << YAML::BeginSeq;
 		m_Scene->m_Registry.each([&](auto entityID)
@@ -439,6 +442,28 @@ namespace Hep
 
 			SerializeEntity(out, entity);
 		});
+		out << YAML::EndSeq;
+
+		out << YAML::Key << "PhysicsLayers";
+		out << YAML::Value << YAML::BeginSeq;
+		for (uint32_t i = 0; i < PhysicsLayerManager::GetLayerCount(); i++)
+		{
+			const PhysicsLayer& layer = PhysicsLayerManager::GetLayerInfo(i);
+
+			out << YAML::BeginMap;
+			out << YAML::Key << "Name" << YAML::Value << layer.Name;
+
+			out << YAML::Key << "CollidesWith" << YAML::Value;
+			out << YAML::BeginSeq;
+			for (const auto& collidingLayer : PhysicsLayerManager::GetLayerCollisions(layer.LayerID))
+			{
+				out << YAML::BeginMap;
+				out << YAML::Key << "Name" << YAML::Value << collidingLayer.Name;
+				out << YAML::EndMap;
+			}
+			out << YAML::EndSeq;
+			out << YAML::EndMap;
+		}
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 
@@ -650,6 +675,7 @@ namespace Hep
 					component.BodyType = (RigidBodyComponent::Type)rigidBodyComponent["BodyType"].as<int>();
 					component.Mass = rigidBodyComponent["Mass"].as<float>();
 					component.IsKinematic = rigidBodyComponent["IsKinematic"] ? rigidBodyComponent["IsKinematic"].as<bool>() : false;
+					component.Layer = rigidBodyComponent["Layer"] ? rigidBodyComponent["Layer"].as<uint32_t>() : 0;
 
 					component.LockPositionX = rigidBodyComponent["Constraints"]["LockPositionX"].as<bool>();
 					component.LockPositionY = rigidBodyComponent["Constraints"]["LockPositionY"].as<bool>();
@@ -709,6 +735,33 @@ namespace Hep
 				}
 			}
 		}
+
+		auto physicsLayers = data["PhysicsLayers"];
+		if (physicsLayers)
+		{
+			PhysicsLayerManager::ClearLayers();
+
+			for (auto layer : physicsLayers)
+			{
+				PhysicsLayerManager::AddLayer(layer["Name"].as<std::string>());
+			}
+
+			for (auto layer : physicsLayers)
+			{
+				const PhysicsLayer& layerInfo = PhysicsLayerManager::GetLayerInfo(layer["Name"].as<std::string>());
+
+				auto collidesWith = layer["CollidesWith"];
+				if (collidesWith)
+				{
+					for (auto collisionLayer : collidesWith)
+					{
+						const auto& otherLayer = PhysicsLayerManager::GetLayerInfo(collisionLayer["Name"].as<std::string>());
+						PhysicsLayerManager::SetLayerCollision(layerInfo.LayerID, otherLayer.LayerID, true);
+					}
+				}
+			}
+		}
+		
 		return true;
 	}
 

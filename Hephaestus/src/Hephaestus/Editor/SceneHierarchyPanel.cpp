@@ -6,6 +6,7 @@
 #include "Hephaestus/Core/Application.h"
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Script/ScriptEngine.h"
+#include "Hephaestus/Physics/Physics.h"
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
 #include "Hephaestus/Renderer/MeshFactory.h"
 
@@ -876,7 +877,9 @@ namespace Hep
 			// Rigidbody Type
 			const char* rbTypeStrings[] = { "Static", "Dynamic" };
 			const char* currentType = rbTypeStrings[(int)rbc.BodyType];
-			if (ImGui::BeginCombo("Type", currentType))
+			ImGui::TextUnformatted("Type");
+			ImGui::SameLine();
+			if (ImGui::BeginCombo("##TypeSelection", currentType))
 			{
 				for (int type = 0; type < 2; type++)
 				{
@@ -885,6 +888,26 @@ namespace Hep
 					{
 						currentType = rbTypeStrings[type];
 						rbc.BodyType = (RigidBodyComponent::Type)type;
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+
+			const std::vector<std::string>& layerNames = PhysicsLayerManager::GetLayerNames();
+			const char* currentLayer = layerNames[rbc.Layer].c_str();
+			ImGui::TextUnformatted("Layer");
+			ImGui::SameLine();
+			if (ImGui::BeginCombo("##LayerSelection", currentLayer))
+			{
+				for (uint32_t layer = 0; layer < PhysicsLayerManager::GetLayerCount(); layer++)
+				{
+					bool is_selected = (currentLayer == layerNames[layer]);
+					if (ImGui::Selectable(layerNames[layer].c_str(), is_selected))
+					{
+						currentLayer = layerNames[layer].c_str();
+						rbc.Layer = layer;
 					}
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
