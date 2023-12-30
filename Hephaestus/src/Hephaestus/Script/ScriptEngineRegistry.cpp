@@ -61,6 +61,8 @@ namespace Hep
 		mono_add_internal_call("Hep.TransformComponent::SetTransform_Native", Hep::Script::Hep_Entity_SetTransform);
 		mono_add_internal_call("Hep.TransformComponent::GetRelativeDirection_Native",
 			Hep::Script::Hep_TransformComponent_GetRelativeDirection);
+		mono_add_internal_call("Hep.TransformComponent::GetRotation_Native", Hep::Script::Hep_TransformComponent_GetRotation);
+		mono_add_internal_call("Hep.TransformComponent::SetRotation_Native", Hep::Script::Hep_TransformComponent_SetRotation);
 
 		mono_add_internal_call("Hep.MeshComponent::GetMesh_Native", Hep::Script::Hep_MeshComponent_GetMesh);
 		mono_add_internal_call("Hep.MeshComponent::SetMesh_Native", Hep::Script::Hep_MeshComponent_SetMesh);
@@ -76,8 +78,12 @@ namespace Hep
 		mono_add_internal_call("Hep.RigidBodyComponent::AddTorque_Native", Hep::Script::Hep_RigidBodyComponent_AddTorque);
 		mono_add_internal_call("Hep.RigidBodyComponent::GetLinearVelocity_Native", Hep::Script::Hep_RigidBodyComponent_GetLinearVelocity);
 		mono_add_internal_call("Hep.RigidBodyComponent::SetLinearVelocity_Native", Hep::Script::Hep_RigidBodyComponent_SetLinearVelocity);
+		mono_add_internal_call("Hep.RigidBodyComponent::Rotate_Native", Hep::Script::Hep_RigidBodyComponent_Rotate);
 
 		mono_add_internal_call("Hep.Input::IsKeyPressed_Native", Hep::Script::Hep_Input_IsKeyPressed);
+		mono_add_internal_call("Hep.Input::GetMousePosition_Native", Hep::Script::Hep_Input_GetMousePosition);
+		mono_add_internal_call("Hep.Input::SetCursorMode_Native", Hep::Script::Hep_Input_SetCursorMode);
+		mono_add_internal_call("Hep.Input::GetCursorMode_Native", Hep::Script::Hep_Input_GetCursorMode);
 
 		mono_add_internal_call("Hep.Texture2D::Constructor_Native", Hep::Script::Hep_Texture2D_Constructor);
 		mono_add_internal_call("Hep.Texture2D::Destructor_Native", Hep::Script::Hep_Texture2D_Destructor);

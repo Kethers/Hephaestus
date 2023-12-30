@@ -7,17 +7,19 @@
 #include "Hephaestus/Scene/Scene.h"
 #include "Hephaestus/Scene/Entity.h"
 #include "Hephaestus/Scene/Components.h"
+#include "Hephaestus/Physics/PhysicsUtil.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Hephaestus/Core/Input.h"
 #include <mono/jit/jit.h>
 
 #include <box2d/box2d.h>
 
 #include <PhysX/PxPhysicsAPI.h>
+
+#include <imgui.h>
 
 namespace Hep
 {
@@ -55,6 +57,22 @@ namespace Hep::Script
 	bool Hep_Input_IsKeyPressed(KeyCode key)
 	{
 		return Input::IsKeyPressed(key);
+	}
+
+	void Hep_Input_GetMousePosition(glm::vec2* outPosition)
+	{
+		auto [x, y] = Input::GetMousePosition();
+		*outPosition = { x, y };
+	}
+
+	void Hep_Input_SetCursorMode(CursorMode mode)
+	{
+		Input::SetCursorMode(mode);
+	}
+
+	CursorMode Hep_Input_GetCursorMode()
+	{
+		return Input::GetCursorMode();
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -135,7 +153,36 @@ namespace Hep::Script
 		auto& transformComponent = entity.GetComponent<TransformComponent>();
 
 		auto [position, rotation, scale] = GetTransformDecomposition(transformComponent.Transform);
-		*outDirection = glm::rotate(glm::inverse(glm::normalize(rotation)), *inAbsoluteDirection);
+		*outDirection = glm::rotate(glm::normalize(rotation), *inAbsoluteDirection);
+	}
+
+	void Hep_TransformComponent_GetRotation(uint64_t entityID, glm::vec3* outRotation)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.find(entityID) != entityMap.end(), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		auto& transformComponent = entity.GetComponent<TransformComponent>();
+		auto [position, rotationQuat, scale] = GetTransformDecomposition(transformComponent.Transform);
+		*outRotation = glm::degrees(glm::eulerAngles(rotationQuat));
+	}
+
+	void Hep_TransformComponent_SetRotation(uint64_t entityID, glm::vec3* inRotation)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.find(entityID) != entityMap.end(), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		glm::mat4& transform = entity.Transform();
+
+		auto [translation, rotationQuat, scale] = GetTransformDecomposition(transform);
+		transform = glm::translate(glm::mat4(1.0F), translation) *
+			glm::toMat4(glm::quat(glm::radians(*inRotation))) *
+			glm::scale(glm::mat4(1.0F), scale);
 	}
 
 	void* Hep_MeshComponent_GetMesh(uint64_t entityID)
@@ -297,6 +344,28 @@ namespace Hep::Script
 
 		HEP_CORE_ASSERT(velocity);
 		dynamicActor->setLinearVelocity({ velocity->x, velocity->y, velocity->z });
+	}
+
+	void Hep_RigidBodyComponent_Rotate(uint64_t entityID, glm::vec3* rotation)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+
+		physx::PxRigidActor* actor = (physx::PxRigidActor*)component.RuntimeActor;
+		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+		HEP_CORE_ASSERT(dynamicActor);
+
+		physx::PxTransform transform = dynamicActor->getGlobalPose();
+		transform.q *= (physx::PxQuat(glm::radians(rotation->x), { 1.0F, 0.0F, 0.0F })
+			* physx::PxQuat(glm::radians(rotation->y), { 0.0F, 1.0F, 0.0F })
+			* physx::PxQuat(glm::radians(rotation->z), { 0.0F, 0.0F, 1.0F }));
+		dynamicActor->setGlobalPose(transform);
 	}
 
 	Ref<Mesh>* Hep_Mesh_Constructor(MonoString* filepath)

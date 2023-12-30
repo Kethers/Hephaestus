@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "Hephaestus/Script/ScriptEngine.h"
-#include "Hephaestus/Core/KeyCodes.h"
+#include "Hephaestus/Core/Input.h"
 #include "Hephaestus/Physics/Physics.h"
 
 #include <glm/glm.hpp>
@@ -16,9 +16,14 @@ namespace Hep::Script
 {
 	// Math
 	float Hep_Noise_PerlinNoise(float x, float y);
+	void Hep_Input_GetMousePosition(glm::vec2* outPosition);
+	void Hep_Input_SetCursorMode(CursorMode mode);
+	CursorMode Hep_Input_GetCursorMode();
 
 	// Input
 	bool Hep_Input_IsKeyPressed(KeyCode key);
+	void Hep_TransformComponent_GetRotation(uint64_t entityID, glm::vec3* outRotation);
+	void Hep_TransformComponent_SetRotation(uint64_t entityID, glm::vec3* inRotation);
 
 	// Entity
 	void Hep_Entity_GetTransform(uint64_t entityID, glm::mat4* outTransform);
@@ -40,6 +45,7 @@ namespace Hep::Script
 	void Hep_RigidBodyComponent_AddTorque(uint64_t entityID, glm::vec3* torque, ForceMode forceMode);
 	void Hep_RigidBodyComponent_GetLinearVelocity(uint64_t entityID, glm::vec3* outVelocity);
 	void Hep_RigidBodyComponent_SetLinearVelocity(uint64_t entityID, glm::vec3* velocity);
+	void Hep_RigidBodyComponent_Rotate(uint64_t entityID, glm::vec3* rotation);
 
 	// Renderer
 	// Texture2D

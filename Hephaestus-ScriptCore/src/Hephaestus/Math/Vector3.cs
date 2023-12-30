@@ -11,9 +11,11 @@ namespace Hep
 	[StructLayout(LayoutKind.Sequential)]
 	public struct Vector3
 	{
-		internal static Vector3 Forward = new Vector3(0, 0, -1);
-		internal static Vector3 Right = new Vector3(1, 0, 0);
-		internal static Vector3 Up = new Vector3(0, 1, 0);
+		public static Vector3 Zero = new Vector3(0, 0, 0);
+
+		public static Vector3 Forward = new Vector3(0, 0, -1);
+		public static Vector3 Right = new Vector3(1, 0, 0);
+		public static Vector3 Up = new Vector3(0, 1, 0);
 
 		public float X;
 		public float Y;
@@ -52,14 +54,54 @@ namespace Hep
 			Z = Mathf.Clamp(Z, min.Z, max.Z);
 		}
 
-		public static Vector3 operator *(Vector3 left, float scalar)
+		public static Vector3 operator*(Vector3 left, float scalar)
 		{
 			return new Vector3(left.X * scalar, left.Y * scalar, left.Z * scalar);
 		}
 
-		public static Vector3 operator *(float scalar, Vector3 right)
+		public static Vector3 operator*(float scalar, Vector3 right)
 		{
 			return new Vector3(scalar * right.X, scalar * right.Y, scalar * right.Z);
+		}
+
+		public static Vector3 operator+(Vector3 left, Vector3 right)
+		{
+			return new Vector3(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
+		}
+
+		public static Vector3 operator-(Vector3 left, Vector3 right)
+		{
+			return new Vector3(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
+		}
+
+		public static Vector3 operator/(Vector3 left, Vector3 right)
+		{
+			return new Vector3(left.X / right.X, left.Y / right.Y, left.Z / right.Z);
+		}
+
+		public static Vector3 operator/(Vector3 left, float scalar)
+		{
+			return new Vector3(left.X / scalar, left.Y / scalar, left.Z / scalar);
+		}
+
+		public static Vector3 operator-(Vector3 vector)
+		{
+			return new Vector3(-vector.X, -vector.Y, -vector.Z);
+		}
+
+		public static Vector3 Cos(Vector3 vector)
+		{
+			return new Vector3((float)Math.Cos(vector.X), (float)Math.Cos(vector.Y), (float)Math.Cos(vector.Z));
+		}
+
+		public static Vector3 Sin(Vector3 vector)
+		{
+			return new Vector3((float)Math.Sin(vector.X), (float)Math.Sin(vector.Y), (float)Math.Sin(vector.Z));
+		}
+
+		public override string ToString()
+		{
+			return "Vector3[" + X + ", " + Y + ", " + Z + "]";
 		}
 
 		public Vector2 XY

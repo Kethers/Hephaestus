@@ -2,8 +2,10 @@
 #include "PXPhysicsWrappers.h"
 #include "Physics.h"
 
+#include <glm/gtx/rotate_vector.hpp>
+
 #ifdef HEP_DEBUG
-	#define PHYSX_DEBUGGER 1
+	#define PHYSX_DEBUGGER 0
 #endif
 
 namespace Hep
@@ -12,7 +14,7 @@ namespace Hep
 	static physx::PxDefaultAllocator s_Allocator;
 	static physx::PxFoundation* s_Foundation;
 	static physx::PxPhysics* s_Physics;
-	static physx::PxPvd* s_VisualDebugger;
+	static physx::PxPvd* s_VisualDebugger = nullptr;
 	static physx::PxCooking* s_CookingFactory;
 
 	static physx::PxSimulationFilterShader s_FilterShader = physx::PxDefaultSimulationFilterShader;
@@ -113,7 +115,7 @@ namespace Hep
 		float colliderHeight = collider.Height;
 
 		if (size.x != 0.0F)
-			colliderRadius *= size.x;
+			colliderRadius *= size.x / 2.0f;
 
 		if (size.y != 0.0F)
 			colliderHeight *= size.y;
@@ -136,10 +138,10 @@ namespace Hep
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 	}
 
+	// TODO: Save cooked mesh once processed
 	physx::PxConvexMesh* PXPhysicsWrappers::CreateConvexMesh(MeshColliderComponent& collider)
 	{
-		const auto& vertices = collider.CollisionMesh->GetStaticVertices();
-		const auto& indices = collider.CollisionMesh->GetIndices();
+		std::vector<Vertex> vertices = collider.CollisionMesh->GetStaticVertices();
 
 		physx::PxConvexMeshDesc convexDesc;
 		convexDesc.points.count = vertices.size();
@@ -190,7 +192,8 @@ namespace Hep
 				uint32_t vI0 = vertCounter;
 				for (uint32_t vI = 0; vI < polygon.mNbVerts; vI++)
 				{
-					collisionVertices[vertCounter].Position = FromPhysXVector(convexVertices[convexIndices[polygon.mIndexBase + vI]]);
+					collisionVertices[vertCounter].Position = glm::rotate(
+						FromPhysXVector(convexVertices[convexIndices[polygon.mIndexBase + vI]]), glm::radians(90.0F), { 1, 0, 0 });
 					vertCounter++;
 				}
 
