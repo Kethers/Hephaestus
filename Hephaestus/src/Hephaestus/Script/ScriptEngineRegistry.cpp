@@ -51,6 +51,8 @@ namespace Hep
 
 		mono_add_internal_call("Hep.Noise::PerlinNoise_Native", Hep::Script::Hep_Noise_PerlinNoise);
 
+		mono_add_internal_call("Hep.Physics::Raycast_Native", Hep::Script::Hep_Physics_Raycast);
+
 		mono_add_internal_call("Hep.Entity::GetTransform_Native", Hep::Script::Hep_Entity_GetTransform);
 		mono_add_internal_call("Hep.Entity::SetTransform_Native", Hep::Script::Hep_Entity_SetTransform);
 		mono_add_internal_call("Hep.Entity::CreateComponent_Native", Hep::Script::Hep_Entity_CreateComponent);
@@ -81,6 +83,7 @@ namespace Hep
 		mono_add_internal_call("Hep.RigidBodyComponent::Rotate_Native", Hep::Script::Hep_RigidBodyComponent_Rotate);
 
 		mono_add_internal_call("Hep.Input::IsKeyPressed_Native", Hep::Script::Hep_Input_IsKeyPressed);
+		mono_add_internal_call("Hep.Input::IsMouseButtonPressed_Native", Hep::Script::Hep_Input_IsMouseButtonPressed);
 		mono_add_internal_call("Hep.Input::GetMousePosition_Native", Hep::Script::Hep_Input_GetMousePosition);
 		mono_add_internal_call("Hep.Input::SetCursorMode_Native", Hep::Script::Hep_Input_SetCursorMode);
 		mono_add_internal_call("Hep.Input::GetCursorMode_Native", Hep::Script::Hep_Input_GetCursorMode);
@@ -106,12 +109,5 @@ namespace Hep
 		mono_add_internal_call("Hep.Mesh::GetMaterialCount_Native", Hep::Script::Hep_Mesh_GetMaterialCount);
 
 		mono_add_internal_call("Hep.MeshFactory::CreatePlane_Native", Hep::Script::Hep_MeshFactory_CreatePlane);
-
-		// static bool IsKeyPressed(KeyCode key) { return s_Instance->IsKeyPressedImpl(key); }
-		// 
-		// static bool IsMouseButtonPressed(MouseCode button) { return s_Instance->IsMouseButtonPressedImpl(button); }
-		// static std::pair<float, float> GetMousePosition() { return s_Instance->GetMousePositionImpl(); }
-		// static float GetMouseX() { return s_Instance->GetMouseXImpl(); }
-		// static float GetMouseY() { return s_Instance->GetMouseYImpl(); }
 	}
 }

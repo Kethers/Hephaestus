@@ -60,6 +60,12 @@ namespace Hep
 			return new Entity(entityID);
 		}
 
+		public Entity FindEntityByID(ulong entityID)
+		{
+			// TODO: Verify the entity id
+			return new Entity(entityID);
+		}
+
 		public Matrix4 GetTransform()
 		{
 			Matrix4 mat4Instance;

@@ -138,6 +138,11 @@ namespace Hep
 		s_Scene = nullptr;
 	}
 
+	void* Physics::GetPhysicsScene()
+	{
+		return s_Scene;
+	}
+
 	void Physics::ConnectVisualDebugger()
 	{
 		PXPhysicsWrappers::ConnectVisualDebugger();

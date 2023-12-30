@@ -50,6 +50,11 @@ namespace FPSExample
 				Input.SetCursorMode(CursorMode.Normal);
 			}
 
+			/*if (Input.IsMouseButtonPressed(MouseButton.Left) && Input.GetCursorMode() == CursorMode.Normal)
+			{
+				Input.SetCursorMode(CursorMode.Locked);
+			}*/
+
 			m_CurrentSpeed = Input.IsKeyPressed(KeyCode.LeftShift) ? RunSpeed : WalkingSpeed;
 
 			UpdateRotation(ts);
@@ -75,6 +80,15 @@ namespace FPSExample
 
 		private void UpdateMovement()
 		{
+			RaycastHit hitInfo;
+			if (Input.IsKeyPressed(KeyCode.H) &&
+				Physics.Raycast(m_CameraTransform.Transform.Translation + (m_CameraTransform.Forward * 5.0F), m_CameraTransform.Forward,
+					20.0F, out hitInfo))
+			{
+				FindEntityByID(hitInfo.EntityID).GetComponent<MeshComponent>().Mesh.GetMaterial(0)
+					.Set("u_AlbedoColor", new Vector3(1.0f, 0.0f, 0.0f));
+			}
+
 			if (Input.IsKeyPressed(KeyCode.W))
 				m_RigidBody.AddForce(m_CameraTransform.Forward * m_CurrentSpeed);
 			else if (Input.IsKeyPressed(KeyCode.S))

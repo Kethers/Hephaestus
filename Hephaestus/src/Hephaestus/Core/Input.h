@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "KeyCodes.h"
+#include "MouseButtonCodes.h"
 
 namespace Hep
 {
@@ -15,7 +16,7 @@ namespace Hep
 	{
 	public:
 		static bool IsKeyPressed(KeyCode keycode);
-		static bool IsMouseButtonPressed(int button);
+		static bool IsMouseButtonPressed(MouseButton button);
 		static std::pair<float, float> GetMousePosition();
 		static float GetMouseX();
 		static float GetMouseY();

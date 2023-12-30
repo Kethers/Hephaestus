@@ -8,6 +8,7 @@
 #include "Hephaestus/Scene/Entity.h"
 #include "Hephaestus/Scene/Components.h"
 #include "Hephaestus/Physics/PhysicsUtil.h"
+#include "Hephaestus/Physics/PXPhysicsWrappers.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -59,6 +60,11 @@ namespace Hep::Script
 		return Input::IsKeyPressed(key);
 	}
 
+	bool Hep_Input_IsMouseButtonPressed(MouseButton button)
+	{
+		return Input::IsMouseButtonPressed(button);
+	}
+
 	void Hep_Input_GetMousePosition(glm::vec2* outPosition)
 	{
 		auto [x, y] = Input::GetMousePosition();
@@ -73,6 +79,11 @@ namespace Hep::Script
 	CursorMode Hep_Input_GetCursorMode()
 	{
 		return Input::GetCursorMode();
+	}
+
+	bool Hep_Physics_Raycast(glm::vec3* origin, glm::vec3* direction, float maxDistance, RaycastHit* hit)
+	{
+		return PXPhysicsWrappers::Raycast(*origin, *direction, maxDistance, hit);
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -153,7 +164,7 @@ namespace Hep::Script
 		auto& transformComponent = entity.GetComponent<TransformComponent>();
 
 		auto [position, rotation, scale] = GetTransformDecomposition(transformComponent.Transform);
-		*outDirection = glm::rotate(glm::normalize(rotation), *inAbsoluteDirection);
+		*outDirection = glm::rotate(rotation, *inAbsoluteDirection);
 	}
 
 	void Hep_TransformComponent_GetRotation(uint64_t entityID, glm::vec3* outRotation)

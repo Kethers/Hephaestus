@@ -6,6 +6,11 @@
 
 #include <glm/glm.hpp>
 
+#include "Hephaestus/Core/Math/AABB.h"
+#include "Hephaestus/Core/Math/AABB.h"
+#include "Hephaestus/Core/Math/AABB.h"
+#include "Hephaestus/Core/Math/AABB.h"
+
 extern "C"
 {
 	typedef struct _MonoString MonoString;
@@ -22,8 +27,12 @@ namespace Hep::Script
 
 	// Input
 	bool Hep_Input_IsKeyPressed(KeyCode key);
+	bool Hep_Input_IsMouseButtonPressed(MouseButton button);
 	void Hep_TransformComponent_GetRotation(uint64_t entityID, glm::vec3* outRotation);
 	void Hep_TransformComponent_SetRotation(uint64_t entityID, glm::vec3* inRotation);
+
+	// Physics
+	bool Hep_Physics_Raycast(glm::vec3* origin, glm::vec3* direction, float maxDistance, RaycastHit* hit);
 
 	// Entity
 	void Hep_Entity_GetTransform(uint64_t entityID, glm::mat4* outTransform);
