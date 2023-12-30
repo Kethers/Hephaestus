@@ -6,6 +6,9 @@
 #include "Hephaestus/Core/Application.h"
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Script/ScriptEngine.h"
+#include "Hephaestus/Physics/PXPhysicsWrappers.h"
+#include "Hephaestus/Renderer/MeshFactory.h"
+
 #include <assimp/scene.h>
 
 #include "Hephaestus/Core/Math/Mat4.h"
@@ -927,7 +930,11 @@ namespace Hep
 		{
 			BeginPropertyGrid();
 
-			Property("Size", bcc.Size);
+			if (Property("Size", bcc.Size))
+			{
+				bcc.DebugMesh = MeshFactory::CreateBox(bcc.Size);
+			}
+
 			//Property("Offset", bcc.Offset);
 			Property("Is Trigger", bcc.IsTrigger);
 
@@ -938,7 +945,11 @@ namespace Hep
 		{
 			BeginPropertyGrid();
 
-			Property("Radius", scc.Radius);
+			if (Property("Radius", scc.Radius))
+			{
+				scc.DebugMesh = MeshFactory::CreateSphere(scc.Radius);
+			}
+
 			Property("Is Trigger", scc.IsTrigger);
 
 			EndPropertyGrid();
@@ -948,9 +959,20 @@ namespace Hep
 		{
 			BeginPropertyGrid();
 
-			Property("Radius", ccc.Radius);
-			Property("Height", ccc.Height);
+			bool changed = false;
+
+			if (Property("Radius", ccc.Radius))
+				changed = true;
+
+			if (Property("Height", ccc.Height))
+				changed = true;
+
 			Property("Is Trigger", ccc.IsTrigger);
+
+			if (changed)
+			{
+				ccc.DebugMesh = MeshFactory::CreateCapsule(ccc.Radius, ccc.Height);
+			}
 
 			EndPropertyGrid();
 		});
@@ -974,7 +996,10 @@ namespace Hep
 			{
 				std::string file = Application::Get().OpenFile();
 				if (!file.empty())
+				{
 					mcc.CollisionMesh = Ref<Mesh>::Create(file);
+					PXPhysicsWrappers::CreateConvexMesh(mcc);
+				}
 			}
 
 			BeginPropertyGrid();

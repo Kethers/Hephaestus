@@ -1066,7 +1066,7 @@ namespace Hep
 					}
 				}
 				std::sort(m_SelectionContext.begin(), m_SelectionContext.end(), [](auto& a, auto& b) { return a.Distance < b.Distance; });
-				if (m_SelectionContext.size())
+				if (!m_SelectionContext.empty())
 					OnSelected(m_SelectionContext[0]);
 			}
 		}

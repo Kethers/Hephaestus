@@ -4,6 +4,8 @@
 #include "Entity.h"
 #include "Components.h"
 #include "Hephaestus/Script/ScriptEngine.h"
+#include "Hephaestus/Physics/PXPhysicsWrappers.h"
+#include "Hephaestus/Renderer/MeshFactory.h"
 
 #include "yaml-cpp/yaml.h"
 
@@ -673,6 +675,7 @@ namespace Hep
 					component.Offset = boxColliderComponent["Offset"].as<glm::vec3>();
 					component.Size = boxColliderComponent["Size"].as<glm::vec3>();
 					component.IsTrigger = boxColliderComponent["IsTrigger"] ? boxColliderComponent["IsTrigger"].as<bool>() : false;
+					component.DebugMesh = MeshFactory::CreateBox(component.Size);
 				}
 
 				auto sphereColliderComponent = entity["SphereColliderComponent"];
@@ -681,6 +684,7 @@ namespace Hep
 					auto& component = deserializedEntity.AddComponent<SphereColliderComponent>();
 					component.Radius = sphereColliderComponent["Radius"].as<float>();
 					component.IsTrigger = sphereColliderComponent["IsTrigger"] ? sphereColliderComponent["IsTrigger"].as<bool>() : false;
+					component.DebugMesh = MeshFactory::CreateSphere(component.Radius);
 				}
 
 				auto capsuleColliderComponent = entity["CapsuleColliderComponent"];
@@ -690,6 +694,7 @@ namespace Hep
 					component.Radius = capsuleColliderComponent["Radius"].as<float>();
 					component.Height = capsuleColliderComponent["Height"].as<float>();
 					component.IsTrigger = capsuleColliderComponent["IsTrigger"] ? capsuleColliderComponent["IsTrigger"].as<bool>() : false;
+					component.DebugMesh = MeshFactory::CreateCapsule(component.Radius, component.Height);
 				}
 
 				auto meshColliderComponent = entity["MeshColliderComponent"];
@@ -698,6 +703,7 @@ namespace Hep
 					std::string meshPath = meshColliderComponent["AssetPath"].as<std::string>();
 					auto& component = deserializedEntity.AddComponent<MeshColliderComponent>(Ref<Mesh>::Create(meshPath));
 					component.IsTrigger = meshColliderComponent["IsTrigger"] ? meshColliderComponent["IsTrigger"].as<bool>() : false;
+					PXPhysicsWrappers::CreateConvexMesh(component);
 
 					HEP_CORE_INFO("  Mesh Collider Asset Path: {0}", meshPath);
 				}

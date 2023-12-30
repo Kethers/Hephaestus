@@ -274,12 +274,63 @@ namespace Hep
 			{
 				meshComponent.Mesh->OnUpdate(ts);
 				// TODO: Should we render (logically)
-				if (m_SelectedEntity == entity)
-					SceneRenderer::SubmitSelectedMesh(meshComponent, transformComponent);
-				else
-					SceneRenderer::SubmitMesh(meshComponent, transformComponent);
+				SceneRenderer::SubmitMesh(meshComponent, transformComponent);
+
+				/*if (m_SelectedEntity == entity)
+					SceneRenderer::SubmitSelectedMesh(meshComponent, transformComponent);*/
 			}
 		}
+
+		{
+			auto view = m_Registry.view<BoxColliderComponent>();
+			for (auto entity : view)
+			{
+				Entity e = { entity, this };
+				auto& collider = e.GetComponent<BoxColliderComponent>();
+
+				if (m_SelectedEntity == entity)
+					SceneRenderer::SubmitColliderMesh(collider, e.GetComponent<TransformComponent>());
+			}
+		}
+
+		{
+			auto view = m_Registry.view<SphereColliderComponent>();
+			for (auto entity : view)
+			{
+				Entity e = { entity, this };
+				auto& collider = e.GetComponent<SphereColliderComponent>();
+
+				if (m_SelectedEntity == entity)
+					SceneRenderer::SubmitColliderMesh(collider, e.GetComponent<TransformComponent>());
+			}
+		}
+
+		{
+			auto view = m_Registry.view<CapsuleColliderComponent>();
+			for (auto entity : view)
+			{
+				Entity e = { entity, this };
+				auto& collider = e.GetComponent<CapsuleColliderComponent>();
+
+				if (m_SelectedEntity == entity)
+					SceneRenderer::SubmitColliderMesh(collider, e.GetComponent<TransformComponent>());
+			}
+		}
+
+		{
+			auto view = m_Registry.view<MeshColliderComponent>();
+			for (auto entity : view)
+			{
+				Entity e = { entity, this };
+				auto& collider = e.GetComponent<MeshColliderComponent>();
+
+				if (m_SelectedEntity == entity)
+				{
+					SceneRenderer::SubmitColliderMesh(collider, e.GetComponent<TransformComponent>());
+				}
+			}
+		}
+
 
 		SceneRenderer::EndScene();
 		/////////////////////////////////////////////////////////////////////

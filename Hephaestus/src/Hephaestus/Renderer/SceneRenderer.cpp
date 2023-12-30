@@ -3,6 +3,8 @@
 
 #include "Renderer.h"
 
+#include "Hephaestus/Renderer/MeshFactory.h"
+
 #include <glad/glad.h>
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -40,10 +42,12 @@ namespace Hep
 
 		std::vector<DrawCommand> DrawList;
 		std::vector<DrawCommand> SelectedMeshDrawList;
+		std::vector<DrawCommand> ColliderDrawList;
 
 		// Grid
 		Ref<MaterialInstance> GridMaterial;
 		Ref<MaterialInstance> OutlineMaterial;
+		Ref<MaterialInstance> ColliderMaterial;
 
 		SceneRendererOptions Options;
 	};
@@ -87,6 +91,10 @@ namespace Hep
 		auto outlineShader = Shader::Create("assets/shaders/Outline.glsl");
 		s_Data.OutlineMaterial = MaterialInstance::Create(Material::Create(outlineShader));
 		s_Data.OutlineMaterial->SetFlag(MaterialFlag::DepthTest, false);
+
+		auto colliderShader = Shader::Create("assets/shaders/Collider.glsl");
+		s_Data.ColliderMaterial = MaterialInstance::Create(Material::Create(colliderShader));
+		s_Data.ColliderMaterial->SetFlag(MaterialFlag::DepthTest, false);
 	}
 
 	void SceneRenderer::SetViewportSize(uint32_t width, uint32_t height)
@@ -125,6 +133,26 @@ namespace Hep
 	void SceneRenderer::SubmitSelectedMesh(Ref<Mesh> mesh, const glm::mat4& transform)
 	{
 		s_Data.SelectedMeshDrawList.push_back({ mesh, nullptr, transform });
+	}
+
+	void SceneRenderer::SubmitColliderMesh(const BoxColliderComponent& component, const glm::mat4& parentTransform)
+	{
+		s_Data.ColliderDrawList.push_back({ component.DebugMesh, nullptr, glm::translate(parentTransform, component.Offset) });
+	}
+
+	void SceneRenderer::SubmitColliderMesh(const SphereColliderComponent& component, const glm::mat4& parentTransform)
+	{
+		s_Data.ColliderDrawList.push_back({ component.DebugMesh, nullptr, parentTransform });
+	}
+
+	void SceneRenderer::SubmitColliderMesh(const CapsuleColliderComponent& component, const glm::mat4& parentTransform)
+	{
+		s_Data.ColliderDrawList.push_back({ component.DebugMesh, nullptr, parentTransform });
+	}
+
+	void SceneRenderer::SubmitColliderMesh(const MeshColliderComponent& component, const glm::mat4& parentTransform)
+	{
+		s_Data.ColliderDrawList.push_back({ component.ProcessedMesh, nullptr, parentTransform });
 	}
 
 	static Ref<Shader> equirectangularConversionShader, envFilteringShader, envIrradianceShader;
@@ -198,8 +226,9 @@ namespace Hep
 	void SceneRenderer::GeometryPass()
 	{
 		bool outline = s_Data.SelectedMeshDrawList.size() > 0;
+		bool collider = s_Data.ColliderDrawList.size() > 0;
 
-		if (outline)
+		if (outline || collider)
 		{
 			Renderer::Submit([]()
 			{
@@ -209,7 +238,7 @@ namespace Hep
 
 		Renderer::BeginRenderPass(s_Data.GeoPass);
 
-		if (outline)
+		if (outline || collider)
 		{
 			Renderer::Submit([]()
 			{
@@ -248,30 +277,6 @@ namespace Hep
 		{
 			Renderer::Submit([]()
 			{
-				glStencilFunc(GL_ALWAYS, 1, 0xff);
-				glStencilMask(0xff);
-			});
-		}
-		for (auto& dc : s_Data.SelectedMeshDrawList)
-		{
-			auto baseMaterial = dc.Mesh->GetMaterial();
-			baseMaterial->Set("u_ViewProjectionMatrix", viewProjection);
-			baseMaterial->Set("u_CameraPosition", cameraPosition);
-			// Environment (TODO: don't do this per mesh)
-			baseMaterial->Set("u_EnvRadianceTex", s_Data.SceneData.SceneEnvironment.RadianceMap);
-			baseMaterial->Set("u_EnvIrradianceTex", s_Data.SceneData.SceneEnvironment.IrradianceMap);
-			baseMaterial->Set("u_BRDFLUTTexture", s_Data.BRDFLUT);
-
-			// Set lights (TODO: move to light environment and don't do per mesh)
-			baseMaterial->Set("lights", s_Data.SceneData.ActiveLight);
-			auto overrideMaterial = nullptr; // dc.Material;
-			Renderer::SubmitMesh(dc.Mesh, dc.Transform, overrideMaterial);
-		}
-
-		if (outline)
-		{
-			Renderer::Submit([]()
-			{
 				glStencilFunc(GL_NOTEQUAL, 1, 0xff);
 				glStencilMask(0);
 
@@ -293,9 +298,50 @@ namespace Hep
 				glPointSize(10);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 			});
+
 			for (auto& dc : s_Data.SelectedMeshDrawList)
 			{
 				Renderer::SubmitMesh(dc.Mesh, dc.Transform, s_Data.OutlineMaterial);
+			}
+
+			Renderer::Submit([]()
+			{
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				glStencilMask(0xff);
+				glStencilFunc(GL_ALWAYS, 1, 0xff);
+				glEnable(GL_DEPTH_TEST);
+			});
+		}
+
+		if (collider)
+		{
+			Renderer::Submit([]()
+			{
+				glStencilFunc(GL_NOTEQUAL, 1, 0xff);
+				glStencilMask(0);
+
+				glLineWidth(1);
+				glEnable(GL_LINE_SMOOTH);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				glDisable(GL_DEPTH_TEST);
+			});
+
+			s_Data.ColliderMaterial->Set("u_ViewProjection", viewProjection);
+			for (auto& dc : s_Data.ColliderDrawList)
+			{
+				if (dc.Mesh)
+					Renderer::SubmitMesh(dc.Mesh, dc.Transform, s_Data.ColliderMaterial);
+			}
+
+			Renderer::Submit([]()
+			{
+				glPointSize(1);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+			});
+			for (auto& dc : s_Data.ColliderDrawList)
+			{
+				if (dc.Mesh)
+					Renderer::SubmitMesh(dc.Mesh, dc.Transform, s_Data.ColliderMaterial);
 			}
 
 			Renderer::Submit([]()
@@ -349,6 +395,7 @@ namespace Hep
 
 		s_Data.DrawList.clear();
 		s_Data.SelectedMeshDrawList.clear();
+		s_Data.ColliderDrawList.clear();
 		s_Data.SceneData = {};
 	}
 
