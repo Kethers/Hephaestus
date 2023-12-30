@@ -1,6 +1,7 @@
 ﻿#include "heppch.h"
 #include "Physics.h"
 #include "PXPhysicsWrappers.h"
+#include "PhysicsLayer.h"
 
 #include <glm/glm.hpp>
 
@@ -9,126 +10,6 @@
 
 namespace Hep
 {
-	static std::vector<std::string> s_LayerNames;
-	static uint32_t s_LastLayerID = 0;
-
-	uint32_t PhysicsLayerManager::AddLayer(const std::string& name)
-	{
-		PhysicsLayer layer{ s_LastLayerID, name, BIT(s_LastLayerID) };
-		s_Layers[s_LastLayerID] = layer;
-		s_LastLayerID++;
-		s_LayerNames.push_back(name);
-
-		// TODO: We might not always want to do this
-		SetLayerCollision(layer.LayerID, layer.LayerID, true);
-
-		return layer.LayerID;
-	}
-
-	void PhysicsLayerManager::RemoveLayer(uint32_t layerId)
-	{
-		if (s_Layers.contains(layerId))
-		{
-			for (auto it = s_LayerNames.begin(); it != s_LayerNames.end(); ++it)
-			{
-				if (*it == s_Layers[layerId].Name)
-				{
-					s_LayerNames.erase(it--);
-				}
-			}
-
-			s_Layers.erase(layerId);
-		}
-	}
-
-	void PhysicsLayerManager::SetLayerCollision(uint32_t layerId, uint32_t otherLayer, bool collides)
-	{
-		if (!s_LayerCollisions.contains(layerId))
-		{
-			s_LayerCollisions[layerId] = std::vector<PhysicsLayer>();
-			s_LayerCollisions[layerId].reserve(1);
-		}
-
-		if (!s_LayerCollisions.contains(otherLayer))
-		{
-			s_LayerCollisions[otherLayer] = std::vector<PhysicsLayer>();
-			s_LayerCollisions[otherLayer].reserve(1);
-		}
-
-		if (collides)
-		{
-			s_LayerCollisions[layerId].push_back(GetLayerInfo(otherLayer));
-			s_LayerCollisions[otherLayer].push_back(GetLayerInfo(layerId));
-		}
-		else
-		{
-			for (auto it = s_LayerCollisions[layerId].begin(); it != s_LayerCollisions[layerId].end(); ++it)
-			{
-				if (it->LayerID == otherLayer)
-				{
-					s_LayerCollisions[layerId].erase(it--);
-				}
-			}
-
-			for (auto it = s_LayerCollisions[otherLayer].begin(); it != s_LayerCollisions[otherLayer].end(); ++it)
-			{
-				if (it->LayerID == layerId)
-				{
-					s_LayerCollisions[otherLayer].erase(it--);
-				}
-			}
-		}
-	}
-
-	const std::vector<PhysicsLayer>& PhysicsLayerManager::GetLayerCollisions(uint32_t layerId)
-	{
-		HEP_CORE_ASSERT(s_LayerCollisions.contains(layerId));
-		return s_LayerCollisions[layerId];
-	}
-
-	const PhysicsLayer& PhysicsLayerManager::GetLayerInfo(uint32_t layerId)
-	{
-		HEP_CORE_ASSERT(s_Layers.contains(layerId));
-		return s_Layers[layerId];
-	}
-
-	const PhysicsLayer& PhysicsLayerManager::GetLayerInfo(const std::string& layerName)
-	{
-		for (const auto& kv : s_Layers)
-		{
-			if (kv.second.Name == layerName)
-			{
-				return kv.second;
-			}
-		}
-
-		return {};
-	}
-
-	const std::vector<std::string>& PhysicsLayerManager::GetLayerNames()
-	{
-		return s_LayerNames;
-	}
-
-	void PhysicsLayerManager::ClearLayers()
-	{
-		s_Layers.clear();
-		s_LayerCollisions.clear();
-		s_LastLayerID = 0;
-		s_LayerNames.clear();
-	}
-
-	void PhysicsLayerManager::Init()
-	{
-		AddLayer("Default");
-	}
-
-	void PhysicsLayerManager::Shutdown()
-	{}
-
-	std::unordered_map<uint32_t, PhysicsLayer> PhysicsLayerManager::s_Layers;
-	std::unordered_map<uint32_t, std::vector<PhysicsLayer>> PhysicsLayerManager::s_LayerCollisions;
-
 	static physx::PxScene* s_Scene;
 	static std::vector<Entity> s_SimulatedEntities;
 	static Entity* s_EntityStorageBuffer;
@@ -138,14 +19,14 @@ namespace Hep
 	void Physics::Init()
 	{
 		PXPhysicsWrappers::Initialize();
-		PhysicsLayerManager::Init();;
+		PhysicsLayerManager::AddLayer("Default");
 	}
 
 	void Physics::Shutdown()
 	{
-		PhysicsLayerManager::Shutdown();
 		PXPhysicsWrappers::Shutdown();
 	}
+
 
 	void Physics::CreateScene(const SceneParams& params)
 	{
@@ -172,7 +53,6 @@ namespace Hep
 		if (s_EntityStorageBuffer == nullptr)
 			s_EntityStorageBuffer = new Entity[entityCount];
 
-		// Create Actor Body
 		physx::PxRigidActor* actor = PXPhysicsWrappers::CreateActor(rigidbody, e.Transform());
 		s_SimulatedEntities.push_back(e);
 		Entity* entityStorage = &s_EntityStorageBuffer[s_EntityStorageBufferPosition++];
@@ -180,10 +60,8 @@ namespace Hep
 		actor->userData = (void*)entityStorage;
 		rigidbody.RuntimeActor = actor;
 
-		// Physics Material
 		physx::PxMaterial* material = PXPhysicsWrappers::CreateMaterial(e.GetComponent<PhysicsMaterialComponent>());
 
-		// Add all colliders
 		const auto& transform = e.Transform();
 		auto [translation, rotation, scale] = GetTransformDecomposition(transform);
 
@@ -211,7 +89,9 @@ namespace Hep
 			PXPhysicsWrappers::AddMeshCollider(*actor, *material, collider, scale);
 		}
 
-		// Set collision filters
+		if (!PhysicsLayerManager::IsLayerValid(rigidbody.Layer))
+			rigidbody.Layer = 0;
+
 		PXPhysicsWrappers::SetCollisionFilters(*actor, rigidbody.Layer);
 
 		s_Scene->addActor(*actor);

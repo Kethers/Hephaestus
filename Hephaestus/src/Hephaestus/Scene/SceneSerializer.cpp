@@ -4,7 +4,7 @@
 #include "Entity.h"
 #include "Components.h"
 #include "Hephaestus/Script/ScriptEngine.h"
-#include "Hephaestus/Physics/Physics.h"
+#include "Hephaestus/Physics/PhysicsLayer.h"
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
 #include "Hephaestus/Renderer/MeshFactory.h"
 
@@ -431,7 +431,7 @@ namespace Hep
 		out << YAML::Key << "Scene";
 		out << YAML::Value << "Scene Name";
 		SerializeEnvironment(out, m_Scene);
-		
+
 		out << YAML::Key << "Entities";
 		out << YAML::Value << YAML::BeginSeq;
 		m_Scene->m_Registry.each([&](auto entityID)
@@ -448,7 +448,7 @@ namespace Hep
 		out << YAML::Value << YAML::BeginSeq;
 		for (uint32_t i = 0; i < PhysicsLayerManager::GetLayerCount(); i++)
 		{
-			const PhysicsLayer& layer = PhysicsLayerManager::GetLayerInfo(i);
+			const PhysicsLayer& layer = PhysicsLayerManager::GetLayer(i);
 
 			out << YAML::BeginMap;
 			out << YAML::Key << "Name" << YAML::Value << layer.Name;
@@ -743,25 +743,25 @@ namespace Hep
 
 			for (auto layer : physicsLayers)
 			{
-				PhysicsLayerManager::AddLayer(layer["Name"].as<std::string>());
+				PhysicsLayerManager::AddLayer(layer["Name"].as<std::string>(), false);
 			}
 
 			for (auto layer : physicsLayers)
 			{
-				const PhysicsLayer& layerInfo = PhysicsLayerManager::GetLayerInfo(layer["Name"].as<std::string>());
+				const PhysicsLayer& layerInfo = PhysicsLayerManager::GetLayer(layer["Name"].as<std::string>());
 
 				auto collidesWith = layer["CollidesWith"];
 				if (collidesWith)
 				{
 					for (auto collisionLayer : collidesWith)
 					{
-						const auto& otherLayer = PhysicsLayerManager::GetLayerInfo(collisionLayer["Name"].as<std::string>());
+						const auto& otherLayer = PhysicsLayerManager::GetLayer(collisionLayer["Name"].as<std::string>());
 						PhysicsLayerManager::SetLayerCollision(layerInfo.LayerID, otherLayer.LayerID, true);
 					}
 				}
 			}
 		}
-		
+
 		return true;
 	}
 

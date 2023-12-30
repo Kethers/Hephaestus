@@ -1,6 +1,7 @@
 ﻿#include "heppch.h"
 #include "PXPhysicsWrappers.h"
 #include "Physics.h"
+#include "PhysicsLayer.h"
 
 #include <glm/gtx/rotate_vector.hpp>
 
@@ -64,19 +65,14 @@ namespace Hep
 
 	void PXPhysicsWrappers::SetCollisionFilters(const physx::PxRigidActor& actor, uint32_t physicsLayer)
 	{
-		const PhysicsLayer& layerInfo = PhysicsLayerManager::GetLayerInfo(physicsLayer);
+		const PhysicsLayer& layerInfo = PhysicsLayerManager::GetLayer(physicsLayer);
 
-		uint32_t collisionBitField = 0;
-		for (const auto& collisionLayerInfo : PhysicsLayerManager::GetLayerCollisions(physicsLayer))
-		{
-			collisionBitField |= collisionLayerInfo.BitValue;
-		}
-		if (collisionBitField == 0)
+		if (layerInfo.CollidesWith == 0)
 			return;
 
 		physx::PxFilterData filterData;
 		filterData.word0 = layerInfo.BitValue;
-		filterData.word1 = collisionBitField;
+		filterData.word1 = layerInfo.CollidesWith;
 
 		const physx::PxU32 numShapes = actor.getNbShapes();
 
@@ -140,10 +136,9 @@ namespace Hep
 	void PXPhysicsWrappers::AddMeshCollider(physx::PxRigidActor& actor, const physx::PxMaterial& material,
 		MeshColliderComponent& collider, const glm::vec3& size)
 	{
-		// TODO: Possibly take a look at https://github.com/kmammou/v-hacd for computing convex meshes from triangle meshes...
-		physx::PxConvexMeshGeometry triangleGeometry = physx::PxConvexMeshGeometry(CreateConvexMesh(collider));
-		triangleGeometry.meshFlags = physx::PxConvexMeshGeometryFlag::eTIGHT_BOUNDS;
-		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(actor, triangleGeometry, material);
+		physx::PxConvexMeshGeometry convexGeometry = physx::PxConvexMeshGeometry(CreateConvexMesh(collider));
+		convexGeometry.meshFlags = physx::PxConvexMeshGeometryFlag::eTIGHT_BOUNDS;
+		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(actor, convexGeometry, material);
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 	}

@@ -5,6 +5,7 @@
 #include "Hephaestus/ImGui/ImGuizmo.h"
 #include "Hephaestus/Renderer/Renderer2D.h"
 #include "Hephaestus/Script/ScriptEngine.h"
+#include "Hephaestus/Editor/PhysicsSettingsWindow.h"
 
 #include <filesystem>
 
@@ -697,6 +698,13 @@ namespace Hep
 				ImGui::EndMenu();
 			}
 
+			if (ImGui::BeginMenu("Edit"))
+			{
+				ImGui::MenuItem("Physics Settings", nullptr, &m_ShowPhysicsSettings);
+
+				ImGui::EndMenu();
+			}
+
 			if (ImGui::BeginMenu("Debug"))
 			{
 				if (ImGui::MenuItem("Connect To PVD"))
@@ -919,6 +927,7 @@ namespace Hep
 		ImGui::End();
 
 		ScriptEngine::OnImGuiRender();
+		PhysicsSettingsWindow::OnImGuiRender(&m_ShowPhysicsSettings);
 
 		ImGui::End();
 	}
