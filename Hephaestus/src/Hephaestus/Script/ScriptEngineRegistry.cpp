@@ -52,6 +52,12 @@ namespace Hep
 		mono_add_internal_call("Hep.Noise::PerlinNoise_Native", Hep::Script::Hep_Noise_PerlinNoise);
 
 		mono_add_internal_call("Hep.Physics::Raycast_Native", Hep::Script::Hep_Physics_Raycast);
+		mono_add_internal_call("Hep.Physics::OverlapBox_Native", Hep::Script::Hep_Physics_OverlapBox);
+		mono_add_internal_call("Hep.Physics::OverlapCapsule_Native", Hep::Script::Hep_Physics_OverlapCapsule);
+		mono_add_internal_call("Hep.Physics::OverlapSphere_Native", Hep::Script::Hep_Physics_OverlapSphere);
+		mono_add_internal_call("Hep.Physics::OverlapBoxNonAlloc_Native", Hep::Script::Hep_Physics_OverlapBoxNonAlloc);
+		mono_add_internal_call("Hep.Physics::OverlapCapsuleNonAlloc_Native", Hep::Script::Hep_Physics_OverlapCapsuleNonAlloc);
+		mono_add_internal_call("Hep.Physics::OverlapSphereNonAlloc_Native", Hep::Script::Hep_Physics_OverlapSphereNonAlloc);
 
 		mono_add_internal_call("Hep.Entity::GetTransform_Native", Hep::Script::Hep_Entity_GetTransform);
 		mono_add_internal_call("Hep.Entity::SetTransform_Native", Hep::Script::Hep_Entity_SetTransform);
@@ -81,6 +87,9 @@ namespace Hep
 		mono_add_internal_call("Hep.RigidBodyComponent::GetLinearVelocity_Native", Hep::Script::Hep_RigidBodyComponent_GetLinearVelocity);
 		mono_add_internal_call("Hep.RigidBodyComponent::SetLinearVelocity_Native", Hep::Script::Hep_RigidBodyComponent_SetLinearVelocity);
 		mono_add_internal_call("Hep.RigidBodyComponent::Rotate_Native", Hep::Script::Hep_RigidBodyComponent_Rotate);
+		mono_add_internal_call("Hep.RigidBodyComponent::GetLayer_Native", Hep::Script::Hep_RigidBodyComponent_GetLayer);
+		mono_add_internal_call("Hep.RigidBodyComponent::GetMass_Native", Hep::Script::Hep_RigidBodyComponent_GetMass);
+		mono_add_internal_call("Hep.RigidBodyComponent::SetMass_Native", Hep::Script::Hep_RigidBodyComponent_SetMass);
 
 		mono_add_internal_call("Hep.Input::IsKeyPressed_Native", Hep::Script::Hep_Input_IsKeyPressed);
 		mono_add_internal_call("Hep.Input::IsMouseButtonPressed_Native", Hep::Script::Hep_Input_IsMouseButtonPressed);

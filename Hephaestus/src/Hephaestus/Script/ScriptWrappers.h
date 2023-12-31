@@ -33,6 +33,12 @@ namespace Hep::Script
 
 	// Physics
 	bool Hep_Physics_Raycast(glm::vec3* origin, glm::vec3* direction, float maxDistance, RaycastHit* hit);
+	MonoArray* Hep_Physics_OverlapBox(glm::vec3* origin, glm::vec3* halfSize);
+	MonoArray* Hep_Physics_OverlapCapsule(glm::vec3* origin, float radius, float halfHeight);
+	MonoArray* Hep_Physics_OverlapSphere(glm::vec3* origin, float radius);
+	int32_t Hep_Physics_OverlapBoxNonAlloc(glm::vec3* origin, glm::vec3* halfSize, MonoArray* outColliders);
+	int32_t Hep_Physics_OverlapCapsuleNonAlloc(glm::vec3* origin, float radius, float halfHeight, MonoArray* outColliders);
+	int32_t Hep_Physics_OverlapSphereNonAlloc(glm::vec3* origin, float radius, MonoArray* outColliders);
 
 	// Entity
 	void Hep_Entity_GetTransform(uint64_t entityID, glm::mat4* outTransform);
@@ -55,6 +61,9 @@ namespace Hep::Script
 	void Hep_RigidBodyComponent_GetLinearVelocity(uint64_t entityID, glm::vec3* outVelocity);
 	void Hep_RigidBodyComponent_SetLinearVelocity(uint64_t entityID, glm::vec3* velocity);
 	void Hep_RigidBodyComponent_Rotate(uint64_t entityID, glm::vec3* rotation);
+	uint32_t Hep_RigidBodyComponent_GetLayer(uint64_t entityID);
+	float Hep_RigidBodyComponent_GetMass(uint64_t entityID);
+	void Hep_RigidBodyComponent_SetMass(uint64_t entityID, float mass);
 
 	// Renderer
 	// Texture2D

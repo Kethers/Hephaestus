@@ -6,7 +6,6 @@
 
 #include "Hephaestus/Scene/Scene.h"
 #include "Hephaestus/Scene/Entity.h"
-#include "Hephaestus/Scene/Components.h"
 #include "Hephaestus/Physics/PhysicsUtil.h"
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
 
@@ -20,8 +19,6 @@
 
 #include <PhysX/PxPhysicsAPI.h>
 
-#include <imgui.h>
-
 namespace Hep
 {
 	extern std::unordered_map<MonoType*, std::function<bool(Entity&)>> s_HasComponentFuncs;
@@ -30,16 +27,6 @@ namespace Hep
 
 namespace Hep::Script
 {
-	enum class ComponentID
-	{
-		None           = 0,
-		Transform      = 1,
-		Mesh           = 2,
-		Script         = 3,
-		SpriteRenderer = 4
-	};
-
-
 	////////////////////////////////////////////////////////////////
 	// Math ////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
@@ -84,6 +71,180 @@ namespace Hep::Script
 	bool Hep_Physics_Raycast(glm::vec3* origin, glm::vec3* direction, float maxDistance, RaycastHit* hit)
 	{
 		return PXPhysicsWrappers::Raycast(*origin, *direction, maxDistance, hit);
+	}
+
+	// Helper function for the Overlap functions below
+	static void AddCollidersToArray(MonoArray* array, const std::array<physx::PxOverlapHit, OVERLAP_MAX_COLLIDERS>& hits, uint32_t count)
+	{
+		uint32_t arrayIndex = 0;
+		for (uint32_t i = 0; i < count; i++)
+		{
+			Entity& entity = *(Entity*)hits[i].actor->userData;
+
+			if (entity.HasComponent<BoxColliderComponent>())
+			{
+				auto& boxCollider = entity.GetComponent<BoxColliderComponent>();
+
+				UUID uuid = entity.GetUUID();
+				void* data[] = {
+					&uuid,
+					&boxCollider.IsTrigger,
+					&boxCollider.Size,
+					&boxCollider.Offset
+				};
+
+				MonoObject* obj = ScriptEngine::Construct("Hep.BoxCollider:.ctor(ulong,bool,Vector3,Vector3)", true, data);
+				mono_array_set(array, MonoObject*, arrayIndex++, obj);
+			}
+
+			if (entity.HasComponent<SphereColliderComponent>())
+			{
+				auto& sphereCollider = entity.GetComponent<SphereColliderComponent>();
+
+				UUID uuid = entity.GetUUID();
+				void* data[] = {
+					&uuid,
+					&sphereCollider.IsTrigger,
+					&sphereCollider.Radius
+				};
+
+				MonoObject* obj = ScriptEngine::Construct("Hep.SphereCollider:.ctor(ulong,bool,float)", true, data);
+				mono_array_set(array, MonoObject*, arrayIndex++, obj);
+			}
+
+			if (entity.HasComponent<CapsuleColliderComponent>())
+			{
+				auto& capsuleCollider = entity.GetComponent<CapsuleColliderComponent>();
+
+				UUID uuid = entity.GetUUID();
+				void* data[] = {
+					&uuid,
+					&capsuleCollider.IsTrigger,
+					&capsuleCollider.Radius,
+					&capsuleCollider.Height
+				};
+
+				MonoObject* obj = ScriptEngine::Construct("Hep.CapsuleCollider:.ctor(ulong,bool,float,float)", true, data);
+				mono_array_set(array, MonoObject*, arrayIndex++, obj);
+			}
+
+			if (entity.HasComponent<MeshColliderComponent>())
+			{
+				auto& meshCollider = entity.GetComponent<MeshColliderComponent>();
+
+				Ref<Mesh>* mesh = new Ref<Mesh>(meshCollider.CollisionMesh);
+				UUID uuid = entity.GetUUID();
+				void* data[] = {
+					&uuid,
+					&meshCollider.IsTrigger,
+					&mesh
+				};
+
+				MonoObject* obj = ScriptEngine::Construct("Hep.MeshCollider:.ctor(ulong,bool,intptr)", true, data);
+				mono_array_set(array, MonoObject*, arrayIndex++, obj);
+			}
+		}
+	}
+
+	static std::array<physx::PxOverlapHit, OVERLAP_MAX_COLLIDERS> s_OverlapBuffer;
+
+	MonoArray* Hep_Physics_OverlapBox(glm::vec3* origin, glm::vec3* halfSize)
+	{
+		MonoArray* outColliders = nullptr;
+		memset(s_OverlapBuffer.data(), 0, OVERLAP_MAX_COLLIDERS * sizeof(physx::PxOverlapHit));
+
+		uint32_t count;
+		if (PXPhysicsWrappers::OverlapBox(*origin, *halfSize, s_OverlapBuffer, &count))
+		{
+			outColliders = mono_array_new(mono_domain_get(), ScriptEngine::GetCoreClass("Hep.Collider"), count);
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+		}
+
+		return outColliders;
+	}
+
+	MonoArray* Hep_Physics_OverlapCapsule(glm::vec3* origin, float radius, float halfHeight)
+	{
+		MonoArray* outColliders = nullptr;
+		memset(s_OverlapBuffer.data(), 0, OVERLAP_MAX_COLLIDERS * sizeof(physx::PxOverlapHit));
+
+		uint32_t count;
+		if (PXPhysicsWrappers::OverlapCapsule(*origin, radius, halfHeight, s_OverlapBuffer, &count))
+		{
+			outColliders = mono_array_new(mono_domain_get(), ScriptEngine::GetCoreClass("Hep.Collider"), count);
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+		}
+
+		return outColliders;
+	}
+
+	MonoArray* Hep_Physics_OverlapSphere(glm::vec3* origin, float radius)
+	{
+		MonoArray* outColliders = nullptr;
+		memset(s_OverlapBuffer.data(), 0, OVERLAP_MAX_COLLIDERS * sizeof(physx::PxOverlapHit));
+
+		uint32_t count;
+		if (PXPhysicsWrappers::OverlapSphere(*origin, radius, s_OverlapBuffer, &count))
+		{
+			outColliders = mono_array_new(mono_domain_get(), ScriptEngine::GetCoreClass("Hep.Collider"), count);
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+		}
+
+		return outColliders;
+	}
+
+	int32_t Hep_Physics_OverlapBoxNonAlloc(glm::vec3* origin, glm::vec3* halfSize, MonoArray* outColliders)
+	{
+		memset(s_OverlapBuffer.data(), 0, OVERLAP_MAX_COLLIDERS * sizeof(physx::PxOverlapHit));
+
+		uint64_t arrayLength = mono_array_length(outColliders);
+
+		uint32_t count;
+		if (PXPhysicsWrappers::OverlapBox(*origin, *halfSize, s_OverlapBuffer, &count))
+		{
+			if (count > arrayLength)
+				count = arrayLength;
+
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+		}
+
+		return count;
+	}
+
+	int32_t Hep_Physics_OverlapCapsuleNonAlloc(glm::vec3* origin, float radius, float halfHeight, MonoArray* outColliders)
+	{
+		memset(s_OverlapBuffer.data(), 0, OVERLAP_MAX_COLLIDERS * sizeof(physx::PxOverlapHit));
+
+		uint64_t arrayLength = mono_array_length(outColliders);
+
+		uint32_t count;
+		if (PXPhysicsWrappers::OverlapCapsule(*origin, radius, halfHeight, s_OverlapBuffer, &count))
+		{
+			if (count > arrayLength)
+				count = arrayLength;
+
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+		}
+
+		return count;
+	}
+
+	int32_t Hep_Physics_OverlapSphereNonAlloc(glm::vec3* origin, float radius, MonoArray* outColliders)
+	{
+		memset(s_OverlapBuffer.data(), 0, OVERLAP_MAX_COLLIDERS * sizeof(physx::PxOverlapHit));
+
+		uint64_t arrayLength = mono_array_length(outColliders);
+
+		uint32_t count;
+		if (PXPhysicsWrappers::OverlapSphere(*origin, radius, s_OverlapBuffer, &count))
+		{
+			if (count > arrayLength)
+				count = arrayLength;
+
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+		}
+
+		return count;
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -172,7 +333,7 @@ namespace Hep::Script
 		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
 		HEP_CORE_ASSERT(scene, "No active scene!");
 		const auto& entityMap = scene->GetEntityMap();
-		HEP_CORE_ASSERT(entityMap.find(entityID) != entityMap.end(), "Invalid entity ID or entity doesn't exist in scene!");
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
 
 		Entity entity = entityMap.at(entityID);
 		auto& transformComponent = entity.GetComponent<TransformComponent>();
@@ -185,7 +346,7 @@ namespace Hep::Script
 		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
 		HEP_CORE_ASSERT(scene, "No active scene!");
 		const auto& entityMap = scene->GetEntityMap();
-		HEP_CORE_ASSERT(entityMap.find(entityID) != entityMap.end(), "Invalid entity ID or entity doesn't exist in scene!");
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
 
 		Entity entity = entityMap.at(entityID);
 		glm::mat4& transform = entity.Transform();
@@ -225,7 +386,7 @@ namespace Hep::Script
 		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
 		HEP_CORE_ASSERT(scene, "No active scene!");
 		const auto& entityMap = scene->GetEntityMap();
-		HEP_CORE_ASSERT(entityMap.find(entityID) != entityMap.end(), "Invalid entity ID or entity doesn't exist in scene!");
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
 
 		Entity entity = entityMap.at(entityID);
 		HEP_CORE_ASSERT(entity.HasComponent<RigidBody2DComponent>());
@@ -377,6 +538,56 @@ namespace Hep::Script
 			* physx::PxQuat(glm::radians(rotation->y), { 0.0F, 1.0F, 0.0F })
 			* physx::PxQuat(glm::radians(rotation->z), { 0.0F, 0.0F, 1.0F }));
 		dynamicActor->setGlobalPose(transform);
+	}
+
+	uint32_t Hep_RigidBodyComponent_GetLayer(uint64_t entityID)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+		return component.Layer;
+	}
+
+	float Hep_RigidBodyComponent_GetMass(uint64_t entityID)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+
+		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
+		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+		HEP_CORE_ASSERT(dynamicActor);
+
+		return dynamicActor->getMass();
+	}
+
+	void Hep_RigidBodyComponent_SetMass(uint64_t entityID, float mass)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+
+		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
+		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+		HEP_CORE_ASSERT(dynamicActor);
+
+		component.Mass = mass;
+		physx::PxRigidBodyExt::updateMassAndInertia(*dynamicActor, mass);
 	}
 
 	Ref<Mesh>* Hep_Mesh_Constructor(MonoString* filepath)

@@ -171,6 +171,17 @@ namespace Hep
 			Acceleration
 		}
 
+		public float Mass
+		{
+			get { return GetMass_Native(Entity.ID); }
+			set { SetMass_Native(Entity.ID, value); }
+		}
+
+		public uint Layer
+		{
+			get { return GetLayer_Native(Entity.ID); }
+		}
+
 		public void AddForce(Vector3 force, ForceMode forceMode = ForceMode.Force)
 		{
 			AddForce_Native(Entity.ID, ref force, forceMode);
@@ -211,5 +222,13 @@ namespace Hep
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal static extern void Rotate_Native(ulong entityID, ref Vector3 rotation);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal static extern uint GetLayer_Native(ulong entityID);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal static extern float GetMass_Native(ulong entityID);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal static extern float SetMass_Native(ulong entityID, float mass);
 	}
 }

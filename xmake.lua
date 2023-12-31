@@ -14,7 +14,7 @@ end
 if is_mode("debug") then
 	add_defines("_DEBUG")
 	add_defines("HEP_DEBUG")
-elseif is_mode("release") then
+elseif is_mode("release") then	-- bulitin release mode has defined "NDEBUG"
 	add_defines("HEP_RELEASE")
 elseif is_mode("dist") then
 	add_defines("HEP_DIST", "NDEBUG")

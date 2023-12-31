@@ -31,10 +31,6 @@ IncludeDir["PhysX"]		= "$(projectdir)/external/PhysX/include"
 LibraryDir = {}
 LibraryDir["mono"] 							= "$(projectdir)/external/mono/lib/Debug/mono-2.0-sgen.lib"
 
--- PhysX TODO: Release dir doesn't exist yet
-LibraryDir["PhysX_LowLevel"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/LowLevel.lib"
-LibraryDir["PhysX_LowLevelAABB"] 			= "$(projectdir)/external/PhysX/lib/$(mode)/LowLevelAABB.lib"
-LibraryDir["PhysX_LowLevelDynamics"] 		= "$(projectdir)/external/PhysX/lib/$(mode)/LowLevelDynamics.lib"
 LibraryDir["PhysX"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysX_static_64.lib"
 LibraryDir["PhysXCharacterKinematic"] 		= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCharacterKinematic_static_64.lib"
 LibraryDir["PhysXCommon"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCommon_static_64.lib"
@@ -42,10 +38,7 @@ LibraryDir["PhysXCooking"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/Phys
 LibraryDir["PhysXExtensions"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXExtensions_static_64.lib"
 LibraryDir["PhysXFoundation"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXFoundation_static_64.lib"
 LibraryDir["PhysXPvd"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXPvdSDK_static_64.lib"
-LibraryDir["PhysXTask"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXTask.lib"
-LibraryDir["PhysXVehicle"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXVehicle_static_64.lib"
-LibraryDir["PhysX_SceneQuery"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/SceneQuery.lib"
-LibraryDir["PhysX_SimulationController"] 	= "$(projectdir)/external/PhysX/lib/$(mode)/SimulationController.lib"
+
 
 BuildProject({
 	projectName = "Hephaestus",
@@ -85,9 +78,6 @@ BuildProject({
 	releaseLink = {},
 	link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", 
 		LibraryDir.mono,
-		-- LibraryDir.PhysX_LowLevel,
-		-- LibraryDir.PhysX_LowLevelAABB,
-		-- LibraryDir.PhysX_LowLevelDynamics,
 		LibraryDir.PhysX,
 		LibraryDir.PhysXCharacterKinematic,
 		LibraryDir.PhysXCommon,
@@ -95,10 +85,6 @@ BuildProject({
 		LibraryDir.PhysXExtensions,
 		LibraryDir.PhysXFoundation,
 		LibraryDir.PhysXPvd,
-		-- LibraryDir.PhysXTask,
-		-- LibraryDir.PhysXVehicle,
-		-- LibraryDir.PhysX_SceneQuery,
-		-- LibraryDir.PhysX_SimulationController
 	},
 	cxflags = {},
 	afterBuildFunc = nil,
