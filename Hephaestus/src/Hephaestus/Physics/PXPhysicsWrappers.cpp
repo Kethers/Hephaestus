@@ -144,6 +144,20 @@ namespace Hep
 		return physx::PxBroadPhaseType::eABP;
 	}
 
+	static physx::PxFrictionType::Enum ToPhysXFrictionType(FrictionType type)
+	{
+		switch (type)
+		{
+			// @formatter:off
+			case Hep::FrictionType::Patch:				return physx::PxFrictionType::ePATCH;
+			case Hep::FrictionType::OneDirectional: 	return physx::PxFrictionType::eONE_DIRECTIONAL;
+			case Hep::FrictionType::TwoDirectional: 	return physx::PxFrictionType::eTWO_DIRECTIONAL;
+			// @formatter:on
+		}
+
+		return physx::PxFrictionType::ePATCH;
+	}
+
 	physx::PxScene* PXPhysicsWrappers::CreateScene()
 	{
 		physx::PxSceneDesc sceneDesc(s_Physics->getTolerancesScale());
@@ -155,6 +169,7 @@ namespace Hep
 		sceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(1);
 		sceneDesc.filterShader = HepFilterShader;
 		sceneDesc.simulationEventCallback = &s_ContactListener;
+		sceneDesc.frictionType = ToPhysXFrictionType(settings.FrictionModel);
 
 		HEP_CORE_ASSERT(sceneDesc.isValid());
 		return s_Physics->createScene(sceneDesc);
