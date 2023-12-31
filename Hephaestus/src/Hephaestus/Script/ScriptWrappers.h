@@ -56,10 +56,13 @@ namespace Hep::Script
 	void Hep_RigidBody2DComponent_GetLinearVelocity(uint64_t entityID, glm::vec2* outVelocity);
 	void Hep_RigidBody2DComponent_SetLinearVelocity(uint64_t entityID, glm::vec2* velocity);
 
+	RigidBodyComponent::Type Hep_RigidBodyComponent_GetBodyType(uint64_t entityID);
 	void Hep_RigidBodyComponent_AddForce(uint64_t entityID, glm::vec3* force, ForceMode foceMode);
 	void Hep_RigidBodyComponent_AddTorque(uint64_t entityID, glm::vec3* torque, ForceMode forceMode);
 	void Hep_RigidBodyComponent_GetLinearVelocity(uint64_t entityID, glm::vec3* outVelocity);
 	void Hep_RigidBodyComponent_SetLinearVelocity(uint64_t entityID, glm::vec3* velocity);
+	void Hep_RigidBodyComponent_GetAngularVelocity(uint64_t entityID, glm::vec3* outVelocity);
+	void Hep_RigidBodyComponent_SetAngularVelocity(uint64_t entityID, glm::vec3* velocity);
 	void Hep_RigidBodyComponent_Rotate(uint64_t entityID, glm::vec3* rotation);
 	uint32_t Hep_RigidBodyComponent_GetLayer(uint64_t entityID);
 	float Hep_RigidBodyComponent_GetMass(uint64_t entityID);

@@ -139,9 +139,7 @@ namespace Hep
 
 		if (!isEditorScene)
 		{
-			SceneParams sceneDesc;
-			sceneDesc.Gravity = glm::vec3(0.0F, -9.81F, 0.0F);
-			Physics::CreateScene(sceneDesc);
+			Physics::CreateScene();
 		}
 
 		Init();
@@ -459,11 +457,11 @@ namespace Hep
 
 		{
 			auto view = m_Registry.view<RigidBodyComponent>();
-
+			Physics::ExpandEntityBuffer(view.size());
 			for (auto entity : view)
 			{
 				Entity e = { entity, this };
-				Physics::CreateActor(e, view.size());
+				Physics::CreateActor(e);
 			}
 		}
 

@@ -60,6 +60,7 @@ namespace FPSExample
 
 		private void UpdateRotation(float ts)
 		{
+			// TODO: Mouse position should be relative to the viewport
 			Vector2 currentMousePosition = Input.GetMousePosition();
 			Vector2 delta = m_LastMousePosition - currentMousePosition;
 			m_RotationY += delta.X * MouseSensitivity * ts;
@@ -94,24 +95,13 @@ namespace FPSExample
 
 				int numColliders = Physics.OverlapBoxNonAlloc(m_Transform.Transform.Translation, new Vector3(1.0F), colliders);
 
+				Console.WriteLine("Colliders: {0}", numColliders);
+
 				// When using NonAlloc it's not safe to use a foreach loop since some of the colliders may not exist
 				for (int i = 0; i < numColliders; i++)
 				{
 					Console.WriteLine(colliders[i]);
 				}
-
-				/*Collider[] colliders = Physics.OverlapBox(m_Transform.Transform.Translation, new Vector3(1.0f));
-				Console.WriteLine(colliders.Length);
-
-				foreach (Collider c in colliders)
-				{
-					Console.WriteLine("EntityID: {0}", c.EntityID);
-					Console.WriteLine("IsTrigger: {0}", c.IsTrigger);
-					Console.WriteLine("IsBox: {0}", c is BoxCollider);
-					Console.WriteLine("IsSphere: {0}", c is SphereCollider);
-					Console.WriteLine("IsCapsule: {0}", c is CapsuleCollider);
-					Console.WriteLine("IsMesh: {0}", c is MeshCollider);
-				}*/
 			}
 
 			if (Input.IsKeyPressed(KeyCode.W))

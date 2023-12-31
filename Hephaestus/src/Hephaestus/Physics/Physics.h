@@ -22,9 +22,19 @@ namespace Hep
 		All       = Static | Dynamic | Kinematic
 	};
 
-	struct SceneParams
+	enum class BroadphaseType
 	{
-		glm::vec3 Gravity = { 0.0f, -9.81f, 0.0f };
+		SweepAndPrune,
+		MultiBoxPrune,
+		AutomaticBoxPrune
+		// TODO: GPU?
+	};
+
+	struct PhysicsSettings
+	{
+		float FixedTimestep = 0.02F;
+		glm::vec3 Gravity = { 0.0F, -9.81F, 0.0F };
+		BroadphaseType BroadphaseAlgorithm = BroadphaseType::AutomaticBoxPrune;
 	};
 
 	struct RaycastHit
@@ -41,8 +51,10 @@ namespace Hep
 		static void Init();
 		static void Shutdown();
 
-		static void CreateScene(const SceneParams& params);
-		static void CreateActor(Entity e, int entityCount);
+		static void ExpandEntityBuffer(uint32_t entityCount);
+
+		static void CreateScene();
+		static void CreateActor(Entity e);
 
 		static void Simulate(Timestep ts);
 
@@ -50,7 +62,7 @@ namespace Hep
 
 		static void* GetPhysicsScene();
 
-		static void ConnectVisualDebugger();
-		static void DisconnectVisualDebugger();
+	public:
+		static PhysicsSettings& GetSettings();
 	};
 }

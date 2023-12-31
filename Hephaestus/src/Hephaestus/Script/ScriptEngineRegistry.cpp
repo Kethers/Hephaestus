@@ -9,7 +9,6 @@
 
 #include "Hephaestus/Scene/Entity.h"
 #include "ScriptWrappers.h"
-#include <iostream>
 
 namespace Hep
 {
@@ -82,10 +81,13 @@ namespace Hep
 		mono_add_internal_call("Hep.RigidBody2DComponent::SetLinearVelocity_Native",
 			Hep::Script::Hep_RigidBody2DComponent_SetLinearVelocity);
 
+		mono_add_internal_call("Hep.RigidBodyComponent::GetBodyType_Native", Hep::Script::Hep_RigidBodyComponent_GetBodyType);
 		mono_add_internal_call("Hep.RigidBodyComponent::AddForce_Native", Hep::Script::Hep_RigidBodyComponent_AddForce);
 		mono_add_internal_call("Hep.RigidBodyComponent::AddTorque_Native", Hep::Script::Hep_RigidBodyComponent_AddTorque);
 		mono_add_internal_call("Hep.RigidBodyComponent::GetLinearVelocity_Native", Hep::Script::Hep_RigidBodyComponent_GetLinearVelocity);
 		mono_add_internal_call("Hep.RigidBodyComponent::SetLinearVelocity_Native", Hep::Script::Hep_RigidBodyComponent_SetLinearVelocity);
+		mono_add_internal_call("Hep.RigidBodyComponent::GetAngularVelocity_Native", Hep::Script::Hep_RigidBodyComponent_GetAngularVelocity);
+		mono_add_internal_call("Hep.RigidBodyComponent::SetAngularVelocity_Native", Hep::Script::Hep_RigidBodyComponent_SetAngularVelocity);
 		mono_add_internal_call("Hep.RigidBodyComponent::Rotate_Native", Hep::Script::Hep_RigidBodyComponent_Rotate);
 		mono_add_internal_call("Hep.RigidBodyComponent::GetLayer_Native", Hep::Script::Hep_RigidBodyComponent_GetLayer);
 		mono_add_internal_call("Hep.RigidBodyComponent::GetMass_Native", Hep::Script::Hep_RigidBodyComponent_GetMass);

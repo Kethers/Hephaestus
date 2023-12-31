@@ -705,16 +705,6 @@ namespace Hep
 				ImGui::EndMenu();
 			}
 
-			if (ImGui::BeginMenu("Debug"))
-			{
-				if (ImGui::MenuItem("Connect To PVD"))
-				{
-					Physics::ConnectVisualDebugger();
-				}
-
-				ImGui::EndMenu();
-			}
-
 			ImGui::EndMenuBar();
 		}
 
@@ -927,7 +917,7 @@ namespace Hep
 		ImGui::End();
 
 		ScriptEngine::OnImGuiRender();
-		PhysicsSettingsWindow::OnImGuiRender(&m_ShowPhysicsSettings);
+		PhysicsSettingsWindow::OnImGuiRender(m_ShowPhysicsSettings);
 
 		ImGui::End();
 	}

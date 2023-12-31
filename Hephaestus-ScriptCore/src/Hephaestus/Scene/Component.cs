@@ -163,12 +163,23 @@ namespace Hep
 
 	public class RigidBodyComponent : Component
 	{
+		public enum Type
+		{
+			Static,
+			Dynamic
+		}
+
 		public enum ForceMode
 		{
 			Force = 0,
 			Impulse,
 			VelocityChange,
 			Acceleration
+		}
+
+		public Type BodyType
+		{
+			get { return GetBodyType_Native(Entity.ID); }
 		}
 
 		public float Mass
@@ -203,6 +214,17 @@ namespace Hep
 			SetLinearVelocity_Native(Entity.ID, ref velocity);
 		}
 
+		public Vector3 GetAngularVelocity()
+		{
+			GetAngularVelocity_Native(Entity.ID, out Vector3 velocity);
+			return velocity;
+		}
+
+		public void SetAngularVelocity(Vector3 velocity)
+		{
+			SetAngularVelocity_Native(Entity.ID, ref velocity);
+		}
+
 		public void Rotate(Vector3 rotation)
 		{
 			Rotate_Native(Entity.ID, ref rotation);
@@ -214,6 +236,11 @@ namespace Hep
 		internal static extern void AddForce_Native(ulong entityID, ref Vector3 force, ForceMode forceMode);
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal static extern void AddTorque_Native(ulong entityID, ref Vector3 torque, ForceMode forceMode);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal static extern void GetAngularVelocity_Native(ulong entityID, out Vector3 velocity);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal static extern void SetAngularVelocity_Native(ulong entityID, ref Vector3 velocity);
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal static extern void GetLinearVelocity_Native(ulong entityID, out Vector3 velocity);
@@ -230,5 +257,8 @@ namespace Hep
 		internal static extern float GetMass_Native(ulong entityID);
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal static extern float SetMass_Native(ulong entityID, float mass);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal static extern Type GetBodyType_Native(ulong entityID);
 	}
 }

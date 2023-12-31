@@ -56,15 +56,15 @@ namespace Hep
 		RemoveIfExists<PhysicsLayer>(s_Layers, [&](const PhysicsLayer& layer) { return layer.LayerID == layerId; });
 	}
 
-	void PhysicsLayerManager::SetLayerCollision(uint32_t layerId, uint32_t otherLayer, bool collides)
+	void PhysicsLayerManager::SetLayerCollision(uint32_t layerId, uint32_t otherLayer, bool shouldCollide)
 	{
-		if (ShouldCollide(layerId, otherLayer) && collides)
+		if (ShouldCollide(layerId, otherLayer) && shouldCollide)
 			return;
 
 		PhysicsLayer& layerInfo = GetLayer(layerId);
 		PhysicsLayer& otherLayerInfo = GetLayer(otherLayer);
 
-		if (collides)
+		if (shouldCollide)
 		{
 			layerInfo.CollidesWith |= otherLayerInfo.BitValue;
 			otherLayerInfo.CollidesWith |= layerInfo.BitValue;

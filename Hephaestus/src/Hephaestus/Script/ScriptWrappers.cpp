@@ -74,14 +74,15 @@ namespace Hep::Script
 	}
 
 	// Helper function for the Overlap functions below
-	static void AddCollidersToArray(MonoArray* array, const std::array<physx::PxOverlapHit, OVERLAP_MAX_COLLIDERS>& hits, uint32_t count)
+	static void AddCollidersToArray(MonoArray* array, const std::array<physx::PxOverlapHit, OVERLAP_MAX_COLLIDERS>& hits, uint32_t count,
+		uint32_t arrayLength)
 	{
 		uint32_t arrayIndex = 0;
 		for (uint32_t i = 0; i < count; i++)
 		{
 			Entity& entity = *(Entity*)hits[i].actor->userData;
 
-			if (entity.HasComponent<BoxColliderComponent>())
+			if (entity.HasComponent<BoxColliderComponent>() && arrayIndex < arrayLength)
 			{
 				auto& boxCollider = entity.GetComponent<BoxColliderComponent>();
 
@@ -97,7 +98,7 @@ namespace Hep::Script
 				mono_array_set(array, MonoObject*, arrayIndex++, obj);
 			}
 
-			if (entity.HasComponent<SphereColliderComponent>())
+			if (entity.HasComponent<SphereColliderComponent>() && arrayIndex < arrayLength)
 			{
 				auto& sphereCollider = entity.GetComponent<SphereColliderComponent>();
 
@@ -112,7 +113,7 @@ namespace Hep::Script
 				mono_array_set(array, MonoObject*, arrayIndex++, obj);
 			}
 
-			if (entity.HasComponent<CapsuleColliderComponent>())
+			if (entity.HasComponent<CapsuleColliderComponent>() && arrayIndex < arrayLength)
 			{
 				auto& capsuleCollider = entity.GetComponent<CapsuleColliderComponent>();
 
@@ -128,7 +129,7 @@ namespace Hep::Script
 				mono_array_set(array, MonoObject*, arrayIndex++, obj);
 			}
 
-			if (entity.HasComponent<MeshColliderComponent>())
+			if (entity.HasComponent<MeshColliderComponent>() && arrayIndex < arrayLength)
 			{
 				auto& meshCollider = entity.GetComponent<MeshColliderComponent>();
 
@@ -157,7 +158,7 @@ namespace Hep::Script
 		if (PXPhysicsWrappers::OverlapBox(*origin, *halfSize, s_OverlapBuffer, &count))
 		{
 			outColliders = mono_array_new(mono_domain_get(), ScriptEngine::GetCoreClass("Hep.Collider"), count);
-			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count, count);
 		}
 
 		return outColliders;
@@ -172,7 +173,7 @@ namespace Hep::Script
 		if (PXPhysicsWrappers::OverlapCapsule(*origin, radius, halfHeight, s_OverlapBuffer, &count))
 		{
 			outColliders = mono_array_new(mono_domain_get(), ScriptEngine::GetCoreClass("Hep.Collider"), count);
-			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count, count);
 		}
 
 		return outColliders;
@@ -187,7 +188,7 @@ namespace Hep::Script
 		if (PXPhysicsWrappers::OverlapSphere(*origin, radius, s_OverlapBuffer, &count))
 		{
 			outColliders = mono_array_new(mono_domain_get(), ScriptEngine::GetCoreClass("Hep.Collider"), count);
-			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count, count);
 		}
 
 		return outColliders;
@@ -205,7 +206,7 @@ namespace Hep::Script
 			if (count > arrayLength)
 				count = arrayLength;
 
-			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count, arrayLength);
 		}
 
 		return count;
@@ -223,7 +224,7 @@ namespace Hep::Script
 			if (count > arrayLength)
 				count = arrayLength;
 
-			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count, arrayLength);
 		}
 
 		return count;
@@ -241,7 +242,7 @@ namespace Hep::Script
 			if (count > arrayLength)
 				count = arrayLength;
 
-			AddCollidersToArray(outColliders, s_OverlapBuffer, count);
+			AddCollidersToArray(outColliders, s_OverlapBuffer, count, arrayLength);
 		}
 
 		return count;
@@ -426,6 +427,19 @@ namespace Hep::Script
 		body->SetLinearVelocity({ velocity->x, velocity->y });
 	}
 
+	RigidBodyComponent::Type Hep_RigidBodyComponent_GetBodyType(uint64_t entityID)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+		return component.BodyType;
+	}
+
 	void Hep_RigidBodyComponent_AddForce(uint64_t entityID, glm::vec3* force, ForceMode forceMode)
 	{
 		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
@@ -516,6 +530,45 @@ namespace Hep::Script
 
 		HEP_CORE_ASSERT(velocity);
 		dynamicActor->setLinearVelocity({ velocity->x, velocity->y, velocity->z });
+	}
+
+	void Hep_RigidBodyComponent_GetAngularVelocity(uint64_t entityID, glm::vec3* outVelocity)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+
+		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
+		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+		HEP_CORE_ASSERT(dynamicActor);
+
+		HEP_CORE_ASSERT(outVelocity);
+		physx::PxVec3 velocity = dynamicActor->getAngularVelocity();
+		*outVelocity = { velocity.x, velocity.y, velocity.z };
+	}
+
+	void Hep_RigidBodyComponent_SetAngularVelocity(uint64_t entityID, glm::vec3* velocity)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
+		auto& component = entity.GetComponent<RigidBodyComponent>();
+
+		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
+		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
+		HEP_CORE_ASSERT(dynamicActor);
+
+		HEP_CORE_ASSERT(velocity);
+		dynamicActor->setAngularVelocity({ velocity->x, velocity->y, velocity->z });
 	}
 
 	void Hep_RigidBodyComponent_Rotate(uint64_t entityID, glm::vec3* rotation)
