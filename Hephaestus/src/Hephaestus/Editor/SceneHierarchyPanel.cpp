@@ -4,7 +4,6 @@
 #include <imgui.h>
 
 #include "Hephaestus/Core/Application.h"
-#include "Hephaestus/Core/Math/Transform.h"
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Physics/PhysicsLayer.h"
@@ -574,24 +573,16 @@ namespace Hep
 
 		if (entity.HasComponent<TransformComponent>())
 		{
-			Transform& transform = entity.GetComponent<TransformComponent>();
+			TransformComponent& transform = entity.GetComponent<TransformComponent>();
 			if (ImGui::TreeNodeEx((void*)((uint32_t)entity | typeid(TransformComponent).hash_code()), ImGuiTreeNodeFlags_DefaultOpen,
 				"Transform"))
 			{
-				glm::vec3 translation = transform.GetTranslation();
-				glm::vec3 rotation = transform.GetRotation();
-				glm::vec3 scale = transform.GetScale();
-
 				ImGui::Columns(2);
 				ImGui::Text("Translation");
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(-1);
 
-				if (ImGui::DragFloat3("##translation", glm::value_ptr(translation), 0.25f))
-				{
-					transform.SetTranslation(translation);
-				}
-
+				ImGui::DragFloat3("##translation", glm::value_ptr(transform.Translation), 0.25f);
 				ImGui::PopItemWidth();
 				ImGui::NextColumn();
 
@@ -599,11 +590,7 @@ namespace Hep
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(-1);
 
-				if (ImGui::DragFloat3("##rotation", glm::value_ptr(rotation), 0.25f))
-				{
-					transform.SetRotation(rotation);
-				}
-
+				ImGui::DragFloat3("##rotation", glm::value_ptr(transform.Rotation), 0.25f);
 				ImGui::PopItemWidth();
 				ImGui::NextColumn();
 
@@ -611,11 +598,7 @@ namespace Hep
 				ImGui::NextColumn();
 				ImGui::PushItemWidth(-1);
 
-				if (ImGui::DragFloat3("##scale", glm::value_ptr(scale), 0.25f))
-				{
-					transform.SetScale(scale);
-				}
-
+				ImGui::DragFloat3("##scale", glm::value_ptr(transform.Scale), 0.25f);
 				ImGui::PopItemWidth();
 				ImGui::NextColumn();
 

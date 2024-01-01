@@ -3,14 +3,8 @@
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Core/Input.h"
 #include "Hephaestus/Physics/Physics.h"
-#include "Hephaestus/Core/Math/Transform.h"
 
 #include <glm/glm.hpp>
-
-#include "Hephaestus/Core/Math/AABB.h"
-#include "Hephaestus/Core/Math/AABB.h"
-#include "Hephaestus/Core/Math/AABB.h"
-#include "Hephaestus/Core/Math/AABB.h"
 
 extern "C"
 {

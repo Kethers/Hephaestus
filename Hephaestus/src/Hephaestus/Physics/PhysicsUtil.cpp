@@ -5,10 +5,10 @@
 
 namespace Hep
 {
-	physx::PxTransform ToPhysXTransform(const Transform& transform)
+	physx::PxTransform ToPhysXTransform(const TransformComponent& transform)
 	{
-		physx::PxQuat r = ToPhysXQuat(glm::normalize(glm::quat(glm::radians(transform.GetRotation()))));
-		physx::PxVec3 p = ToPhysXVector(transform.GetTranslation());
+		physx::PxQuat r = ToPhysXQuat(glm::normalize(glm::quat(glm::radians(transform.Rotation))));
+		physx::PxVec3 p = ToPhysXVector(transform.Translation);
 		return physx::PxTransform(p, r);
 	}
 
@@ -108,7 +108,7 @@ namespace Hep
 		auto path = p.parent_path() / (p.filename().string() + ".pxm");
 		std::string cachedFilepath = path.string();
 
-		std::ifstream f(cachedFilepath, std::ios::out | std::ios::binary);
+		std::ifstream f(cachedFilepath, std::ios::in | std::ios::binary);
 		bool exists = !f.fail();
 		if (exists)
 			f.close();

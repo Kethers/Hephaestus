@@ -9,9 +9,6 @@
 #include <chrono>
 #include <thread>
 
-#include <Windows.h>
-#include <winioctl.h>
-
 #include "ScriptEngineRegistry.h"
 
 #include "Hephaestus/Scene/Scene.h"
@@ -43,6 +40,7 @@ namespace Hep
 		MonoMethod* OnCreateMethod = nullptr;
 		MonoMethod* OnDestroyMethod = nullptr;
 		MonoMethod* OnUpdateMethod = nullptr;
+		MonoMethod* OnPhysicsUpdateMethod = nullptr;
 
 		// Physics
 		MonoMethod* OnCollisionBeginMethod = nullptr;
@@ -57,6 +55,7 @@ namespace Hep
 			Constructor = GetMethod(s_CoreAssemblyImage, "Hep.Entity:.ctor(ulong)");
 			OnCreateMethod = GetMethod(image, FullName + ":OnCreate()");
 			OnUpdateMethod = GetMethod(image, FullName + ":OnUpdate(single)");
+			OnPhysicsUpdateMethod = GetMethod(image, FullName = ":OnPhysicsUpdate(single)");
 
 			// Physics (Entity class)
 			OnCollisionBeginMethod = GetMethod(s_CoreAssemblyImage, "Hep.Entity:OnCollisionBegin(single)");
@@ -365,6 +364,16 @@ namespace Hep
 		}
 	}
 
+	void ScriptEngine::OnPhysicsUpdateEntity(Entity entity, float fixedTimeStep)
+	{
+		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
+		if (entityInstance.ScriptClass->OnPhysicsUpdateMethod)
+		{
+			void* args[] = { &fixedTimeStep };
+			CallMethod(entityInstance.GetInstance(), entityInstance.ScriptClass->OnPhysicsUpdateMethod, args);
+		}
+	}
+
 	void ScriptEngine::OnCollision2DBegin(Entity entity)
 	{
 		EntityInstance& entityInstance = GetEntityInstanceData(entity.GetSceneUUID(), entity.GetUUID()).Instance;
@@ -649,11 +658,8 @@ namespace Hep
 		HEP_CORE_ASSERT(entityInstance.ScriptClass);
 		entityInstance.Handle = Instantiate(*entityInstance.ScriptClass);
 
-		MonoProperty* entityIDPropery = mono_class_get_property_from_name(entityInstance.ScriptClass->Class, "ID");
-		mono_property_get_get_method(entityIDPropery);
-		MonoMethod* entityIDSetMethod = mono_property_get_set_method(entityIDPropery);
 		void* param[] = { &id };
-		CallMethod(entityInstance.GetInstance(), entityIDSetMethod, param);
+		CallMethod(entityInstance.GetInstance(), entityInstance.ScriptClass->Constructor, param);
 
 		// Set all public fields to appropriate values
 		ScriptModuleFieldMap& moduleFieldMap = entityInstanceData.ModuleFieldMap;

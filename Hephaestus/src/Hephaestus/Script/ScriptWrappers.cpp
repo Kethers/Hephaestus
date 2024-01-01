@@ -12,6 +12,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/common.hpp>
 
 #include <mono/jit/jit.h>
 
@@ -298,10 +299,16 @@ namespace Hep::Script
 		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
 
 		Entity entity = entityMap.at(entityID);
-		Transform& transform = entity.GetComponent<TransformComponent>();
+		TransformComponent& transform = entity.GetComponent<TransformComponent>();
+
+		glm::quat rotation = glm::quat(glm::radians(transform.Rotation));
+		glm::vec3 right = glm::normalize(glm::rotate(rotation, glm::vec3(1.0F, 0.0F, 0.0F)));
+		glm::vec3 up = glm::normalize(glm::rotate(rotation, glm::vec3(0.0F, 1.0F, 0.0F)));
+		glm::vec3 forward = glm::normalize(glm::rotate(rotation, glm::vec3(0.0F, 0.0F, -1.0F)));
+
 		*outTransform = {
-			transform.GetTranslation(), transform.GetRotation(), transform.GetScale(),
-			transform.GetUpDirection(), transform.GetRightDirection(), transform.GetForwardDirection()
+			transform.Translation, transform.Rotation, transform.Scale,
+			up, right, forward
 		};
 	}
 
@@ -313,10 +320,10 @@ namespace Hep::Script
 		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
 
 		Entity entity = entityMap.at(entityID);
-		Transform& transform = entity.GetComponent<TransformComponent>();
-		transform.SetTranslation(inTransform->Translation);
-		transform.SetRotation(inTransform->Rotation);
-		transform.SetScale(inTransform->Scale);
+		TransformComponent& transform = entity.GetComponent<TransformComponent>();
+		transform.Translation = inTransform->Translation;
+		transform.Rotation = inTransform->Rotation;
+		transform.Scale = inTransform->Scale;
 	}
 
 	void* Hep_MeshComponent_GetMesh(uint64_t entityID)

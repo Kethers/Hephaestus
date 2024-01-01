@@ -1,16 +1,13 @@
 ﻿#pragma once
 
-#include "Hephaestus/Core/Math/Transform.h"
+#include "Hephaestus/Scene/Components.h"
 
 #include <PhysX/PxPhysicsAPI.h>
-#include <glm/glm.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace Hep
 {
-	physx::PxTransform ToPhysXTransform(const Transform& transform);
+	physx::PxTransform ToPhysXTransform(const TransformComponent& transform);
 	physx::PxTransform ToPhysXTransform(const glm::mat4& transform);
 	physx::PxMat44 ToPhysXMatrix(const glm::mat4& matrix);
 	physx::PxVec3 ToPhysXVector(const glm::vec3& vector);
