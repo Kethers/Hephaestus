@@ -1,6 +1,8 @@
 ﻿#include "heppch.h"
 #include "PhysicsUtil.h"
 
+#include <filesystem>
+
 namespace Hep
 {
 	physx::PxTransform ToPhysXTransform(const Transform& transform)
@@ -84,5 +86,56 @@ namespace Hep
 		}
 
 		return physx::PxFilterFlag::eSUPPRESS;
+	}
+
+	void ConvexMeshSerializer::SerializeMesh(const std::string& filepath, const physx::PxDefaultMemoryOutputStream& data)
+	{
+		std::filesystem::path p = filepath;
+		auto path = p.parent_path() / (p.filename().string() + ".pxm");
+		std::string cachedFilepath = path.string();
+
+		std::ofstream out(cachedFilepath, std::ios::out | std::ios::binary);
+		if (out)
+		{
+			out.write((const char*)data.getData(), data.getSize() / sizeof(char));
+			out.close();
+		}
+	}
+
+	bool ConvexMeshSerializer::IsSerialized(const std::string& filepath)
+	{
+		std::filesystem::path p = filepath;
+		auto path = p.parent_path() / (p.filename().string() + ".pxm");
+		std::string cachedFilepath = path.string();
+
+		std::ifstream f(cachedFilepath, std::ios::out | std::ios::binary);
+		bool exists = !f.fail();
+		if (exists)
+			f.close();
+		return exists;
+	}
+
+	static physx::PxU8* s_MeshDataBuffer;
+
+	physx::PxDefaultMemoryInputData ConvexMeshSerializer::DeserializeMesh(const std::string& filepath)
+	{
+		std::filesystem::path p = filepath;
+		auto path = p.parent_path() / (p.filename().string() + ".pxm");
+		std::string cachedFilepath = path.string();
+
+		std::ifstream in(cachedFilepath, std::ios::in | std::ios::binary);
+
+		uint32_t size;
+		if (in)
+		{
+			in.seekg(0, std::ios::end);
+			size = in.tellg();
+			in.seekg(0, std::ios::beg);
+			s_MeshDataBuffer = new physx::PxU8[size / sizeof(physx::PxU8)];
+			in.read((char*)s_MeshDataBuffer, size / sizeof(char));
+			in.close();
+		}
+
+		return physx::PxDefaultMemoryInputData(s_MeshDataBuffer, size);
 	}
 }
