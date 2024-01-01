@@ -3,10 +3,17 @@
 
 namespace Hep
 {
-	physx::PxTransform ToPhysXTransform(const glm::mat4& matrix)
+	physx::PxTransform ToPhysXTransform(const Transform& transform)
 	{
-		physx::PxQuat r = ToPhysXQuat(glm::normalize(glm::toQuat(matrix)));
-		physx::PxVec3 p = ToPhysXVector(glm::vec3(matrix[3]));
+		physx::PxQuat r = ToPhysXQuat(glm::normalize(glm::quat(glm::radians(transform.GetRotation()))));
+		physx::PxVec3 p = ToPhysXVector(transform.GetTranslation());
+		return physx::PxTransform(p, r);
+	}
+
+	physx::PxTransform ToPhysXTransform(const glm::mat4& transform)
+	{
+		physx::PxQuat r = ToPhysXQuat(glm::normalize(glm::toQuat(transform)));
+		physx::PxVec3 p = ToPhysXVector(glm::vec3(transform[3]));
 		return physx::PxTransform(p, r);
 	}
 

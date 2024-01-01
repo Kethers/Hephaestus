@@ -32,7 +32,7 @@ namespace Hep
 	{
 	public:
 		static physx::PxScene* CreateScene();
-		static physx::PxRigidActor* CreateActor(const RigidBodyComponent& rigidbody, const glm::mat4& transform);
+		static physx::PxRigidActor* CreateActor(const RigidBodyComponent& rigidbody, const Transform& transform);
 		static void SetCollisionFilters(const physx::PxRigidActor& actor, uint32_t physicsLayer);
 
 		static void AddBoxCollider(physx::PxRigidActor& actor, const physx::PxMaterial& material,

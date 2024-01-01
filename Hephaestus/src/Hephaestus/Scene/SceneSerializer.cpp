@@ -177,11 +177,10 @@ namespace Hep
 			out << YAML::Key << "TransformComponent";
 			out << YAML::BeginMap; // TransformComponent
 
-			auto& transform = entity.GetComponent<TransformComponent>().Transform;
-			auto [pos, rot, scale] = GetTransformDecomposition(transform);
-			out << YAML::Key << "Position" << YAML::Value << pos;
-			out << YAML::Key << "Rotation" << YAML::Value << rot;
-			out << YAML::Key << "Scale" << YAML::Value << scale;
+			auto& transform = entity.GetComponent<TransformComponent>().Transformation;
+			out << YAML::Key << "Position" << YAML::Value << transform.GetTranslation();
+			out << YAML::Key << "Rotation" << YAML::Value << transform.GetRotation();
+			out << YAML::Key << "Scale" << YAML::Value << transform.GetScale();
 
 			out << YAML::EndMap; // TransformComponent
 		}
@@ -526,17 +525,18 @@ namespace Hep
 				if (transformComponent)
 				{
 					// Entities always have transforms
-					auto& transform = deserializedEntity.GetComponent<TransformComponent>().Transform;
+					auto& transform = deserializedEntity.GetComponent<TransformComponent>().Transformation;
 					glm::vec3 translation = transformComponent["Position"].as<glm::vec3>();
-					glm::quat rotation = transformComponent["Rotation"].as<glm::quat>();
+					glm::quat rotation = transformComponent["Rotation"].as<glm::vec3>();
 					glm::vec3 scale = transformComponent["Scale"].as<glm::vec3>();
 
-					transform = glm::translate(glm::mat4(1.0f), translation) *
-						glm::toMat4(rotation) * glm::scale(glm::mat4(1.0f), scale);
+					transform.SetTranslation(translation);
+					transform.SetRotation(rotation);
+					transform.SetScale(scale);
 
 					HEP_CORE_INFO("  Entity Transform:");
 					HEP_CORE_INFO("    Translation: {0}, {1}, {2}", translation.x, translation.y, translation.z);
-					HEP_CORE_INFO("    Rotation: {0}, {1}, {2}, {3}", rotation.w, rotation.x, rotation.y, rotation.z);
+					HEP_CORE_INFO("    Rotation: {0}, {1}, {2}", rotation.x, rotation.y, rotation.z);
 					HEP_CORE_INFO("    Scale: {0}, {1}, {2}", scale.x, scale.y, scale.z);
 				}
 

@@ -21,7 +21,7 @@ namespace Hep
 	uint32_t PhysicsLayerManager::AddLayer(const std::string& name, bool setCollisions)
 	{
 		uint32_t layerId = GetNextLayerID();
-		PhysicsLayer layer = { layerId, name, BIT(layerId) };
+		PhysicsLayer layer = { layerId, name, BIT(layerId), (int32_t)BIT(layerId) };
 		s_Layers.push_back(layer);
 
 		if (setCollisions)
@@ -76,7 +76,7 @@ namespace Hep
 		}
 	}
 
-	const std::vector<PhysicsLayer>& PhysicsLayerManager::GetLayerCollisions(uint32_t layerId)
+	std::vector<PhysicsLayer> PhysicsLayerManager::GetLayerCollisions(uint32_t layerId)
 	{
 		const PhysicsLayer& layer = GetLayer(layerId);
 

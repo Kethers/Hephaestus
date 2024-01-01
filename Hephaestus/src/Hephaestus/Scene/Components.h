@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 
 #include "Hephaestus/Core/UUID.h"
+#include "Hephaestus/Core/Math/Transform.h"
 #include "Hephaestus/Renderer/Texture.h"
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Scene/SceneCamera.h"
@@ -29,15 +30,15 @@ namespace Hep
 
 	struct TransformComponent
 	{
-		glm::mat4 Transform;
+		Transform Transformation;
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent& other) = default;
-		TransformComponent(const glm::mat4& transform)
-			: Transform(transform) {}
+		TransformComponent(const Transform& transform)
+			: Transformation(transform) {}
 
-		operator glm::mat4&() { return Transform; }
-		operator const glm::mat4&() const { return Transform; }
+		operator Transform&() { return Transformation; }
+		operator const Transform&() const { return Transformation; }
 	};
 
 	struct MeshComponent

@@ -58,18 +58,12 @@ namespace Hep
 		mono_add_internal_call("Hep.Physics::OverlapCapsuleNonAlloc_Native", Hep::Script::Hep_Physics_OverlapCapsuleNonAlloc);
 		mono_add_internal_call("Hep.Physics::OverlapSphereNonAlloc_Native", Hep::Script::Hep_Physics_OverlapSphereNonAlloc);
 
-		mono_add_internal_call("Hep.Entity::GetTransform_Native", Hep::Script::Hep_Entity_GetTransform);
-		mono_add_internal_call("Hep.Entity::SetTransform_Native", Hep::Script::Hep_Entity_SetTransform);
 		mono_add_internal_call("Hep.Entity::CreateComponent_Native", Hep::Script::Hep_Entity_CreateComponent);
 		mono_add_internal_call("Hep.Entity::HasComponent_Native", Hep::Script::Hep_Entity_HasComponent);
 		mono_add_internal_call("Hep.Entity::FindEntityByTag_Native", Hep::Script::Hep_Entity_FindEntityByTag);
 
-		mono_add_internal_call("Hep.TransformComponent::GetTransform_Native", Hep::Script::Hep_Entity_GetTransform);
-		mono_add_internal_call("Hep.TransformComponent::SetTransform_Native", Hep::Script::Hep_Entity_SetTransform);
-		mono_add_internal_call("Hep.TransformComponent::GetRelativeDirection_Native",
-			Hep::Script::Hep_TransformComponent_GetRelativeDirection);
-		mono_add_internal_call("Hep.TransformComponent::GetRotation_Native", Hep::Script::Hep_TransformComponent_GetRotation);
-		mono_add_internal_call("Hep.TransformComponent::SetRotation_Native", Hep::Script::Hep_TransformComponent_SetRotation);
+		mono_add_internal_call("Hep.TransformComponent::GetTransform_Native", Hep::Script::Hep_TransformComponent_GetTransform);
+		mono_add_internal_call("Hep.TransformComponent::SetTransform_Native", Hep::Script::Hep_TransformComponent_SetTransform);
 
 		mono_add_internal_call("Hep.MeshComponent::GetMesh_Native", Hep::Script::Hep_MeshComponent_GetMesh);
 		mono_add_internal_call("Hep.MeshComponent::SetMesh_Native", Hep::Script::Hep_MeshComponent_SetMesh);

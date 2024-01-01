@@ -29,66 +29,58 @@ namespace Hep
 
 	public class TransformComponent : Component
 	{
-		public Matrix4 Transform
+		private Transform m_Transform;
+
+		public Transform Transform => m_Transform;
+
+		public Vector3 Position
 		{
 			get
 			{
-				Matrix4 result;
-				GetTransform_Native(Entity.ID, out result);
-				return result;
+				GetTransform_Native(Entity.ID, out m_Transform);
+				return m_Transform.Position;
 			}
-			set => SetTransform_Native(Entity.ID, ref value);
+			set
+			{
+				m_Transform.Position = value;
+				SetTransform_Native(Entity.ID, ref m_Transform);
+			}
 		}
 
 		public Vector3 Rotation
 		{
 			get
 			{
-				GetRotation_Native(Entity.ID, out Vector3 rotation);
-				return rotation;
+				GetTransform_Native(Entity.ID, out m_Transform);
+				return m_Transform.Rotation;
 			}
 
-			set => SetRotation_Native(Entity.ID, ref value);
+			set
+			{
+				m_Transform.Rotation = value;
+				SetTransform_Native(Entity.ID, ref m_Transform);
+			}
 		}
 
-		public Vector3 Forward
+		public Vector3 Scale
 		{
 			get
 			{
-				GetRelativeDirection_Native(Entity.ID, out Vector3 result, ref Vector3.Forward);
-				return result;
+				GetTransform_Native(Entity.ID, out m_Transform);
+				return m_Transform.Scale;
 			}
-		}
 
-		public Vector3 Right
-		{
-			get
+			set
 			{
-				GetRelativeDirection_Native(Entity.ID, out Vector3 result, ref Vector3.Right);
-				return result;
-			}
-		}
-
-		public Vector3 Up
-		{
-			get
-			{
-				GetRelativeDirection_Native(Entity.ID, out Vector3 result, ref Vector3.Up);
-				return result;
+				m_Transform.Scale = value;
+				SetTransform_Native(Entity.ID, ref m_Transform);
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal static extern void GetTransform_Native(ulong entityID, out Matrix4 result);
+		internal static extern void GetTransform_Native(ulong entityID, out Transform result);
 		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal static extern void SetTransform_Native(ulong entityID, ref Matrix4 result);
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal static extern void GetRelativeDirection_Native(ulong entityID, out Vector3 result, ref Vector3 direction);
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal static extern void GetRotation_Native(ulong entityID, out Vector3 result);
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal static extern void SetRotation_Native(ulong entityID, ref Vector3 rotation);
+		internal static extern void SetTransform_Native(ulong entityID, ref Transform result);
 	}
 
 	public class MeshComponent : Component

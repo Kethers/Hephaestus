@@ -17,7 +17,7 @@ namespace Hep
 		static void RemoveLayer(uint32_t layerId);
 
 		static void SetLayerCollision(uint32_t layerId, uint32_t otherLayer, bool shouldCollide);
-		static const std::vector<PhysicsLayer>& GetLayerCollisions(uint32_t layerId);
+		static std::vector<PhysicsLayer> GetLayerCollisions(uint32_t layerId);
 
 		static const std::vector<PhysicsLayer>& GetLayers() { return s_Layers; }
 

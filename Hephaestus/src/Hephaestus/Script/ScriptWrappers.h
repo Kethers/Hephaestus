@@ -3,6 +3,7 @@
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Core/Input.h"
 #include "Hephaestus/Physics/Physics.h"
+#include "Hephaestus/Core/Math/Transform.h"
 
 #include <glm/glm.hpp>
 
@@ -19,6 +20,14 @@ extern "C"
 
 namespace Hep::Script
 {
+	struct ScriptTransform
+	{
+		glm::vec3 Translation;
+		glm::vec3 Rotation;
+		glm::vec3 Scale;
+		glm::vec3 Up, Right, Forward;
+	};
+
 	// Math
 	float Hep_Noise_PerlinNoise(float x, float y);
 	void Hep_Input_GetMousePosition(glm::vec2* outPosition);
@@ -28,8 +37,6 @@ namespace Hep::Script
 	// Input
 	bool Hep_Input_IsKeyPressed(KeyCode key);
 	bool Hep_Input_IsMouseButtonPressed(MouseButton button);
-	void Hep_TransformComponent_GetRotation(uint64_t entityID, glm::vec3* outRotation);
-	void Hep_TransformComponent_SetRotation(uint64_t entityID, glm::vec3* inRotation);
 
 	// Physics
 	bool Hep_Physics_Raycast(glm::vec3* origin, glm::vec3* direction, float maxDistance, RaycastHit* hit);
@@ -41,13 +48,12 @@ namespace Hep::Script
 	int32_t Hep_Physics_OverlapSphereNonAlloc(glm::vec3* origin, float radius, MonoArray* outColliders);
 
 	// Entity
-	void Hep_Entity_GetTransform(uint64_t entityID, glm::mat4* outTransform);
-	void Hep_Entity_SetTransform(uint64_t entityID, glm::mat4* inTransform);
 	void Hep_Entity_CreateComponent(uint64_t entityID, void* type);
 	bool Hep_Entity_HasComponent(uint64_t entityID, void* type);
 	uint64_t Hep_Entity_FindEntityByTag(MonoString* tag);
 
-	void Hep_TransformComponent_GetRelativeDirection(uint64_t entityID, glm::vec3* outDirection, glm::vec3* inAbsoluteDirection);
+	void Hep_TransformComponent_GetTransform(uint64_t entityID, ScriptTransform* outTransform);
+	void Hep_TransformComponent_SetTransform(uint64_t entityID, ScriptTransform* inTransform);
 
 	void* Hep_MeshComponent_GetMesh(uint64_t entityID);
 	void Hep_MeshComponent_SetMesh(uint64_t entityID, Ref<Mesh>* inMesh);

@@ -102,7 +102,7 @@ namespace Hep
 
 		RigidBodyComponent& rigidbody = e.GetComponent<RigidBodyComponent>();
 
-		physx::PxRigidActor* actor = PXPhysicsWrappers::CreateActor(rigidbody, e.Transform());
+		physx::PxRigidActor* actor = PXPhysicsWrappers::CreateActor(rigidbody, e.Transformation());
 
 		if (rigidbody.BodyType == RigidBodyComponent::Type::Dynamic)
 			s_SimulatedEntities.push_back(e);
@@ -116,31 +116,30 @@ namespace Hep
 
 		physx::PxMaterial* material = PXPhysicsWrappers::CreateMaterial(e.GetComponent<PhysicsMaterialComponent>());
 
-		const auto& transform = e.Transform();
-		auto [translation, rotation, scale] = GetTransformDecomposition(transform);
+		const auto& transform = e.Transformation();
 
 		if (e.HasComponent<BoxColliderComponent>())
 		{
 			BoxColliderComponent& collider = e.GetComponent<BoxColliderComponent>();
-			PXPhysicsWrappers::AddBoxCollider(*actor, *material, collider, scale);
+			PXPhysicsWrappers::AddBoxCollider(*actor, *material, collider, transform.GetScale());
 		}
 
 		if (e.HasComponent<SphereColliderComponent>())
 		{
 			SphereColliderComponent& collider = e.GetComponent<SphereColliderComponent>();
-			PXPhysicsWrappers::AddSphereCollider(*actor, *material, collider, scale);
+			PXPhysicsWrappers::AddSphereCollider(*actor, *material, collider, transform.GetScale());
 		}
 
 		if (e.HasComponent<CapsuleColliderComponent>())
 		{
 			CapsuleColliderComponent& collider = e.GetComponent<CapsuleColliderComponent>();
-			PXPhysicsWrappers::AddCapsuleCollider(*actor, *material, collider, scale);
+			PXPhysicsWrappers::AddCapsuleCollider(*actor, *material, collider, transform.GetScale());
 		}
 
 		if (e.HasComponent<MeshColliderComponent>())
 		{
 			MeshColliderComponent& collider = e.GetComponent<MeshColliderComponent>();
-			PXPhysicsWrappers::AddMeshCollider(*actor, *material, collider, scale);
+			PXPhysicsWrappers::AddMeshCollider(*actor, *material, collider, transform.GetScale());
 		}
 
 		if (!PhysicsLayerManager::IsLayerValid(rigidbody.Layer))
@@ -173,12 +172,13 @@ namespace Hep
 
 		for (Entity& e : s_SimulatedEntities)
 		{
-			auto& transform = e.Transform();
-			auto [translation, rotation, scale] = GetTransformDecomposition(transform);
+			auto& transform = e.Transformation();
 			RigidBodyComponent& rb = e.GetComponent<RigidBodyComponent>();
 			auto actor = static_cast<physx::PxRigidActor*>(rb.RuntimeActor);
 
-			transform = FromPhysXTransform(actor->getGlobalPose()) * glm::scale(glm::mat4(1.0F), scale);
+			physx::PxTransform actorPose = actor->getGlobalPose();
+			transform.SetTranslation(FromPhysXVector(actorPose.p));
+			transform.SetRotation(FromPhysXQuat(actorPose.q));
 		}
 	}
 

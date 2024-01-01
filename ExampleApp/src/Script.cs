@@ -21,7 +21,7 @@ namespace Example
 		{
 			Rotation += ts;
 
-			Matrix4 transform = GetTransform();
+			/*Matrix4 transform = GetTransform();
 			Vector3 translation = transform.Translation;
 
 			float speed = Speed * ts;
@@ -33,7 +33,7 @@ namespace Example
 			translation.Y -= SinkRate * ts;
 
 			transform.Translation = translation;
-			SetTransform(transform);
+			SetTransform(transform);*/
 		}
 	}
 }

@@ -175,7 +175,7 @@ namespace Hep
 		return s_Physics->createScene(sceneDesc);
 	}
 
-	physx::PxRigidActor* PXPhysicsWrappers::CreateActor(const RigidBodyComponent& rigidbody, const glm::mat4& transform)
+	physx::PxRigidActor* PXPhysicsWrappers::CreateActor(const RigidBodyComponent& rigidbody, const Transform& transform)
 	{
 		physx::PxRigidActor* actor = nullptr;
 

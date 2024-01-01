@@ -101,6 +101,7 @@ namespace Hep
 
 	void EditorCamera::MousePan(const glm::vec2& delta)
 	{
+		HEP_CORE_INFO("Panning: {0}, {1}", delta.x, delta.y);
 		auto [xSpeed, ySpeed] = PanSpeed();
 		m_FocalPoint += -GetRightDirection() * delta.x * xSpeed * m_Distance;
 		m_FocalPoint += GetUpDirection() * delta.y * ySpeed * m_Distance;
