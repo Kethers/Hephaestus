@@ -59,6 +59,9 @@ namespace Hep
 
 		static const char* frictionTypeStrings[] = { "Patch", "One Directional", "Two Directional" };
 		Property("Friction Model", frictionTypeStrings, 3, (int*)&settings.FrictionModel);
+
+		Property("Solver Iterations", settings.SolverIterations, 1, 512);
+		Property("Solver Velocity Iterations", settings.SolverVelocityIterations, 1, 512);
 	}
 
 	void PhysicsSettingsWindow::RenderLayerList()

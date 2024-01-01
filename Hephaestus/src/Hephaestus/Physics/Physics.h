@@ -46,6 +46,8 @@ namespace Hep
 		glm::vec3 WorldBoundsMax = glm::vec3(1.0F);
 		uint32_t WorldBoundsSubdivisions = 2;
 		FrictionType FrictionModel = FrictionType::Patch;
+		uint32_t SolverIterations = 6;
+		uint32_t SolverVelocityIterations = 1;
 	};
 
 	struct RaycastHit

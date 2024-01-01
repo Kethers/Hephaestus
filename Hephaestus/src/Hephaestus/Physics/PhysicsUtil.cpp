@@ -131,6 +131,9 @@ namespace Hep
 			in.seekg(0, std::ios::end);
 			size = in.tellg();
 			in.seekg(0, std::ios::beg);
+
+			delete[] s_MeshDataBuffer;
+
 			s_MeshDataBuffer = new physx::PxU8[size / sizeof(physx::PxU8)];
 			in.read((char*)s_MeshDataBuffer, size / sizeof(char));
 			in.close();

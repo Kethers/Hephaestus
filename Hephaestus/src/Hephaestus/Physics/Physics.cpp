@@ -157,8 +157,6 @@ namespace Hep
 
 	void Physics::Simulate(Timestep ts)
 	{
-		HEP_CORE_ASSERT(s_Scene);
-
 		// TODO: Allow projects to control the fixed step amount
 		s_SimulationTime += ts.GetMilliseconds();
 
@@ -166,6 +164,8 @@ namespace Hep
 			return;
 
 		s_SimulationTime -= s_Settings.FixedTimestep;
+
+		// TODO: Maybe FixedUpdate for scripts?
 
 		s_Scene->simulate(s_Settings.FixedTimestep);
 		s_Scene->fetchResults(true);
