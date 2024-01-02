@@ -11,12 +11,14 @@ namespace Hep
 		ImGuiLayer(const std::string& name);
 		~ImGuiLayer() override = default;
 
+		void Begin();
+		void End();
+
 		void OnAttach() override;
 		void OnDetach() override;
 		void OnImGuiRender() override;
 
-		void Begin();
-		void End();
+		void SetDarkThemeColors();
 
 	private:
 		float m_Time = 0.0f;
