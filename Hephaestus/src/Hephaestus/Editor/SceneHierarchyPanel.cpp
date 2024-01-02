@@ -72,73 +72,7 @@ namespace Hep
 			ImGui::Begin("Properties");
 
 			if (m_SelectionContext)
-			{
 				DrawComponents(m_SelectionContext);
-
-				if (ImGui::Button("Add Component"))
-					ImGui::OpenPopup("AddComponentPanel");
-
-				if (ImGui::BeginPopup("AddComponentPanel"))
-				{
-					if (!m_SelectionContext.HasComponent<CameraComponent>())
-					{
-						if (ImGui::Button("Camera"))
-						{
-							m_SelectionContext.AddComponent<CameraComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<MeshComponent>())
-					{
-						if (ImGui::Button("Mesh"))
-						{
-							m_SelectionContext.AddComponent<MeshComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<ScriptComponent>())
-					{
-						if (ImGui::Button("Script"))
-						{
-							m_SelectionContext.AddComponent<ScriptComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<SpriteRendererComponent>())
-					{
-						if (ImGui::Button("SpriteRenderer"))
-						{
-							m_SelectionContext.AddComponent<SpriteRendererComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<RigidBody2DComponent>())
-					{
-						if (ImGui::Button("Rigidbody 2D"))
-						{
-							m_SelectionContext.AddComponent<RigidBody2DComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<BoxCollider2DComponent>())
-					{
-						if (ImGui::Button("Box Collider 2D"))
-						{
-							m_SelectionContext.AddComponent<BoxCollider2DComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					if (!m_SelectionContext.HasComponent<CircleCollider2DComponent>())
-					{
-						if (ImGui::Button("Circle Collider 2D"))
-						{
-							m_SelectionContext.AddComponent<CircleCollider2DComponent>();
-							ImGui::CloseCurrentPopup();
-						}
-					}
-					ImGui::EndPopup();
-				}
-			}
 		}
 		ImGui::End();
 
@@ -523,8 +457,11 @@ namespace Hep
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
 		ImGui::PushFont(boldFont);
-		if ((modified |= ImGui::Button("X", buttonSize)))
+		if (ImGui::Button("X", buttonSize))
+		{
 			values.x = resetValue;
+			modified = true;
+		}
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
@@ -537,8 +474,11 @@ namespace Hep
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushFont(boldFont);
-		if ((modified |= ImGui::Button("Y", buttonSize)))
+		if (ImGui::Button("Y", buttonSize))
+		{
 			values.y = resetValue;
+			modified = true;
+		}
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
@@ -551,8 +491,11 @@ namespace Hep
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
 		ImGui::PushFont(boldFont);
-		if ((modified |= ImGui::Button("Z", buttonSize)))
+		if (ImGui::Button("Z", buttonSize))
+		{
 			values.z = resetValue;
+			modified = true;
+		}
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
@@ -597,7 +540,69 @@ namespace Hep
 		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 		ImVec2 textSize = ImGui::CalcTextSize("Add Component");
 		ImGui::SameLine(contentRegionAvailable.x - (textSize.x + GImGui->Style.FramePadding.y));
-		ImGui::Button("Add Component");
+		if (ImGui::Button("Add Component"))
+			ImGui::OpenPopup("AddComponentPanel");
+
+		if (ImGui::BeginPopup("AddComponentPanel"))
+		{
+			if (!m_SelectionContext.HasComponent<CameraComponent>())
+			{
+				if (ImGui::Button("Camera"))
+				{
+					m_SelectionContext.AddComponent<CameraComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			if (!m_SelectionContext.HasComponent<MeshComponent>())
+			{
+				if (ImGui::Button("Mesh"))
+				{
+					m_SelectionContext.AddComponent<MeshComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			if (!m_SelectionContext.HasComponent<ScriptComponent>())
+			{
+				if (ImGui::Button("Script"))
+				{
+					m_SelectionContext.AddComponent<ScriptComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			if (!m_SelectionContext.HasComponent<SpriteRendererComponent>())
+			{
+				if (ImGui::Button("Sprite Renderer"))
+				{
+					m_SelectionContext.AddComponent<SpriteRendererComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			if (!m_SelectionContext.HasComponent<RigidBody2DComponent>())
+			{
+				if (ImGui::Button("Rigidbody 2D"))
+				{
+					m_SelectionContext.AddComponent<RigidBody2DComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			if (!m_SelectionContext.HasComponent<BoxCollider2DComponent>())
+			{
+				if (ImGui::Button("Box Collider 2D"))
+				{
+					m_SelectionContext.AddComponent<BoxCollider2DComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			if (!m_SelectionContext.HasComponent<CircleCollider2DComponent>())
+			{
+				if (ImGui::Button("Circle Collider 2D"))
+				{
+					m_SelectionContext.AddComponent<CircleCollider2DComponent>();
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			ImGui::EndPopup();
+		}
 
 		ImGui::Separator();
 
