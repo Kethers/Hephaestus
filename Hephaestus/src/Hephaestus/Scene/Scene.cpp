@@ -169,18 +169,6 @@ namespace Hep
 	// Merge OnUpdate/Render into one function?
 	void Scene::OnUpdate(Timestep ts)
 	{
-		// Update all entities
-		{
-			auto view = m_Registry.view<ScriptComponent>();
-			for (auto entity : view)
-			{
-				UUID entityID = m_Registry.get<IDComponent>(entity).ID;
-				Entity e = { entity, this };
-				if (ScriptEngine::ModuleExists(e.GetComponent<ScriptComponent>().ModuleName))
-					ScriptEngine::OnUpdateEntity(m_SceneID, entityID, ts);
-			}
-		}
-
 		// Box2D physics
 		auto sceneView = m_Registry.view<Box2DWorldComponent>();
 		auto& box2DWorld = m_Registry.get<Box2DWorldComponent>(sceneView.front()).World;
@@ -206,6 +194,18 @@ namespace Hep
 					glm::scale(glm::mat4(1.0f), scale);
 			}
 		}
+
+		// Update all entities
+		{
+			auto view = m_Registry.view<ScriptComponent>();
+			for (auto entity : view)
+			{
+				UUID entityID = m_Registry.get<IDComponent>(entity).ID;
+				Entity e = { entity, this };
+				if (ScriptEngine::ModuleExists(e.GetComponent<ScriptComponent>().ModuleName))
+					ScriptEngine::OnUpdateEntity(m_SceneID, entityID, ts);
+			}
+		}
 	}
 
 	void Scene::OnRenderRuntime(Timestep ts)
@@ -217,10 +217,43 @@ namespace Hep
 		if (!cameraEntity)
 			return;
 
+		// Process camera entity
 		glm::mat4 cameraViewMatrix = glm::inverse(cameraEntity.GetComponent<TransformComponent>().Transform);
 		HEP_CORE_ASSERT(cameraEntity, "Scene does not contain any cameras!");
 		SceneCamera& camera = cameraEntity.GetComponent<CameraComponent>();
 		camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
+
+		// Process lights
+		{
+			m_LightEnvironment = LightEnvironment();
+			auto lights = m_Registry.group<DirectionalLightComponent>(entt::get<TransformComponent>);
+			uint32_t directionalLightIndex = 0;
+			for (auto entity : lights)
+			{
+				auto [transformComponent, lightComponent] = lights.get<TransformComponent, DirectionalLightComponent>(entity);
+				glm::vec3 direction = -glm::normalize(glm::mat3(transformComponent.Transform) * glm::vec3(1.0f));
+				m_LightEnvironment.DirectionalLights[directionalLightIndex++] =
+				{
+					direction,
+					lightComponent.Radiance,
+					lightComponent.Intensity,
+					lightComponent.CastShadows
+				};
+			}
+		}
+
+		// TODO: only one sky light at the moment!
+		{
+			m_Environment = Environment();
+			auto lights = m_Registry.group<SkyLightComponent>(entt::get<TransformComponent>);
+			for (auto entity : lights)
+			{
+				auto [transformComponent, skyLightComponent] = lights.get<TransformComponent, SkyLightComponent>(entity);
+				m_Environment = skyLightComponent.SceneEnvironment;
+				m_EnvironmentIntensity = skyLightComponent.Intensity;
+				SetSkybox(m_Environment.RadianceMap);
+			}
+		}
 
 		m_SkyboxMaterial->Set("u_TextureLod", m_SkyboxLod);
 
@@ -263,10 +296,43 @@ namespace Hep
 		/////////////////////////////////////////////////////////////////////
 		// RENDER 3D SCENE
 		/////////////////////////////////////////////////////////////////////
+
+		// Process lights
+		{
+			m_LightEnvironment = LightEnvironment();
+			auto lights = m_Registry.group<DirectionalLightComponent>(entt::get<TransformComponent>);
+			uint32_t directionalLightIndex = 0;
+			for (auto entity : lights)
+			{
+				auto [transformComponent, lightComponent] = lights.get<TransformComponent, DirectionalLightComponent>(entity);
+				glm::vec3 direction = -glm::normalize(glm::mat3(transformComponent.Transform) * glm::vec3(1.0f));
+				m_LightEnvironment.DirectionalLights[directionalLightIndex++] =
+				{
+					direction,
+					lightComponent.Radiance,
+					lightComponent.Intensity,
+					lightComponent.CastShadows
+				};
+			}
+		}
+
+		// TODO: only one sky light at the moment!
+		{
+			m_Environment = Environment();
+			auto lights = m_Registry.group<SkyLightComponent>(entt::get<TransformComponent>);
+			for (auto entity : lights)
+			{
+				auto [transformComponent, skyLightComponent] = lights.get<TransformComponent, SkyLightComponent>(entity);
+				m_Environment = skyLightComponent.SceneEnvironment;
+				m_EnvironmentIntensity = skyLightComponent.Intensity;
+				SetSkybox(m_Environment.RadianceMap);
+			}
+		}
+
 		m_SkyboxMaterial->Set("u_TextureLod", m_SkyboxLod);
 
 		auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
-		SceneRenderer::BeginScene(this, { editorCamera, editorCamera.GetViewMatrix() });
+		SceneRenderer::BeginScene(this, { editorCamera, editorCamera.GetViewMatrix(), 0.1f, 1000.0f, 45.0f });
 		for (auto entity : group)
 		{
 			auto [meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
@@ -421,12 +487,6 @@ namespace Hep
 		m_ViewportHeight = height;
 	}
 
-	void Scene::SetEnvironment(const Environment& environment)
-	{
-		m_Environment = environment;
-		SetSkybox(environment.RadianceMap);
-	}
-
 	void Scene::SetSkybox(const Ref<TextureCube>& skybox)
 	{
 		m_SkyboxTexture = skybox;
@@ -516,6 +576,8 @@ namespace Hep
 
 		CopyComponentIfExists<TransformComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<MeshComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<DirectionalLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<SkyLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<ScriptComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<CameraComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<SpriteRendererComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
@@ -562,6 +624,8 @@ namespace Hep
 		CopyComponent<TagComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<TransformComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<MeshComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<DirectionalLightComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<SkyLightComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<ScriptComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<CameraComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<SpriteRendererComponent>(target->m_Registry, m_Registry, enttMap);
@@ -592,11 +656,5 @@ namespace Hep
 	void Scene::SetPhysics2DGravity(float gravity)
 	{
 		m_Registry.get<Box2DWorldComponent>(m_SceneEntity).World->SetGravity({ 0.0f, gravity });
-	}
-
-	Environment Environment::Load(const std::string& filepath)
-	{
-		auto [radiance, irradiance] = SceneRenderer::CreateEnvironmentMap(filepath);
-		return { filepath, radiance, irradiance };
 	}
 }

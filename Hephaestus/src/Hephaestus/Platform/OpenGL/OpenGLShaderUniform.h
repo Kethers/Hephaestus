@@ -44,7 +44,7 @@ namespace Hep
 	public:
 		enum class Type
 		{
-			NONE, FLOAT32, VEC2, VEC3, VEC4, MAT3, MAT4, INT32, STRUCT
+			NONE, FLOAT32, VEC2, VEC3, VEC4, MAT3, MAT4, INT32, BOOL, STRUCT
 		};
 
 	private:

@@ -207,6 +207,11 @@ namespace Hep
 		return m_Data.VSync;
 	}
 
+	void WindowsWindow::Maximize()
+	{
+		glfwMaximizeWindow(m_Window);
+	}
+
 	void WindowsWindow::SetTitle(const std::string& title)
 	{
 		m_Data.Title = title;

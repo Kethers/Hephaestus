@@ -11,6 +11,8 @@ namespace Hep
 		ImGuiLayer(const std::string& name);
 		~ImGuiLayer() override = default;
 
+		void OnEvent(Event& e) override;
+
 		void Begin();
 		void End();
 

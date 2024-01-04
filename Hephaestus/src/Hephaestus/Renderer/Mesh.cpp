@@ -77,7 +77,7 @@ namespace Hep
 
 		void write(const char* message) override
 		{
-			HEP_CORE_ERROR("Assimp error: {0}", message);
+			HEP_CORE_WARN("Assimp: {0}", message);
 		}
 	};
 

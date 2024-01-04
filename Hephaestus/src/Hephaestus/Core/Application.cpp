@@ -25,7 +25,8 @@ namespace Hep
 		m_Window = std::unique_ptr<Window>(
 			Window::Create(WindowProps(props.Name, props.WindowWidth, props.WindowHeight)));
 		m_Window->SetEventCallback(HEP_BIND_EVENT_FN(Application::OnEvent));
-		m_Window->SetVSync(true);
+		m_Window->Maximize();
+		m_Window->SetVSync(false);
 
 		m_ImGuiLayer = new ImGuiLayer("ImGui");
 		PushOverlay(m_ImGuiLayer);
@@ -122,7 +123,10 @@ namespace Hep
 		Renderer::Submit([=]() { glViewport(0, 0, width, height); });
 		auto& fbs = FramebufferPool::GetGlobal()->GetAll();
 		for (auto& fb : fbs)
-			fb->Resize(width, height);
+		{
+			if (!fb->GetSpecification().NoResize)
+				fb->Resize(width, height);
+		}
 		return false;
 	}
 

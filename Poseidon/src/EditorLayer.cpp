@@ -13,6 +13,8 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <imgui/imgui_internal.h>
+
 namespace Hep
 {
 	static void ImGuiShowHelpMarker(const char* desc)
@@ -39,7 +41,7 @@ namespace Hep
 	}
 
 	EditorLayer::EditorLayer()
-		: m_SceneType(SceneType::Model), m_EditorCamera(glm::perspectiveFov(glm::radians(45.0f), 1600.f, 900.f, 0.1f, 10000.f))
+		: m_SceneType(SceneType::Model), m_EditorCamera(glm::perspectiveFov(glm::radians(45.0f), 1600.f, 900.f, 0.1f, 1000.0f))
 	{}
 
 	EditorLayer::~EditorLayer() = default;
@@ -52,15 +54,11 @@ namespace Hep
 		m_CheckerboardTex = Texture2D::Create("assets/editor/Checkerboard.tga");
 		m_PlayButtonTex = Texture2D::Create("assets/editor/PlayButton.png");
 
-		m_EditorScene = Ref<Scene>::Create();
-		UpdateWindowTitle("Untitled Scene");
-		ScriptEngine::SetSceneContext(m_EditorScene);
 		m_SceneHierarchyPanel = CreateScope<SceneHierarchyPanel>(m_EditorScene);
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(HEP_BIND_EVENT_FN(EditorLayer::SelectEntity));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(HEP_BIND_EVENT_FN(EditorLayer::OnEntityDeleted));
-		SceneSerializer serializer(m_EditorScene);
-		serializer.Deserialize("assets/scenes/levels/Physics2D-Game.hsc");
-		UpdateWindowTitle("Physics2D-Game");
+
+		OpenScene("assets/scenes/LightingTest.hsc");
 	}
 
 	void EditorLayer::OnDetach()
@@ -115,6 +113,10 @@ namespace Hep
 
 	void EditorLayer::OnUpdate(Timestep ts)
 	{
+		auto [x, y] = GetMouseViewportSpace();
+
+		SceneRenderer::SetFocusPoint({ x * 0.5f + 0.5f, y * 0.5f + 0.5f });
+
 		switch (m_SceneState)
 		{
 			case SceneState::Edit:
@@ -319,7 +321,9 @@ namespace Hep
 		SelectedSubmesh selection;
 		if (entity.HasComponent<MeshComponent>())
 		{
-			selection.Mesh = entity.GetComponent<MeshComponent>().Mesh->GetSubmeshes().data();
+			auto mesh = entity.GetComponent<MeshComponent>().Mesh;
+			if (mesh)
+				selection.Mesh = &mesh->GetSubmeshes()[0];
 		}
 		selection.Entity = entity;
 		m_SelectionContext.clear();
@@ -328,32 +332,51 @@ namespace Hep
 		m_EditorScene->SetSelectedEntity(entity);
 	}
 
+	void EditorLayer::NewScene()
+	{
+		m_EditorScene = Ref<Scene>::Create();
+		m_SceneHierarchyPanel->SetContext(m_EditorScene);
+		ScriptEngine::SetSceneContext(m_EditorScene);
+		UpdateWindowTitle("Untitled Scene");
+		m_SceneFilePath = std::string();
+
+		m_EditorCamera = EditorCamera(glm::perspectiveFov(glm::radians(45.0f), 1280.0f, 720.0f, 0.1f, 1000.0f));
+	}
+
 	void EditorLayer::OpenScene()
 	{
 		auto& app = Application::Get();
 		std::string filepath = app.OpenFile("Hephaestus Scene (*.hsc)\0*.hsc\0");
 		if (!filepath.empty())
-		{
-			Ref<Scene> newScene = Ref<Scene>::Create();
-			SceneSerializer serializer(newScene);
-			serializer.Deserialize(filepath);
-			m_EditorScene = newScene;
-			std::filesystem::path path = filepath;
-			UpdateWindowTitle(path.filename().string());
-			m_SceneHierarchyPanel->SetContext(m_EditorScene);
-			ScriptEngine::SetSceneContext(m_EditorScene);
+			OpenScene(filepath);
+	}
 
-			m_EditorScene->SetSelectedEntity({});
-			m_SelectionContext.clear();
+	void EditorLayer::OpenScene(const std::string& filepath)
+	{
+		Ref<Scene> newScene = Ref<Scene>::Create();
+		SceneSerializer serializer(newScene);
+		serializer.Deserialize(filepath);
+		m_EditorScene = newScene;
+		std::filesystem::path path = filepath;
+		UpdateWindowTitle(path.filename().string());
+		m_SceneHierarchyPanel->SetContext(m_EditorScene);
+		ScriptEngine::SetSceneContext(m_EditorScene);
 
-			m_SceneFilePath = filepath;
-		}
+		m_EditorScene->SetSelectedEntity({});
+		m_SelectionContext.clear();
 	}
 
 	void EditorLayer::SaveScene()
 	{
-		SceneSerializer serializer(m_EditorScene);
-		serializer.Serialize(m_SceneFilePath);
+		if (!m_SceneFilePath.empty())
+		{
+			SceneSerializer serializer(m_EditorScene);
+			serializer.Serialize(m_SceneFilePath);
+		}
+		else
+		{
+			SaveSceneAs();
+		}
 	}
 
 	void EditorLayer::SaveSceneAs()
@@ -422,13 +445,6 @@ namespace Hep
 		// Editor Panel ------------------------------------------------------------------------------
 		ImGui::Begin("Model");
 		ImGui::Begin("Environment");
-
-		if (ImGui::Button("Load Environment Map"))
-		{
-			std::string filename = Application::Get().OpenFile("*.hdr");
-			if (!filename.empty())
-				m_EditorScene->SetEnvironment(Environment::Load(filename));
-		}
 
 		ImGui::SliderFloat("Skybox LOD", &m_EditorScene->GetSkyboxLod(), 0.0f, 11.0f);
 
@@ -568,7 +584,7 @@ namespace Hep
 		m_EditorScene->SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
 		if (m_RuntimeScene)
 			m_RuntimeScene->SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
-		m_EditorCamera.SetProjectionMatrix(glm::perspectiveFov(glm::radians(45.0f), viewportSize.x, viewportSize.y, 0.1f, 10000.0f));
+		m_EditorCamera.SetProjectionMatrix(glm::perspectiveFov(glm::radians(45.0f), viewportSize.x, viewportSize.y, 0.1f, 1000.0f));
 		m_EditorCamera.SetViewportSize((uint32_t)viewportSize.x, (uint32_t)viewportSize.y);
 		ImGui::Image((void*)SceneRenderer::GetFinalColorBufferRendererID(), viewportSize, { 0, 1 }, { 1, 0 });
 
@@ -633,7 +649,7 @@ namespace Hep
 			{
 				if (ImGui::MenuItem("New Scene", "Ctrl+N"))
 				{
-					// TODO:
+					NewScene();
 				}
 				if (ImGui::MenuItem("Open Scene...", "Ctrl+O"))
 					OpenScene();
@@ -869,6 +885,7 @@ namespace Hep
 		ImGui::End();
 
 		ScriptEngine::OnImGuiRender();
+		SceneRenderer::OnImGuiRender();
 
 		ImGui::End();
 	}
@@ -894,23 +911,30 @@ namespace Hep
 
 	bool EditorLayer::OnKeyPressedEvent(KeyPressedEvent& e)
 	{
-		if (m_ViewportPanelFocused)
+		if (GImGui->ActiveId == 0)
 		{
+			if (m_ViewportPanelMouseOver)
+			{
+				switch (e.GetKeyCode())
+				{
+					case KeyCode::Q:
+						m_GizmoType = -1;
+						break;
+					case KeyCode::W:
+						m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+						break;
+					case KeyCode::E:
+						m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+						break;
+					case KeyCode::R:
+						m_GizmoType = ImGuizmo::OPERATION::SCALE;
+						break;
+				}
+			}
+
 			switch (e.GetKeyCode())
 			{
-				case KeyCode::Q:
-					m_GizmoType = -1;
-					break;
-				case KeyCode::W:
-					m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
-					break;
-				case KeyCode::E:
-					m_GizmoType = ImGuizmo::OPERATION::ROTATE;
-					break;
-				case KeyCode::R:
-					m_GizmoType = ImGuizmo::OPERATION::SCALE;
-					break;
-				case KeyCode::Delete:
+				case KeyCode::Delete: // TODO: this should be in the scene hierarchy panel
 					if (!m_SelectionContext.empty())
 					{
 						Entity selectedEntity = m_SelectionContext[0].Entity;
@@ -943,6 +967,9 @@ namespace Hep
 					// Toggle grid
 					SceneRenderer::GetOptions().ShowGrid = !SceneRenderer::GetOptions().ShowGrid;
 					break;
+				case KeyCode::N:
+					NewScene();
+					break;
 				case KeyCode::O:
 					OpenScene();
 					break;
@@ -969,6 +996,7 @@ namespace Hep
 	{
 		auto [mx, my] = Input::GetMousePosition();
 		if (e.GetMouseButton() == HEP_MOUSE_BUTTON_LEFT
+			&& m_ViewportPanelMouseOver
 			&& !Input::IsKeyPressed(KeyCode::LeftAlt)
 			&& !ImGuizmo::IsOver()
 			&& m_SceneState != SceneState::Play)
