@@ -187,14 +187,15 @@ namespace Hep
 			cullFace = !material->GetFlag(MaterialFlag::TwoSided);
 		}
 
+		s_Data.m_FullscreenQuadVertexBuffer->Bind();
+		s_Data.m_FullscreenQuadPipeline->Bind();
+		s_Data.m_FullscreenQuadIndexBuffer->Bind();
+		
 		if (cullFace)
 			Renderer::Submit([]() { glEnable(GL_CULL_FACE); });
 		else
 			Renderer::Submit([]() { glDisable(GL_CULL_FACE); });
 
-		s_Data.m_FullscreenQuadVertexBuffer->Bind();
-		s_Data.m_FullscreenQuadPipeline->Bind();
-		s_Data.m_FullscreenQuadIndexBuffer->Bind();
 		Renderer::DrawIndexed(6, PrimitiveType::Triangles, depthTest);
 	}
 

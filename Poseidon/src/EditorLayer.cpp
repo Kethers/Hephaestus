@@ -118,14 +118,11 @@ namespace Hep
 		m_CheckerboardTex = Texture2D::Create("assets/editor/Checkerboard.tga");
 		m_PlayButtonTex = Texture2D::Create("assets/editor/PlayButton.png");
 
-		m_EditorScene = Ref<Scene>::Create("EditorScene", true);
-		UpdateWindowTitle("Untitled Scene");
-		ScriptEngine::SetSceneContext(m_EditorScene);
 		m_SceneHierarchyPanel = CreateScope<SceneHierarchyPanel>(m_EditorScene);
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(HEP_BIND_EVENT_FN(EditorLayer::SelectEntity));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(HEP_BIND_EVENT_FN(EditorLayer::OnEntityDeleted));
 
-		OpenScene("assets/scenes/LightingTest.hsc");
+		OpenScene("assets/scenes/FPSDemo.hsc");
 	}
 
 	void EditorLayer::OnDetach()
@@ -158,8 +155,6 @@ namespace Hep
 		m_SelectionContext.clear();
 		ScriptEngine::SetSceneContext(m_EditorScene);
 		m_SceneHierarchyPanel->SetContext(m_EditorScene);
-
-		Input::SetCursorMode(CursorMode::Normal);
 	}
 
 	void EditorLayer::UpdateWindowTitle(const std::string& sceneName)
@@ -405,7 +400,7 @@ namespace Hep
 
 	void EditorLayer::NewScene()
 	{
-		m_EditorScene = Ref<Scene>::Create();
+		m_EditorScene = Ref<Scene>::Create("Empty Scene", true);
 		m_SceneHierarchyPanel->SetContext(m_EditorScene);
 		ScriptEngine::SetSceneContext(m_EditorScene);
 		UpdateWindowTitle("Untitled Scene");

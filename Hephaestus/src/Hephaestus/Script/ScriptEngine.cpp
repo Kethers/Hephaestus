@@ -55,7 +55,7 @@ namespace Hep
 			Constructor = GetMethod(s_CoreAssemblyImage, "Hep.Entity:.ctor(ulong)");
 			OnCreateMethod = GetMethod(image, FullName + ":OnCreate()");
 			OnUpdateMethod = GetMethod(image, FullName + ":OnUpdate(single)");
-			OnPhysicsUpdateMethod = GetMethod(image, FullName = ":OnPhysicsUpdate(single)");
+			OnPhysicsUpdateMethod = GetMethod(image, FullName + ":OnPhysicsUpdate(single)");
 
 			// Physics (Entity class)
 			OnCollisionBeginMethod = GetMethod(s_CoreAssemblyImage, "Hep.Entity:OnCollisionBegin(single)");

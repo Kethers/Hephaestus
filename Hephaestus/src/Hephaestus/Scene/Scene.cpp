@@ -4,6 +4,7 @@
 #include "Entity.h"
 #include "Components.h"
 
+#include "Hephaestus/Core/Input.h"
 #include "Hephaestus/Renderer/SceneRenderer.h"
 #include "Hephaestus/Script/ScriptEngine.h"
 
@@ -138,9 +139,7 @@ namespace Hep
 		s_ActiveScenes[m_SceneID] = this;
 
 		if (!isEditorScene)
-		{
 			Physics::CreateScene();
-		}
 
 		Init();
 	}
@@ -193,7 +192,6 @@ namespace Hep
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto entity : view)
 			{
-				UUID entityID = m_Registry.get<IDComponent>(entity).ID;
 				Entity e = { entity, this };
 				if (ScriptEngine::ModuleExists(e.GetComponent<ScriptComponent>().ModuleName))
 					ScriptEngine::OnUpdateEntity(e, ts);
@@ -384,9 +382,7 @@ namespace Hep
 				auto& collider = e.GetComponent<MeshColliderComponent>();
 
 				if (m_SelectedEntity == entity)
-				{
 					SceneRenderer::SubmitColliderMesh(collider, e.GetComponent<TransformComponent>().GetTransform());
-				}
 			}
 		}
 
@@ -530,6 +526,7 @@ namespace Hep
 
 	void Scene::OnRuntimeStop()
 	{
+		Input::SetCursorMode(CursorMode::Normal);
 		delete[] m_Physics2DBodyEntityBuffer;
 		Physics::DestroyScene();
 		m_IsPlaying = false;
