@@ -999,11 +999,21 @@ namespace Hep
 				if (!file.empty())
 				{
 					mcc.CollisionMesh = Ref<Mesh>::Create(file);
-					PXPhysicsWrappers::CreateConvexMesh(mcc);
+					if (mcc.IsConvex)
+						PXPhysicsWrappers::CreateConvexMesh(mcc, true);
+					else
+						PXPhysicsWrappers::CreateTriangleMesh(mcc, true);
 				}
 			}
 
 			BeginPropertyGrid();
+			if (Property("Is Convex", mcc.IsConvex))
+			{
+				if (mcc.IsConvex)
+					PXPhysicsWrappers::CreateConvexMesh(mcc, true);
+				else
+					PXPhysicsWrappers::CreateTriangleMesh(mcc, true);
+			}
 			Property("Is Trigger", mcc.IsTrigger);
 			EndPropertyGrid();
 		});

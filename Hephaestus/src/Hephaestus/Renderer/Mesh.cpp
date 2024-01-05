@@ -119,9 +119,10 @@ namespace Hep
 			submesh.BaseIndex = indexCount;
 			submesh.MaterialIndex = mesh->mMaterialIndex;
 			submesh.IndexCount = mesh->mNumFaces * 3;
+			submesh.VertexCount = mesh->mNumVertices;
 			submesh.MeshName = mesh->mName.C_Str();
 
-			vertexCount += mesh->mNumVertices;
+			vertexCount += submesh.VertexCount;
 			indexCount += submesh.IndexCount;
 
 			HEP_CORE_ASSERT(mesh->HasPositions(), "Meshes require positions.");

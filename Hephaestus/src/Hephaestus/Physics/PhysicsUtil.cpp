@@ -88,57 +88,97 @@ namespace Hep
 		return physx::PxFilterFlag::eSUPPRESS;
 	}
 
-	void ConvexMeshSerializer::SerializeMesh(const std::string& filepath, const physx::PxDefaultMemoryOutputStream& data)
+	void ConvexMeshSerializer::DeleteIfSerializedAndInvalidated(const std::string& filepath)
+	{
+		std::filesystem::path p = filepath;
+		std::filesystem::path path = p.parent_path() / (p.filename().string() + ".pxm");
+
+		size_t firstDot = path.filename().string().find_first_of('.');
+		firstDot = firstDot == std::string::npos ? path.filename().string().length() - 1 : firstDot;
+		std::string dirName = p.filename().string().substr(0, firstDot);
+
+		if (IsSerialized(filepath))
+			std::filesystem::remove(p.parent_path() / dirName);
+	}
+
+	void ConvexMeshSerializer::SerializeMesh(const std::string& filepath, const physx::PxDefaultMemoryOutputStream& data,
+		const std::string& submeshName)
 	{
 		std::filesystem::path p = filepath;
 		auto path = p.parent_path() / (p.filename().string() + ".pxm");
+		size_t firstDot = path.filename().string().find_first_of('.');
+		firstDot = firstDot == std::string::npos ? path.filename().string().length() - 1 : firstDot;
+		std::string dirName = p.filename().string().substr(0, firstDot);
+
+		if (submeshName.length() > 0)
+			path = p.parent_path() / dirName / (submeshName + ".pxm");
+
+		std::filesystem::create_directory(p.parent_path() / dirName);
 		std::string cachedFilepath = path.string();
+
+		HEP_CORE_INFO("Serializing {0}", submeshName);
 
 		std::ofstream out(cachedFilepath, std::ios::out | std::ios::binary);
 		if (out)
 		{
+			HEP_CORE_INFO("File Created");
 			out.write((const char*)data.getData(), data.getSize() / sizeof(char));
 			out.close();
+		}
+		else
+		{
+			HEP_CORE_INFO("File Already Exists");
 		}
 	}
 
 	bool ConvexMeshSerializer::IsSerialized(const std::string& filepath)
 	{
 		std::filesystem::path p = filepath;
-		auto path = p.parent_path() / (p.filename().string() + ".pxm");
-		std::string cachedFilepath = path.string();
-
-		std::ifstream f(cachedFilepath, std::ios::in | std::ios::binary);
-		bool exists = !f.fail();
-		if (exists)
-			f.close();
-		return exists;
+		size_t firstDot = p.filename().string().find_first_of(".");
+		firstDot = firstDot == std::string::npos ? p.filename().string().length() - 1 : firstDot;
+		std::string dirName = p.filename().string().substr(0, firstDot);
+		auto path = p.parent_path() / dirName;
+		return std::filesystem::is_directory(path);
 	}
 
-	static physx::PxU8* s_MeshDataBuffer;
+	static std::vector<physx::PxU8*> s_MeshDataBuffers;
 
-	physx::PxDefaultMemoryInputData ConvexMeshSerializer::DeserializeMesh(const std::string& filepath)
+	std::vector<physx::PxDefaultMemoryInputData> ConvexMeshSerializer::DeserializeMesh(const std::string& filepath)
 	{
+		std::vector<physx::PxDefaultMemoryInputData> result;
+
 		std::filesystem::path p = filepath;
-		auto path = p.parent_path() / (p.filename().string() + ".pxm");
-		std::string cachedFilepath = path.string();
+		size_t lastDot = p.filename().string().find_first_of(".");
+		lastDot = lastDot == std::string::npos ? p.filename().string().length() - 1 : lastDot;
+		std::string dirName = p.filename().string().substr(0, lastDot);
+		auto path = p.parent_path() / dirName;
 
-		std::ifstream in(cachedFilepath, std::ios::in | std::ios::binary);
-
-		uint32_t size;
-		if (in)
+		for (const auto& file : std::filesystem::directory_iterator(path))
 		{
-			in.seekg(0, std::ios::end);
-			size = in.tellg();
-			in.seekg(0, std::ios::beg);
+			std::ifstream in(file.path().string(), std::ios::in | std::ios::binary);
 
-			delete[] s_MeshDataBuffer;
-
-			s_MeshDataBuffer = new physx::PxU8[size / sizeof(physx::PxU8)];
-			in.read((char*)s_MeshDataBuffer, size / sizeof(char));
-			in.close();
+			uint32_t size;
+			if (in)
+			{
+				in.seekg(0, std::ios::end);
+				size = in.tellg();
+				in.seekg(0, std::ios::beg);
+				physx::PxU8* buffer = new physx::PxU8[size / sizeof(physx::PxU8)];
+				in.read((char*)buffer, size / sizeof(char));
+				in.close();
+				s_MeshDataBuffers.push_back(buffer);
+				result.emplace_back(buffer, size);
+			}
 		}
 
-		return physx::PxDefaultMemoryInputData(s_MeshDataBuffer, size);
+		return result;
+	}
+
+	void ConvexMeshSerializer::CleanupDataBuffers()
+	{
+		for (auto buffer : s_MeshDataBuffers)
+			delete[] buffer;
+
+		s_MeshDataBuffers.clear();
 	}
 }

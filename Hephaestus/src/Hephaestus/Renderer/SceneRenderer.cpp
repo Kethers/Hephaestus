@@ -152,7 +152,8 @@ namespace Hep
 
 	void SceneRenderer::SubmitColliderMesh(const MeshColliderComponent& component, const glm::mat4& parentTransform)
 	{
-		s_Data.ColliderDrawList.push_back({ component.ProcessedMesh, nullptr, parentTransform });
+		for (auto debugMesh : component.ProcessedMeshes)
+			s_Data.ColliderDrawList.push_back({ debugMesh, nullptr, parentTransform });
 	}
 
 	static Ref<Shader> equirectangularConversionShader, envFilteringShader, envIrradianceShader;

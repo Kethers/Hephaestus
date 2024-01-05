@@ -98,7 +98,7 @@ namespace Hep
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(HEP_BIND_EVENT_FN(EditorLayer::SelectEntity));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(HEP_BIND_EVENT_FN(EditorLayer::OnEntityDeleted));
 		SceneSerializer serializer(m_EditorScene);
-		std::filesystem::path filepath = "assets/scenes/FPSDemo.hsc";
+		std::filesystem::path filepath = "assets/scenes/PhysicsTest2.hsc";
 		serializer.Deserialize(filepath.string());
 		UpdateWindowTitle(filepath.filename().string());
 	}

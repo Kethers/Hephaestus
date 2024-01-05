@@ -399,6 +399,7 @@ namespace Hep
 
 			auto& meshColliderComponent = entity.GetComponent<MeshColliderComponent>();
 			out << YAML::Key << "AssetPath" << YAML::Value << meshColliderComponent.CollisionMesh->GetFilePath();
+			out << YAML::Key << "IsConvex" << YAML::Value << meshColliderComponent.IsConvex;
 			out << YAML::Key << "IsTrigger" << YAML::Value << meshColliderComponent.IsTrigger;
 
 			out << YAML::EndMap; // MeshColliderComponent
@@ -727,8 +728,13 @@ namespace Hep
 				{
 					std::string meshPath = meshColliderComponent["AssetPath"].as<std::string>();
 					auto& component = deserializedEntity.AddComponent<MeshColliderComponent>(Ref<Mesh>::Create(meshPath));
+					component.IsConvex = meshColliderComponent["IsConvex"] ? meshColliderComponent["IsConvex"].as<bool>() : false;
 					component.IsTrigger = meshColliderComponent["IsTrigger"] ? meshColliderComponent["IsTrigger"].as<bool>() : false;
-					PXPhysicsWrappers::CreateConvexMesh(component);
+
+					if (component.IsConvex)
+						PXPhysicsWrappers::CreateConvexMesh(component);
+					else
+						PXPhysicsWrappers::CreateTriangleMesh(component);
 
 					HEP_CORE_INFO("  Mesh Collider Asset Path: {0}", meshPath);
 				}

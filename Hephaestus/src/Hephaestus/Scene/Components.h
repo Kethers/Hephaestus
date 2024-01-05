@@ -213,7 +213,8 @@ namespace Hep
 	struct MeshColliderComponent
 	{
 		Ref<Hep::Mesh> CollisionMesh;
-		Ref<Hep::Mesh> ProcessedMesh;
+		std::vector<Ref<Hep::Mesh>> ProcessedMeshes;
+		bool IsConvex = false;
 		bool IsTrigger = false;
 
 		MeshColliderComponent() = default;
