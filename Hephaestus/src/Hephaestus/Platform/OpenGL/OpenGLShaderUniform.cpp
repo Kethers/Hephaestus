@@ -88,7 +88,7 @@ namespace Hep
 		uint32_t offset = 0;
 		if (!m_Uniforms.empty())
 		{
-			auto* previous = (OpenGLShaderUniformDeclaration*)m_Uniforms.back();
+			auto previous = (OpenGLShaderUniformDeclaration*)m_Uniforms.back();
 			offset = previous->m_Offset + previous->m_Size;
 		}
 		uniform->SetOffset(offset);

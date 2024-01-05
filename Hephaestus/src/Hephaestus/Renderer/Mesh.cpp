@@ -246,7 +246,7 @@ namespace Hep
 				auto mi = Ref<MaterialInstance>::Create(m_BaseMaterial, aiMaterialName.data);
 				m_Materials[i] = mi;
 
-				HEP_MESH_LOG("Material Name = {0}; Index = {1}", aiMaterialName.data, i);
+				HEP_MESH_LOG("  {0} (Index = {1})", aiMaterialName.data, i);
 				aiString aiTexPath;
 				uint32_t textureCount = aiMaterial->GetTextureCount(aiTextureType_DIFFUSE);
 				HEP_MESH_LOG("  TextureCount = {0}", textureCount);
@@ -350,7 +350,7 @@ namespace Hep
 				}
 
 #if 0
-				// Metalness map
+				// Metalness map (or is it??)
 				if (aiMaterial->Get("$raw.ReflectionFactor|file", aiPTI_String, 0, aiTexPath) == AI_SUCCESS)
 				{
 					// TODO: Temp - this should be handled by Hazel's filesystem

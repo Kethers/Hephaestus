@@ -648,9 +648,7 @@ namespace Hep
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("New Scene", "Ctrl+N"))
-				{
 					NewScene();
-				}
 				if (ImGui::MenuItem("Open Scene...", "Ctrl+O"))
 					OpenScene();
 				ImGui::Separator();

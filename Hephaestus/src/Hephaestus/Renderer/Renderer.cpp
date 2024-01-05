@@ -221,7 +221,7 @@ namespace Hep
 				{
 					std::string uniformName = std::string("u_BoneTransforms[") + std::to_string(i) + std::string(
 						"]");
-					mesh->m_MeshShader->SetMat4(uniformName, mesh->m_BoneTransforms[i]);
+					shader->SetMat4(uniformName, mesh->m_BoneTransforms[i]);
 				}
 			}
 			shader->SetMat4("u_Transform", transform * submesh.Transform);
@@ -251,6 +251,14 @@ namespace Hep
 
 		for (Submesh& submesh : mesh->m_Submeshes)
 		{
+			if (mesh->m_IsAnimated)
+			{
+				for (size_t i = 0; i < mesh->m_BoneTransforms.size(); i++)
+				{
+					std::string uniformName = std::string("u_BoneTransforms[") + std::to_string(i) + std::string("]");
+					shader->SetMat4(uniformName, mesh->m_BoneTransforms[i]);
+				}
+			}
 			shader->SetMat4("u_Transform", transform * submesh.Transform);
 
 			Renderer::Submit([submesh]()

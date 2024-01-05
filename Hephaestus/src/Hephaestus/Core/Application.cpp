@@ -26,7 +26,7 @@ namespace Hep
 			Window::Create(WindowProps(props.Name, props.WindowWidth, props.WindowHeight)));
 		m_Window->SetEventCallback(HEP_BIND_EVENT_FN(Application::OnEvent));
 		m_Window->Maximize();
-		m_Window->SetVSync(false);
+		m_Window->SetVSync(true);
 
 		m_ImGuiLayer = new ImGuiLayer("ImGui");
 		PushOverlay(m_ImGuiLayer);

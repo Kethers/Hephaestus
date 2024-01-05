@@ -201,19 +201,18 @@ namespace Hep
 				glDrawBuffer(GL_NONE);
 			}
 #if 0
-			bool multisample = instance->m_Specification.Samples > 1;
 			if (multisample)
 			{
 				glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE, 1, &m_ColorAttachment);
 				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_ColorAttachment);
 
 				// TODO: Create Hazel texture object based on format here
-				if (m_Specification.Format == FramebufferTextureFormat::RGBA16F)
+				if (m_Specification.Format == FramebufferFormat::RGBA16F)
 				{
 					glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_Specification.Samples, GL_RGBA16F, m_Specification.Width,
 						m_Specification.Height, GL_FALSE);
 				}
-				else if (m_Specification.Format == FramebufferTextureFormat::RGBA8)
+				else if (m_Specification.Format == FramebufferFormat::RGBA8)
 				{
 					glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_Specification.Samples, GL_RGBA8, m_Specification.Width,
 						m_Specification.Height, GL_FALSE);
@@ -228,7 +227,7 @@ namespace Hep
 				glBindTexture(GL_TEXTURE_2D, m_ColorAttachment);
 
 				// TODO: Create Hazel texture object based on format here
-				if (m_Specification.Format == FramebufferTextureFormat::RGBA16F)
+				if (m_Specification.Format == FramebufferFormat::RGBA16F)
 				{
 					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_Specification.Width, m_Specification.Height, 0, GL_RGBA, GL_FLOAT,
 						nullptr);
@@ -239,7 +238,7 @@ namespace Hep
 					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_ColorAttachment, 0);
 					glDrawBuffer(GL_NONE);
 				}
-				else if (m_Specification.Format == FramebufferTextureFormat::RGBA8)
+				else if (m_Specification.Format == FramebufferFormat::RGBA8)
 				{
 					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_Specification.Width, m_Specification.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
 						nullptr);

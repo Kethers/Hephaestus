@@ -1289,8 +1289,8 @@ namespace ImGuizmo
 					drawList->AddCircleFilled(worldDirSSpaceNoScale, circleSize, 0xFF404040);
 				}
 
-				drawList->AddLine(baseSSpace, worldDirSSpace, colors[i + 1], 3.f);
-				drawList->AddCircleFilled(worldDirSSpace, 6.f, colors[i + 1]);
+				drawList->AddLine(baseSSpace, worldDirSSpace, colors[i + 1], lineThickness);
+				drawList->AddCircleFilled(worldDirSSpace, circleSize, colors[i + 1]);
 
 				// if (gContext.mAxisFactor[i] < 0.f)
 				// 	DrawHatchedAxis(dirAxis * scaleDisplay[i]);
