@@ -30,26 +30,32 @@ namespace Hep
 	{
 		switch (type)
 		{
-			case OpenGLShaderUniformDeclaration::Type::INT32: return 4;
-			case OpenGLShaderUniformDeclaration::Type::FLOAT32: return 4;
-			case OpenGLShaderUniformDeclaration::Type::VEC2: return 4 * 2;
-			case OpenGLShaderUniformDeclaration::Type::VEC3: return 4 * 3;
-			case OpenGLShaderUniformDeclaration::Type::VEC4: return 4 * 4;
-			case OpenGLShaderUniformDeclaration::Type::MAT3: return 4 * 3 * 3;
-			case OpenGLShaderUniformDeclaration::Type::MAT4: return 4 * 4 * 4;
+			// @formatter:off
+			case OpenGLShaderUniformDeclaration::Type::BOOL:		return 1;
+			case OpenGLShaderUniformDeclaration::Type::INT32:		return 4;
+			case OpenGLShaderUniformDeclaration::Type::FLOAT32: 	return 4;
+			case OpenGLShaderUniformDeclaration::Type::VEC2:		return 4 * 2;
+			case OpenGLShaderUniformDeclaration::Type::VEC3:		return 4 * 3;
+			case OpenGLShaderUniformDeclaration::Type::VEC4:		return 4 * 4;
+			case OpenGLShaderUniformDeclaration::Type::MAT3:		return 4 * 3 * 3;
+			case OpenGLShaderUniformDeclaration::Type::MAT4:		return 4 * 4 * 4;
+			// @formatter:on
 		}
 		return 0;
 	}
 
 	OpenGLShaderUniformDeclaration::Type OpenGLShaderUniformDeclaration::StringToType(const std::string& type)
 	{
-		if (type == "int") return Type::INT32;
-		if (type == "float") return Type::FLOAT32;
-		if (type == "vec2") return Type::VEC2;
-		if (type == "vec3") return Type::VEC3;
-		if (type == "vec4") return Type::VEC4;
-		if (type == "mat3") return Type::MAT3;
-		if (type == "mat4") return Type::MAT4;
+		// @formatter:off
+		if (type == "int")  	return Type::INT32;
+		if (type == "bool") 	return Type::BOOL;
+		if (type == "float")	return Type::FLOAT32;
+		if (type == "vec2") 	return Type::VEC2;
+		if (type == "vec3") 	return Type::VEC3;
+		if (type == "vec4") 	return Type::VEC4;
+		if (type == "mat3") 	return Type::MAT3;
+		if (type == "mat4") 	return Type::MAT4;
+		// @formatter:on
 
 		return Type::NONE;
 	}
@@ -58,13 +64,16 @@ namespace Hep
 	{
 		switch (type)
 		{
-			case OpenGLShaderUniformDeclaration::Type::INT32: return "int32";
-			case OpenGLShaderUniformDeclaration::Type::FLOAT32: return "float";
-			case OpenGLShaderUniformDeclaration::Type::VEC2: return "vec2";
-			case OpenGLShaderUniformDeclaration::Type::VEC3: return "vec3";
-			case OpenGLShaderUniformDeclaration::Type::VEC4: return "vec4";
-			case OpenGLShaderUniformDeclaration::Type::MAT3: return "mat3";
-			case OpenGLShaderUniformDeclaration::Type::MAT4: return "mat4";
+			// @formatter:off
+			case OpenGLShaderUniformDeclaration::Type::INT32:		return "int32";
+			case OpenGLShaderUniformDeclaration::Type::BOOL:		return "bool";
+			case OpenGLShaderUniformDeclaration::Type::FLOAT32:		return "float";
+			case OpenGLShaderUniformDeclaration::Type::VEC2:		return "vec2";
+			case OpenGLShaderUniformDeclaration::Type::VEC3:		return "vec3";
+			case OpenGLShaderUniformDeclaration::Type::VEC4:		return "vec4";
+			case OpenGLShaderUniformDeclaration::Type::MAT3:		return "mat3";
+			case OpenGLShaderUniformDeclaration::Type::MAT4:		return "mat4";
+			// @formatter:on
 		}
 		return "Invalid Type";
 	}
@@ -72,14 +81,14 @@ namespace Hep
 	OpenGLShaderUniformBufferDeclaration::OpenGLShaderUniformBufferDeclaration(const std::string& name,
 		ShaderDomain domain)
 		: m_Name(name), m_Domain(domain), m_Size(0), m_Register(0)
-	{ }
+	{}
 
 	void OpenGLShaderUniformBufferDeclaration::PushUniform(OpenGLShaderUniformDeclaration* uniform)
 	{
 		uint32_t offset = 0;
 		if (!m_Uniforms.empty())
 		{
-			auto* previous = (OpenGLShaderUniformDeclaration*)m_Uniforms.back();
+			auto previous = (OpenGLShaderUniformDeclaration*)m_Uniforms.back();
 			offset = previous->m_Offset + previous->m_Size;
 		}
 		uniform->SetOffset(offset);
@@ -99,7 +108,7 @@ namespace Hep
 
 	OpenGLShaderResourceDeclaration::OpenGLShaderResourceDeclaration(Type type, const std::string& name, uint32_t count)
 		: m_Type(type), m_Name(name), m_Count(count)
-	{ }
+	{}
 
 	OpenGLShaderResourceDeclaration::Type OpenGLShaderResourceDeclaration::StringToType(const std::string& type)
 	{

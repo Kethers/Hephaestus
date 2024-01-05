@@ -24,13 +24,13 @@ namespace Hep::Script
 
 	// Math
 	float Hep_Noise_PerlinNoise(float x, float y);
-	void Hep_Input_GetMousePosition(glm::vec2* outPosition);
-	void Hep_Input_SetCursorMode(CursorMode mode);
-	CursorMode Hep_Input_GetCursorMode();
 
 	// Input
 	bool Hep_Input_IsKeyPressed(KeyCode key);
 	bool Hep_Input_IsMouseButtonPressed(MouseButton button);
+	void Hep_Input_GetMousePosition(glm::vec2* outPosition);
+	void Hep_Input_SetCursorMode(CursorMode mode);
+	CursorMode Hep_Input_GetCursorMode();
 
 	// Physics
 	bool Hep_Physics_Raycast(glm::vec3* origin, glm::vec3* direction, float maxDistance, RaycastHit* hit);

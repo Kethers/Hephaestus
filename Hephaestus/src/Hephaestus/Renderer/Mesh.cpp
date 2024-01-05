@@ -38,22 +38,12 @@ namespace Hep
 	{
 		glm::mat4 result;
 		//the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
-		result[0][0] = matrix.a1;
-		result[1][0] = matrix.a2;
-		result[2][0] = matrix.a3;
-		result[3][0] = matrix.a4;
-		result[0][1] = matrix.b1;
-		result[1][1] = matrix.b2;
-		result[2][1] = matrix.b3;
-		result[3][1] = matrix.b4;
-		result[0][2] = matrix.c1;
-		result[1][2] = matrix.c2;
-		result[2][2] = matrix.c3;
-		result[3][2] = matrix.c4;
-		result[0][3] = matrix.d1;
-		result[1][3] = matrix.d2;
-		result[2][3] = matrix.d3;
-		result[3][3] = matrix.d4;
+		// @formatter:off
+		result[0][0] = matrix.a1; result[1][0] = matrix.a2; result[2][0] = matrix.a3; result[3][0] = matrix.a4;
+		result[0][1] = matrix.b1; result[1][1] = matrix.b2; result[2][1] = matrix.b3; result[3][1] = matrix.b4;
+		result[0][2] = matrix.c1; result[1][2] = matrix.c2; result[2][2] = matrix.c3; result[3][2] = matrix.c4;
+		result[0][3] = matrix.d1; result[1][3] = matrix.d2; result[2][3] = matrix.d3; result[3][3] = matrix.d4;
+		// @formatter:on
 		return result;
 	}
 
@@ -79,7 +69,7 @@ namespace Hep
 
 		void write(const char* message) override
 		{
-			HEP_CORE_ERROR("Assimp error: {0}", message);
+			HEP_CORE_WARN("Assimp: {0}", message);
 		}
 	};
 
@@ -249,7 +239,7 @@ namespace Hep
 				auto mi = Ref<MaterialInstance>::Create(m_BaseMaterial, aiMaterialName.data);
 				m_Materials[i] = mi;
 
-				HEP_MESH_LOG("Material Name = {0}; Index = {1}", aiMaterialName.data, i);
+				HEP_MESH_LOG("  {0} (Index = {1})", aiMaterialName.data, i);
 				aiString aiTexPath;
 				uint32_t textureCount = aiMaterial->GetTextureCount(aiTextureType_DIFFUSE);
 				HEP_MESH_LOG("  TextureCount = {0}", textureCount);
@@ -353,7 +343,7 @@ namespace Hep
 				}
 
 #if 0
-				// Metalness map
+				// Metalness map (or is it??)
 				if (aiMaterial->Get("$raw.ReflectionFactor|file", aiPTI_String, 0, aiTexPath) == AI_SUCCESS)
 				{
 					// TODO: Temp - this should be handled by Hazel's filesystem

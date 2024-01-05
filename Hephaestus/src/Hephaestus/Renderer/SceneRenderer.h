@@ -17,6 +17,8 @@ namespace Hep
 	{
 		Hep::Camera Camera;
 		glm::mat4 ViewMatrix;
+		float Near, Far;
+		float FOV;
 	};
 
 	class SceneRenderer
@@ -44,12 +46,18 @@ namespace Hep
 
 		// TODO: Temp
 		static uint32_t GetFinalColorBufferRendererID();
+		static void SetFocusPoint(const glm::vec2& point);
 
 		static SceneRendererOptions& GetOptions();
+
+		static void OnImGuiRender();
 
 	private:
 		static void FlushDrawList();
 		static void GeometryPass();
 		static void CompositePass();
+		static void BloomBlurPass();
+
+		static void ShadowMapPass();
 	};
 }

@@ -132,16 +132,16 @@ BuildProject({
 	},
 	rundir = "$(projectdir)/Poseidon",
 	packages = {--[["assimp"]]},
-	debugLink = {"$(projectdir)/external/assimp/bin/Debug/assimp-vc143-mtd.lib"},
-	releaseLink = {"$(projectdir)/external/assimp/bin/Release/assimp-vc143-mt.lib"},
+	debugLink = {"$(projectdir)/external/assimp/bin/Debug/assimp-vc141-mtd.lib"},
+	releaseLink = {"$(projectdir)/external/assimp/bin/Release/assimp-vc141-mt.lib"},
 	link = {"kernel32", "User32", "Gdi32", "Shell32"},
 	afterBuildFunc = function (target)
 		if is_plat("windows") then
 			if (is_mode("debug")) then
-				os.cp("$(projectdir)/external/assimp/bin/Debug/assimp-vc143-mtd.dll", target:targetdir())
+				os.cp("$(projectdir)/external/assimp/bin/Debug/assimp-vc141-mtd.dll", target:targetdir())
 				os.cp("$(projectdir)/external/mono/bin/Debug/mono-2.0-sgen.dll", target:targetdir())
 			else
-				os.cp("$(projectdir)/external/assimp/bin/Release/assimp-vc143-mt.dll", target:targetdir())
+				os.cp("$(projectdir)/external/assimp/bin/Release/assimp-vc141-mt.dll", target:targetdir())
 				os.cp("$(projectdir)/external/mono/bin/Release/mono-2.0-sgen.dll", target:targetdir())
 			end
 		end

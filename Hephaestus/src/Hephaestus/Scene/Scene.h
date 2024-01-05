@@ -6,6 +6,7 @@
 #include "Hephaestus/Renderer/Camera.h"
 #include "Hephaestus/Renderer/Texture.h"
 #include "Hephaestus/Renderer/Material.h"
+#include "Hephaestus/Renderer/SceneEnvironment.h"
 
 #include "entt/entt.hpp"
 
@@ -14,21 +15,27 @@
 
 namespace Hep
 {
-	struct Environment
-	{
-		std::string FilePath;
-		Ref<TextureCube> RadianceMap;
-		Ref<TextureCube> IrradianceMap;
-
-		static Environment Load(const std::string& filepath);
-	};
-
 	struct Light
 	{
 		glm::vec3 Direction = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 Radiance = { 0.0f, 0.0f, 0.0f };
 
 		float Multiplier = 1.0f;
+	};
+
+	struct DirectionalLight
+	{
+		glm::vec3 Direction = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 Radiance = { 0.0f, 0.0f, 0.0f };
+		float Multiplier = 0.0f;
+
+		// C++ only
+		bool CastShadows = true;
+	};
+
+	struct LightEnvironment
+	{
+		DirectionalLight DirectionalLights[4];
 	};
 
 	class Entity;
@@ -53,7 +60,6 @@ namespace Hep
 
 		void SetViewportSize(uint32_t width, uint32_t height);
 
-		void SetEnvironment(const Environment& environment);
 		const Environment& GetEnvironment() const { return m_Environment; }
 		void SetSkybox(const Ref<TextureCube>& skybox);
 
@@ -104,7 +110,10 @@ namespace Hep
 		Light m_Light;
 		float m_LightMultiplier = 0.3f;
 
+		LightEnvironment m_LightEnvironment;
+
 		Environment m_Environment;
+		float m_EnvironmentIntensity = 1.0f;
 		Ref<TextureCube> m_SkyboxTexture;
 		Ref<MaterialInstance> m_SkyboxMaterial;
 

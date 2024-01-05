@@ -8,6 +8,7 @@
 #include "Hephaestus/Core/UUID.h"
 #include "Hephaestus/Renderer/Texture.h"
 #include "Hephaestus/Renderer/Mesh.h"
+#include "Hephaestus/Renderer/SceneEnvironment.h"
 #include "Hephaestus/Scene/SceneCamera.h"
 
 namespace Hep
@@ -30,7 +31,6 @@ namespace Hep
 		operator const std::string&() const { return Tag; }
 	};
 
-	// TODO: Should the Up, Right, Forward vectors be stored here?
 	struct TransformComponent
 	{
 		glm::vec3 Translation = { 0.0F, 0.0F, 0.0F };
@@ -45,7 +45,7 @@ namespace Hep
 		glm::mat4 GetTransform() const
 		{
 			return glm::translate(glm::mat4(1.0F), Translation)
-				* glm::toMat4(glm::quat(glm::radians(Rotation)))
+				* glm::toMat4(glm::quat(Rotation))
 				* glm::scale(glm::mat4(1.0F), Scale);
 		}
 	};
@@ -224,5 +224,28 @@ namespace Hep
 		{}
 
 		operator Ref<Hep::Mesh>() { return CollisionMesh; }
+	};
+
+	// Lights
+	// TODO: Move to renderer
+	enum class LightType
+	{
+		None = 0, Directional = 1, Point = 2, Spot = 3
+	};
+
+	struct DirectionalLightComponent
+	{
+		glm::vec3 Radiance = { 1.0f, 1.0f, 1.0f };
+		float Intensity = 1.0f;
+		bool CastShadows = true;
+		bool SoftShadows = true;
+		float LightSize = 0.5f; // For PCSS
+	};
+
+	struct SkyLightComponent
+	{
+		Environment SceneEnvironment;
+		float Intensity = 1.0f;
+		float Angle = 0.0f;
 	};
 }

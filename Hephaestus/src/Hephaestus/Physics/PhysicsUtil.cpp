@@ -7,7 +7,7 @@ namespace Hep
 {
 	physx::PxTransform ToPhysXTransform(const TransformComponent& transform)
 	{
-		physx::PxQuat r = ToPhysXQuat(glm::normalize(glm::quat(glm::radians(transform.Rotation))));
+		physx::PxQuat r = ToPhysXQuat(glm::normalize(glm::quat(transform.Rotation)));
 		physx::PxVec3 p = ToPhysXVector(transform.Translation);
 		return physx::PxTransform(p, r);
 	}
@@ -88,7 +88,7 @@ namespace Hep
 		return physx::PxFilterFlag::eSUPPRESS;
 	}
 
-	void ConvexMeshSerializer::DeleteIfSerializedAndInvalidated(const std::string& filepath)
+	void PhysicsMeshSerializer::DeleteIfSerialized(const std::string& filepath)
 	{
 		std::filesystem::path p = filepath;
 		std::filesystem::path path = p.parent_path() / (p.filename().string() + ".pxm");
@@ -101,11 +101,11 @@ namespace Hep
 			std::filesystem::remove(p.parent_path() / dirName);
 	}
 
-	void ConvexMeshSerializer::SerializeMesh(const std::string& filepath, const physx::PxDefaultMemoryOutputStream& data,
+	void PhysicsMeshSerializer::SerializeMesh(const std::string& filepath, const physx::PxDefaultMemoryOutputStream& data,
 		const std::string& submeshName)
 	{
 		std::filesystem::path p = filepath;
-		auto path = p.parent_path() / (p.filename().string() + ".pxm");
+		std::filesystem::path path = p.parent_path() / (p.filename().string() + ".pxm");
 		size_t firstDot = path.filename().string().find_first_of('.');
 		firstDot = firstDot == std::string::npos ? path.filename().string().length() - 1 : firstDot;
 		std::string dirName = p.filename().string().substr(0, firstDot);
@@ -131,7 +131,7 @@ namespace Hep
 		}
 	}
 
-	bool ConvexMeshSerializer::IsSerialized(const std::string& filepath)
+	bool PhysicsMeshSerializer::IsSerialized(const std::string& filepath)
 	{
 		std::filesystem::path p = filepath;
 		size_t firstDot = p.filename().string().find_first_of(".");
@@ -143,7 +143,7 @@ namespace Hep
 
 	static std::vector<physx::PxU8*> s_MeshDataBuffers;
 
-	std::vector<physx::PxDefaultMemoryInputData> ConvexMeshSerializer::DeserializeMesh(const std::string& filepath)
+	std::vector<physx::PxDefaultMemoryInputData> PhysicsMeshSerializer::DeserializeMesh(const std::string& filepath)
 	{
 		std::vector<physx::PxDefaultMemoryInputData> result;
 
@@ -155,6 +155,8 @@ namespace Hep
 
 		for (const auto& file : std::filesystem::directory_iterator(path))
 		{
+			HEP_CORE_INFO("De-Serializing {0}", file.path().string());
+		
 			std::ifstream in(file.path().string(), std::ios::in | std::ios::binary);
 
 			uint32_t size;
@@ -174,7 +176,7 @@ namespace Hep
 		return result;
 	}
 
-	void ConvexMeshSerializer::CleanupDataBuffers()
+	void PhysicsMeshSerializer::CleanupDataBuffers()
 	{
 		for (auto buffer : s_MeshDataBuffers)
 			delete[] buffer;
