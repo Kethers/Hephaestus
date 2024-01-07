@@ -10,6 +10,7 @@
 
 #include "Hephaestus/Renderer/Renderer2D.h"
 #include "Hephaestus/Physics/Physics.h"
+#include "Hephaestus/Physics/PhysicsActor.h"
 
 #include "Hephaestus/Core/Math/Mat4.h"
 #define GLM_ENABLE_EXPERIMENTAL
@@ -258,7 +259,7 @@ namespace Hep
 				meshComponent.Mesh->OnUpdate(ts);
 
 				// TODO: Should we render (logically)
-				SceneRenderer::SubmitMesh(meshComponent, transformComponent.GetTransform(), nullptr);
+				SceneRenderer::SubmitMesh(meshComponent, transformComponent.GetTransform());
 			}
 		}
 		SceneRenderer::EndScene();

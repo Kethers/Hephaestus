@@ -170,6 +170,7 @@ namespace Hep
 		s_Data.ColliderMaterial = MaterialInstance::Create(Material::Create(colliderShader));
 		s_Data.ColliderMaterial->SetFlag(MaterialFlag::DepthTest, false);
 
+		// Shadow Map
 		s_Data.ShadowMapShader = Shader::Create("assets/shaders/ShadowMap.glsl");
 		s_Data.ShadowMapAnimShader = Shader::Create("assets/shaders/ShadowMap_Anim.glsl");
 

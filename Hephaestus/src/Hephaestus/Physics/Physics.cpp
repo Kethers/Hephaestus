@@ -15,8 +15,7 @@
 namespace Hep
 {
 	static physx::PxScene* s_Scene;
-	static std::vector<Ref<PhysicsActor>> s_SimulatedActors;
-	static std::vector<Ref<PhysicsActor>> s_StaticActors;
+	static std::vector<Ref<PhysicsActor>> s_Actors;
 	static float s_SimulationTime = 0.0F;
 
 	static PhysicsSettings s_Settings;
@@ -53,41 +52,25 @@ namespace Hep
 		}
 	}
 
-	void Physics::CreateActor(Entity e)
+	Ref<PhysicsActor> Physics::CreateActor(Entity e)
 	{
 		HEP_CORE_ASSERT(s_Scene);
 
 		if (!e.HasComponent<RigidBodyComponent>())
 		{
 			HEP_CORE_WARN("Trying to create PhysX actor from a non-rigidbody actor!");
-			return;
-		}
-
-		if (!e.HasComponent<PhysicsMaterialComponent>())
-		{
-			HEP_CORE_WARN("Trying to create PhysX actor without a PhysicsMaterialComponent!");
-			return;
+			return nullptr;
 		}
 
 		Ref<PhysicsActor> actor = Ref<PhysicsActor>::Create(e);
-
-		if (actor->IsDynamic())
-			s_SimulatedActors.push_back(actor);
-		else
-			s_StaticActors.push_back(actor);
-
+		s_Actors.push_back(actor);
 		actor->Spawn();
+		return actor;
 	}
 
 	Ref<PhysicsActor> Physics::GetActorForEntity(Entity entity)
 	{
-		for (auto& actor : s_StaticActors)
-		{
-			if (actor->GetEntity() == entity)
-				return actor;
-		}
-
-		for (auto& actor : s_SimulatedActors)
+		for (auto& actor : s_Actors)
 		{
 			if (actor->GetEntity() == entity)
 				return actor;
@@ -112,13 +95,13 @@ namespace Hep
 
 		s_SimulationTime -= s_Settings.FixedTimestep;
 
-		for (auto& actor : s_SimulatedActors)
+		for (auto& actor : s_Actors)
 			actor->Update(s_Settings.FixedTimestep);
 
 		s_Scene->simulate(s_Settings.FixedTimestep);
 		s_Scene->fetchResults(true);
 
-		for (auto& actor : s_SimulatedActors)
+		for (auto& actor : s_Actors)
 			actor->SynchronizeTransform();
 	}
 
@@ -126,8 +109,7 @@ namespace Hep
 	{
 		HEP_CORE_ASSERT(s_Scene);
 
-		s_StaticActors.clear();
-		s_SimulatedActors.clear();
+		s_Actors.clear();
 		s_Scene->release();
 		s_Scene = nullptr;
 	}
