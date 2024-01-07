@@ -2,6 +2,7 @@
 #include "Physics.h"
 #include "PXPhysicsWrappers.h"
 #include "PhysicsLayer.h"
+#include "PhysicsActor.h"
 
 #include "Hephaestus/Script/ScriptEngine.h"
 
@@ -14,7 +15,8 @@
 namespace Hep
 {
 	static physx::PxScene* s_Scene;
-	static std::vector<Entity> s_SimulatedEntities;
+	static std::vector<Ref<PhysicsActor>> s_SimulatedActors;
+	static std::vector<Ref<PhysicsActor>> s_StaticActors;
 	static Entity* s_EntityStorageBuffer;
 	static uint32_t s_EntityBufferCount;
 	static int s_EntityStorageBufferPosition;
@@ -33,6 +35,7 @@ namespace Hep
 		PXPhysicsWrappers::Shutdown();
 	}
 
+	// NOTE: This is future proofing for when we can spawn entities from scripts/at runtime
 	void Physics::ExpandEntityBuffer(uint32_t amount)
 	{
 		HEP_CORE_ASSERT(s_Scene);
@@ -102,53 +105,17 @@ namespace Hep
 			return;
 		}
 
-		RigidBodyComponent& rigidbody = e.GetComponent<RigidBodyComponent>();
+		Ref<PhysicsActor> actor = Ref<PhysicsActor>::Create(e);
 
-		TransformComponent& transform = e.GetComponent<TransformComponent>();
-		physx::PxRigidActor* actor = PXPhysicsWrappers::CreateActor(rigidbody, transform);
-
-		if (rigidbody.BodyType == RigidBodyComponent::Type::Dynamic)
-			s_SimulatedEntities.push_back(e);
+		if (actor->IsDynamic())
+			s_SimulatedActors.push_back(actor);
+		else
+			s_StaticActors.push_back(actor);
 
 		Entity* entityStorage = &s_EntityStorageBuffer[s_EntityStorageBufferPosition];
 		*entityStorage = e;
-		actor->userData = (void*)entityStorage;
-		rigidbody.RuntimeActor = actor;
-		rigidbody.EntityBufferIndex = s_EntityStorageBufferPosition;
+		actor->SetRuntimeDataInternal((void*)entityStorage, s_EntityStorageBufferPosition);
 		s_EntityStorageBufferPosition++;
-
-		physx::PxMaterial* material = PXPhysicsWrappers::CreateMaterial(e.GetComponent<PhysicsMaterialComponent>());
-
-		if (e.HasComponent<BoxColliderComponent>())
-		{
-			BoxColliderComponent& collider = e.GetComponent<BoxColliderComponent>();
-			PXPhysicsWrappers::AddBoxCollider(*actor, *material, collider, transform.Scale);
-		}
-
-		if (e.HasComponent<SphereColliderComponent>())
-		{
-			SphereColliderComponent& collider = e.GetComponent<SphereColliderComponent>();
-			PXPhysicsWrappers::AddSphereCollider(*actor, *material, collider, transform.Scale);
-		}
-
-		if (e.HasComponent<CapsuleColliderComponent>())
-		{
-			CapsuleColliderComponent& collider = e.GetComponent<CapsuleColliderComponent>();
-			PXPhysicsWrappers::AddCapsuleCollider(*actor, *material, collider, transform.Scale);
-		}
-
-		if (e.HasComponent<MeshColliderComponent>())
-		{
-			MeshColliderComponent& collider = e.GetComponent<MeshColliderComponent>();
-			PXPhysicsWrappers::AddMeshCollider(*actor, *material, collider, transform.Scale);
-		}
-
-		if (!PhysicsLayerManager::IsLayerValid(rigidbody.Layer))
-			rigidbody.Layer = 0;
-
-		PXPhysicsWrappers::SetCollisionFilters(*actor, rigidbody.Layer);
-
-		s_Scene->addActor(*actor);
 	}
 
 	PhysicsSettings& Physics::GetSettings()
@@ -166,25 +133,14 @@ namespace Hep
 
 		s_SimulationTime -= s_Settings.FixedTimestep;
 
-		for (Entity& e : s_SimulatedEntities)
-		{
-			if (ScriptEngine::IsEntityModuleValid(e))
-				ScriptEngine::OnPhysicsUpdateEntity(e, s_Settings.FixedTimestep);
-		}
+		for (auto& actor : s_SimulatedActors)
+			actor->Update(s_Settings.FixedTimestep);
 
 		s_Scene->simulate(s_Settings.FixedTimestep);
 		s_Scene->fetchResults(true);
 
-		for (Entity& e : s_SimulatedEntities)
-		{
-			TransformComponent& transform = e.Transform();
-			RigidBodyComponent& rb = e.GetComponent<RigidBodyComponent>();
-			auto actor = static_cast<physx::PxRigidActor*>(rb.RuntimeActor);
-
-			physx::PxTransform actorPose = actor->getGlobalPose();
-			transform.Translation = FromPhysXVector(actorPose.p);
-			transform.Rotation = glm::eulerAngles(FromPhysXQuat(actorPose.q));
-		}
+		for (auto& actor : s_SimulatedActors)
+			actor->SynchronizeTransform();
 	}
 
 	void Physics::DestroyScene()
@@ -194,7 +150,8 @@ namespace Hep
 		delete[] s_EntityStorageBuffer;
 		s_EntityStorageBuffer = nullptr;
 		s_EntityStorageBufferPosition = 0;
-		s_SimulatedEntities.clear();
+		s_StaticActors.clear();
+		s_SimulatedActors.clear();
 		s_Scene->release();
 		s_Scene = nullptr;
 	}

@@ -2,10 +2,13 @@
 #include "PXPhysicsWrappers.h"
 #include "Physics.h"
 #include "PhysicsLayer.h"
+#include "PhysicsActor.h"
 
 #include "Hephaestus/Script/ScriptEngine.h"
 
 #include <glm/gtx/rotate_vector.hpp>
+
+#include <PhysX/extensions/PxRigidActorExt.h>
 
 namespace Hep
 {
@@ -177,68 +180,10 @@ namespace Hep
 		return s_Physics->createScene(sceneDesc);
 	}
 
-	physx::PxRigidActor* PXPhysicsWrappers::CreateActor(const RigidBodyComponent& rigidbody, const TransformComponent& transform)
+	void PXPhysicsWrappers::AddBoxCollider(PhysicsActor& actor, const physx::PxMaterial& material)
 	{
-		physx::PxRigidActor* actor = nullptr;
-
-		const PhysicsSettings& settings = Physics::GetSettings();
-
-		if (rigidbody.BodyType == RigidBodyComponent::Type::Static)
-		{
-			actor = s_Physics->createRigidStatic(ToPhysXTransform(transform));
-		}
-		else if (rigidbody.BodyType == RigidBodyComponent::Type::Dynamic)
-		{
-			physx::PxRigidDynamic* dynamicActor = s_Physics->createRigidDynamic(ToPhysXTransform(transform));
-
-			dynamicActor->setLinearDamping(rigidbody.LinearDrag);
-			dynamicActor->setAngularDamping(rigidbody.AngularDrag);
-
-			dynamicActor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, rigidbody.IsKinematic);
-
-			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_X, rigidbody.LockPositionX);
-			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Y, rigidbody.LockPositionY);
-			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Z, rigidbody.LockPositionZ);
-			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, rigidbody.LockRotationX);
-			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y, rigidbody.LockRotationY);
-			dynamicActor->setRigidDynamicLockFlag(physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, rigidbody.LockRotationZ);
-
-			dynamicActor->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, rigidbody.DisableGravity);
-
-			dynamicActor->setSolverIterationCounts(settings.SolverIterations, settings.SolverVelocityIterations);
-
-			physx::PxRigidBodyExt::updateMassAndInertia(*dynamicActor, rigidbody.Mass);
-			actor = dynamicActor;
-		}
-
-		return actor;
-	}
-
-	void PXPhysicsWrappers::SetCollisionFilters(const physx::PxRigidActor& actor, uint32_t physicsLayer)
-	{
-		const PhysicsLayer& layerInfo = PhysicsLayerManager::GetLayer(physicsLayer);
-
-		if (layerInfo.CollidesWith == 0)
-			return;
-
-		physx::PxFilterData filterData;
-		filterData.word0 = layerInfo.BitValue;
-		filterData.word1 = layerInfo.CollidesWith;
-
-		const physx::PxU32 numShapes = actor.getNbShapes();
-
-		physx::PxShape** shapes = (physx::PxShape**)s_Allocator.allocate(sizeof(physx::PxShape*) * numShapes, "", "", 0);
-		actor.getShapes(shapes, numShapes);
-
-		for (physx::PxU32 i = 0; i < numShapes; i++)
-			shapes[i]->setSimulationFilterData(filterData);
-
-		s_Allocator.deallocate(shapes);
-	}
-
-	void PXPhysicsWrappers::AddBoxCollider(physx::PxRigidActor& actor, const physx::PxMaterial& material,
-		const BoxColliderComponent& collider, const glm::vec3& size)
-	{
+		auto& collider = actor.m_Entity.GetComponent<BoxColliderComponent>();
+		glm::vec3 size = actor.m_Entity.Transform().Scale;
 		glm::vec3 colliderSize = collider.Size;
 
 		if (size.x != 0.0F) colliderSize.x *= size.x;
@@ -246,45 +191,50 @@ namespace Hep
 		if (size.z != 0.0F) colliderSize.z *= size.z;
 
 		physx::PxBoxGeometry boxGeometry = physx::PxBoxGeometry(colliderSize.x / 2.0F, colliderSize.y / 2.0F, colliderSize.z / 2.0F);
-		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(actor, boxGeometry, material);
+		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, boxGeometry, material);
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 		shape->setLocalPose(ToPhysXTransform(glm::translate(glm::mat4(1.0F), collider.Offset)));
 	}
 
-	void PXPhysicsWrappers::AddSphereCollider(physx::PxRigidActor& actor, const physx::PxMaterial& material,
-		const SphereColliderComponent& collider, const glm::vec3& size)
+	void PXPhysicsWrappers::AddSphereCollider(PhysicsActor& actor, const physx::PxMaterial& material)
 	{
+		auto& collider = actor.m_Entity.GetComponent<SphereColliderComponent>();
+
 		float colliderRadius = collider.Radius;
 
+		glm::vec3 size = actor.m_Entity.Transform().Scale;
 		if (size.x != 0.0F) colliderRadius *= size.x;
 
 		auto sphereGeometry = physx::PxSphereGeometry(colliderRadius);
-		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(actor, sphereGeometry, material);
+		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, sphereGeometry, material);
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 	}
 
-	void PXPhysicsWrappers::AddCapsuleCollider(physx::PxRigidActor& actor, const physx::PxMaterial& material,
-		const CapsuleColliderComponent& collider, const glm::vec3& size)
+	void PXPhysicsWrappers::AddCapsuleCollider(PhysicsActor& actor, const physx::PxMaterial& material)
 	{
+		auto& collider = actor.m_Entity.GetComponent<CapsuleColliderComponent>();
+
 		float colliderRadius = collider.Radius;
 		float colliderHeight = collider.Height;
 
+		glm::vec3 size = actor.m_Entity.Transform().Scale;
 		if (size.x != 0.0F) colliderRadius *= size.x / 2.0f;
-
 		if (size.y != 0.0F) colliderHeight *= size.y;
 
 		physx::PxCapsuleGeometry capsuleGeometry = physx::PxCapsuleGeometry(colliderRadius, colliderHeight / 2.0F);
-		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(actor, capsuleGeometry, material);
+		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, capsuleGeometry, material);
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 		shape->setLocalPose(physx::PxTransform(physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0, 0, 1))));
 	}
 
-	void PXPhysicsWrappers::AddMeshCollider(physx::PxRigidActor& actor, const physx::PxMaterial& material,
-		MeshColliderComponent& collider, const glm::vec3& size)
+	void PXPhysicsWrappers::AddMeshCollider(PhysicsActor& actor, const physx::PxMaterial& material)
 	{
+		auto& collider = actor.m_Entity.GetComponent<MeshColliderComponent>();
+		glm::vec3 size = actor.m_Entity.Transform().Scale;
+
 		if (collider.IsConvex)
 		{
 			std::vector<physx::PxConvexMesh*> meshes = CreateConvexMesh(collider);
@@ -293,7 +243,7 @@ namespace Hep
 			{
 				auto convexGeometry = physx::PxConvexMeshGeometry(mesh, physx::PxMeshScale(ToPhysXVector(size)));
 				convexGeometry.meshFlags = physx::PxConvexMeshGeometryFlag::eTIGHT_BOUNDS;
-				physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(actor, convexGeometry, material);
+				physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, convexGeometry, material);
 				shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 				shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 			}
@@ -305,7 +255,7 @@ namespace Hep
 			for (auto mesh : meshes)
 			{
 				auto convexGeometry = physx::PxTriangleMeshGeometry(mesh, physx::PxMeshScale(ToPhysXVector(size)));
-				physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(actor, convexGeometry, material);
+				physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, convexGeometry, material);
 				shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 				shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 			}
@@ -504,11 +454,6 @@ namespace Hep
 		return meshes;
 	}
 
-	physx::PxMaterial* PXPhysicsWrappers::CreateMaterial(const PhysicsMaterialComponent& material)
-	{
-		return s_Physics->createMaterial(material.StaticFriction, material.DynamicFriction, material.Bounciness);
-	}
-
 	bool PXPhysicsWrappers::Raycast(const glm::vec3& origin, const glm::vec3& direction, float maxDistance, RaycastHit* hit)
 	{
 		auto scene = static_cast<physx::PxScene*>(Physics::GetPhysicsScene());
@@ -594,6 +539,11 @@ namespace Hep
 		return result;
 	}
 
+	physx::PxPhysics& PXPhysicsWrappers::GetPhysics()
+	{
+		return *s_Physics;
+	}
+
 	void PXPhysicsWrappers::Initialize()
 	{
 		HEP_CORE_ASSERT(!s_Foundation, "PXPhysicsWrappers::Initializer shouldn't be called more than once!");
@@ -624,6 +574,11 @@ namespace Hep
 		s_CookingFactory->release();
 		s_Physics->release();
 		s_Foundation->release();
+	}
+
+	physx::PxAllocatorCallback& PXPhysicsWrappers::GetAllocator()
+	{
+		return s_Allocator;
 	}
 
 	void PhysicsAssertHandler::operator()(const char* exp, const char* file, int line, bool& ignore)
