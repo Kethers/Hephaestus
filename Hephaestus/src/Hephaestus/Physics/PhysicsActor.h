@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Hephaestus/Scene/Entity.h"
+#include "Hephaestus/Physics/Physics.h"
 
 namespace physx
 {
@@ -15,19 +16,35 @@ namespace Hep
 		PhysicsActor(Entity entity);
 		~PhysicsActor();
 
-		void Update(float fixedTimestep);
-		void SynchronizeTransform();
+		glm::vec3 GetPosition();
+		glm::quat GetRotation();
+		void Rotate(const glm::vec3& rotation);
 
-		void SetLayer(uint32_t layer);
+		float GetMass() const;
+		void SetMass(float mass);
+
+		void AddForce(const glm::vec3& force, ForceMode forceMode);
+		void AddTorque(const glm::vec3& torque, ForceMode forceMode);
+
+		glm::vec3 GetLinearVelocity() const;
+		void SetLinearVelocity(const glm::vec3& velocity);
+		glm::vec3 GetAngularVelocity() const;
+		void SetAngularVelocity(const glm::vec3& velocity);
+
+		void SetLinearDrag(float drag) const;
+		void SetAngularDrag(float drag) const;
+
+		void SetLayer(uint32_t layerId);
 
 		bool IsDynamic() const { return m_RigidBody.BodyType == RigidBodyComponent::Type::Dynamic; }
 
 		Entity& GetEntity() { return m_Entity; }
 
 	private:
-		void Create();
-
-		void SetRuntimeDataInternal(void* entityStorage, int storageBufferPosition);
+		void Initialize();
+		void Spawn();
+		void Update(float fixedTimestep);
+		void SynchronizeTransform();
 
 	private:
 		Entity m_Entity;
@@ -36,6 +53,7 @@ namespace Hep
 
 		physx::PxRigidActor* m_ActorInternal;
 
+	private:
 		friend class Physics;
 		friend class PXPhysicsWrappers;
 	};

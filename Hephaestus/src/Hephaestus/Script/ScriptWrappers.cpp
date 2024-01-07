@@ -8,6 +8,7 @@
 #include "Hephaestus/Scene/Entity.h"
 #include "Hephaestus/Physics/PhysicsUtil.h"
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
+#include "Hephaestus/Physics/PhysicsActor.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -425,12 +426,8 @@ namespace Hep::Script
 			return;
 		}
 
-		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
-		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
-		HEP_CORE_ASSERT(dynamicActor);
-
-		HEP_CORE_ASSERT(force);
-		dynamicActor->addForce({ force->x, force->y, force->z }, (physx::PxForceMode::Enum)forceMode);
+		Ref<PhysicsActor> actor = Physics::GetActorForEntity(entity);
+		actor->AddForce(*force, forceMode);
 	}
 
 	void Hep_RigidBodyComponent_AddTorque(uint64_t entityID, glm::vec3* torque, ForceMode forceMode)
@@ -450,13 +447,8 @@ namespace Hep::Script
 			return;
 		}
 
-		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
-		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
-
-		HEP_CORE_ASSERT(dynamicActor);
-
-		HEP_CORE_ASSERT(torque);
-		dynamicActor->addTorque({ torque->x, torque->y, torque->z }, (physx::PxForceMode::Enum)forceMode);
+		Ref<PhysicsActor> actor = Physics::GetActorForEntity(entity);
+		actor->AddTorque(*torque, forceMode);
 	}
 
 	void Hep_RigidBodyComponent_GetLinearVelocity(uint64_t entityID, glm::vec3* outVelocity)
@@ -469,16 +461,9 @@ namespace Hep::Script
 		Entity entity = entityMap.at(entityID);
 		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
 		auto& component = entity.GetComponent<RigidBodyComponent>();
-
-		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
-		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
-
-		HEP_CORE_ASSERT(dynamicActor);
-
 		HEP_CORE_ASSERT(outVelocity);
-		physx::PxVec3 velocity = dynamicActor->getLinearVelocity();
-		HEP_CORE_INFO("Hep_RigidBodyComponent_GetLinearVelocity - {0}, {1}, {2}", velocity.x, velocity.y, velocity.z);
-		*outVelocity = { velocity.x, velocity.y, velocity.z };
+		Ref<PhysicsActor> actor = Physics::GetActorForEntity(entity);
+		*outVelocity = actor->GetLinearVelocity();
 	}
 
 	void Hep_RigidBodyComponent_SetLinearVelocity(uint64_t entityID, glm::vec3* velocity)
@@ -492,17 +477,9 @@ namespace Hep::Script
 		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
 
 		auto& component = entity.GetComponent<RigidBodyComponent>();
-		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
-		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
-
-		HEP_CORE_ASSERT(dynamicActor);
-
 		HEP_CORE_ASSERT(velocity);
-		physx::PxVec3 pxVelocity = { velocity->x, velocity->y, velocity->z };
-		if (!pxVelocity.isFinite())
-			return;
-
-		dynamicActor->setLinearVelocity(pxVelocity);
+		Ref<PhysicsActor> actor = Physics::GetActorForEntity(entity);
+		actor->SetLinearVelocity(*velocity);
 	}
 
 	void Hep_RigidBodyComponent_GetAngularVelocity(uint64_t entityID, glm::vec3* outVelocity)
@@ -515,14 +492,9 @@ namespace Hep::Script
 		Entity entity = entityMap.at(entityID);
 		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
 		auto& component = entity.GetComponent<RigidBodyComponent>();
-
-		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
-		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
-		HEP_CORE_ASSERT(dynamicActor);
-
 		HEP_CORE_ASSERT(outVelocity);
-		physx::PxVec3 velocity = dynamicActor->getAngularVelocity();
-		*outVelocity = { velocity.x, velocity.y, velocity.z };
+		Ref<PhysicsActor> actor = Physics::GetActorForEntity(entity);
+		*outVelocity = actor->GetAngularVelocity();
 	}
 
 	void Hep_RigidBodyComponent_SetAngularVelocity(uint64_t entityID, glm::vec3* velocity)
@@ -535,13 +507,9 @@ namespace Hep::Script
 		Entity entity = entityMap.at(entityID);
 		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
 		auto& component = entity.GetComponent<RigidBodyComponent>();
-
-		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
-		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
-		HEP_CORE_ASSERT(dynamicActor);
-
 		HEP_CORE_ASSERT(velocity);
-		dynamicActor->setAngularVelocity({ velocity->x, velocity->y, velocity->z });
+		Ref<PhysicsActor> actor = Physics::GetActorForEntity(entity);
+		actor->SetAngularVelocity(*velocity);
 	}
 
 	void Hep_RigidBodyComponent_Rotate(uint64_t entityID, glm::vec3* rotation)
@@ -554,16 +522,9 @@ namespace Hep::Script
 		Entity entity = entityMap.at(entityID);
 		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
 		auto& component = entity.GetComponent<RigidBodyComponent>();
-
-		physx::PxRigidActor* actor = (physx::PxRigidActor*)component.RuntimeActor;
-		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
-		HEP_CORE_ASSERT(dynamicActor);
-
-		physx::PxTransform transform = dynamicActor->getGlobalPose();
-		transform.q *= (physx::PxQuat(glm::radians(rotation->x), { 1.0F, 0.0F, 0.0F })
-			* physx::PxQuat(glm::radians(rotation->y), { 0.0F, 1.0F, 0.0F })
-			* physx::PxQuat(glm::radians(rotation->z), { 0.0F, 0.0F, 1.0F }));
-		dynamicActor->setGlobalPose(transform);
+		HEP_CORE_ASSERT(rotation);
+		Ref<PhysicsActor> actor = Physics::GetActorForEntity(entity);
+		actor->Rotate(*rotation);
 	}
 
 	uint32_t Hep_RigidBodyComponent_GetLayer(uint64_t entityID)
@@ -589,12 +550,8 @@ namespace Hep::Script
 		Entity entity = entityMap.at(entityID);
 		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
 		auto& component = entity.GetComponent<RigidBodyComponent>();
-
-		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
-		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
-		HEP_CORE_ASSERT(dynamicActor);
-
-		return dynamicActor->getMass();
+		Ref<PhysicsActor> actor = Physics::GetActorForEntity(entity);
+		return actor->GetMass();
 	}
 
 	void Hep_RigidBodyComponent_SetMass(uint64_t entityID, float mass)
@@ -607,13 +564,8 @@ namespace Hep::Script
 		Entity entity = entityMap.at(entityID);
 		HEP_CORE_ASSERT(entity.HasComponent<RigidBodyComponent>());
 		auto& component = entity.GetComponent<RigidBodyComponent>();
-
-		auto actor = (physx::PxRigidActor*)component.RuntimeActor;
-		physx::PxRigidDynamic* dynamicActor = actor->is<physx::PxRigidDynamic>();
-		HEP_CORE_ASSERT(dynamicActor);
-
-		component.Mass = mass;
-		physx::PxRigidBodyExt::updateMassAndInertia(*dynamicActor, mass);
+		Ref<PhysicsActor> actor = Physics::GetActorForEntity(entity);
+		actor->SetMass(mass);
 	}
 
 	Ref<Mesh>* Hep_Mesh_Constructor(MonoString* filepath)

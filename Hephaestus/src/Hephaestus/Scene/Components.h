@@ -157,7 +157,6 @@ namespace Hep
 		bool LockRotationY = false;
 		bool LockRotationZ = false;
 
-		void* RuntimeActor = nullptr;
 		int32_t EntityBufferIndex = -1;
 
 		RigidBodyComponent() = default;
@@ -215,18 +214,18 @@ namespace Hep
 
 	struct MeshColliderComponent
 	{
-		Ref<Hep::Mesh> CollisionMesh;
-		std::vector<Ref<Hep::Mesh>> ProcessedMeshes;
+		Ref<Mesh> CollisionMesh;
+		std::vector<Ref<Mesh>> ProcessedMeshes;
 		bool IsConvex = false;
 		bool IsTrigger = false;
 
 		MeshColliderComponent() = default;
 		MeshColliderComponent(const MeshColliderComponent& other) = default;
-		MeshColliderComponent(const Ref<Hep::Mesh>& mesh)
+		MeshColliderComponent(const Ref<Mesh>& mesh)
 			: CollisionMesh(mesh)
 		{}
 
-		operator Ref<Hep::Mesh>() { return CollisionMesh; }
+		operator Ref<Mesh>() { return CollisionMesh; }
 	};
 
 	// Lights
