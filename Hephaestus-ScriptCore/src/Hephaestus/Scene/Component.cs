@@ -161,14 +161,6 @@ namespace Hep
 			Dynamic
 		}
 
-		public enum ForceMode
-		{
-			Force = 0,
-			Impulse,
-			VelocityChange,
-			Acceleration
-		}
-
 		public Type BodyType
 		{
 			get { return GetBodyType_Native(Entity.ID); }

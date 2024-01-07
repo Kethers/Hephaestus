@@ -477,6 +477,7 @@ namespace Hep::Script
 
 		HEP_CORE_ASSERT(outVelocity);
 		physx::PxVec3 velocity = dynamicActor->getLinearVelocity();
+		HEP_CORE_INFO("Hep_RigidBodyComponent_GetLinearVelocity - {0}, {1}, {2}", velocity.x, velocity.y, velocity.z);
 		*outVelocity = { velocity.x, velocity.y, velocity.z };
 	}
 
@@ -497,7 +498,11 @@ namespace Hep::Script
 		HEP_CORE_ASSERT(dynamicActor);
 
 		HEP_CORE_ASSERT(velocity);
-		dynamicActor->setLinearVelocity({ velocity->x, velocity->y, velocity->z });
+		physx::PxVec3 pxVelocity = { velocity->x, velocity->y, velocity->z };
+		if (!pxVelocity.isFinite())
+			return;
+
+		dynamicActor->setLinearVelocity(pxVelocity);
 	}
 
 	void Hep_RigidBodyComponent_GetAngularVelocity(uint64_t entityID, glm::vec3* outVelocity)
