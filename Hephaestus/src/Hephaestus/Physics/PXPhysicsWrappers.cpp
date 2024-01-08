@@ -182,6 +182,7 @@ namespace Hep
 
 	void PXPhysicsWrappers::AddBoxCollider(PhysicsActor& actor, const physx::PxMaterial& material)
 	{
+		actor.RemoveCollisionsShapes(physx::PxGeometryType::eBOX);
 		auto& collider = actor.m_Entity.GetComponent<BoxColliderComponent>();
 		glm::vec3 size = actor.m_Entity.Transform().Scale;
 		glm::vec3 colliderSize = collider.Size;
@@ -195,10 +196,12 @@ namespace Hep
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 		shape->setLocalPose(ToPhysXTransform(glm::translate(glm::mat4(1.0F), collider.Offset)));
+		actor.AddCollisionShape(shape);
 	}
 
 	void PXPhysicsWrappers::AddSphereCollider(PhysicsActor& actor, const physx::PxMaterial& material)
 	{
+		actor.RemoveCollisionsShapes(physx::PxGeometryType::eSPHERE);
 		auto& collider = actor.m_Entity.GetComponent<SphereColliderComponent>();
 
 		float colliderRadius = collider.Radius;
@@ -210,10 +213,12 @@ namespace Hep
 		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, sphereGeometry, material);
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
+		actor.AddCollisionShape(shape);
 	}
 
 	void PXPhysicsWrappers::AddCapsuleCollider(PhysicsActor& actor, const physx::PxMaterial& material)
 	{
+		actor.RemoveCollisionsShapes(physx::PxGeometryType::eCAPSULE);
 		auto& collider = actor.m_Entity.GetComponent<CapsuleColliderComponent>();
 
 		float colliderRadius = collider.Radius;
@@ -228,6 +233,7 @@ namespace Hep
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 		shape->setLocalPose(physx::PxTransform(physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0, 0, 1))));
+		actor.AddCollisionShape(shape);
 	}
 
 	void PXPhysicsWrappers::AddMeshCollider(PhysicsActor& actor, const physx::PxMaterial& material)
@@ -237,6 +243,8 @@ namespace Hep
 
 		if (collider.IsConvex)
 		{
+			// Remove any potential triangle meshes from this actor
+			actor.RemoveCollisionsShapes(physx::PxGeometryType::eTRIANGLEMESH);
 			std::vector<physx::PxConvexMesh*> meshes = CreateConvexMesh(collider);
 
 			for (auto mesh : meshes)
@@ -244,12 +252,16 @@ namespace Hep
 				auto convexGeometry = physx::PxConvexMeshGeometry(mesh, physx::PxMeshScale(ToPhysXVector(size)));
 				convexGeometry.meshFlags = physx::PxConvexMeshGeometryFlag::eTIGHT_BOUNDS;
 				physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, convexGeometry, material);
+				// shape->setLocalPose(physx::PxTransform(ToPhysXQuat(glm::quat(glm::radians(glm::vec3(-90.0F, 0.0F, 0.0F))))));
 				shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 				shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
+				actor.AddCollisionShape(shape);
 			}
 		}
 		else
 		{
+			// Remove any potential convex meshes from this actor
+			actor.RemoveCollisionsShapes(physx::PxGeometryType::eCONVEXMESH);
 			std::vector<physx::PxTriangleMesh*> meshes = CreateTriangleMesh(collider);
 
 			for (auto mesh : meshes)
@@ -258,6 +270,7 @@ namespace Hep
 				physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, convexGeometry, material);
 				shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 				shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
+				actor.AddCollisionShape(shape);
 			}
 		}
 	}
@@ -347,7 +360,8 @@ namespace Hep
 		return meshes;
 	}
 
-	std::vector<physx::PxConvexMesh*> PXPhysicsWrappers::CreateConvexMesh(MeshColliderComponent& collider, bool invalidateOld)
+	std::vector<physx::PxConvexMesh*> PXPhysicsWrappers::CreateConvexMesh(MeshColliderComponent& collider, bool invalidateOld,
+		bool* rotatedX)
 	{
 		std::vector<physx::PxConvexMesh*> meshes;
 
@@ -365,18 +379,22 @@ namespace Hep
 		{
 			const std::vector<Vertex>& vertices = collider.CollisionMesh->GetStaticVertices();
 			const std::vector<Index>& indices = collider.CollisionMesh->GetIndices();
-			std::vector<glm::vec3> vertexPositions;
+
+			// NOTE: It seems that convex meshes are a bit strange and requires us to rotate the vertices 90 degrees around the -X axis
+			std::vector<glm::vec3> rotatedVertices;
 			for (const auto& vertex : vertices)
-				vertexPositions.push_back(vertex.Position);
+				rotatedVertices.push_back(glm::rotate(vertex.Position, glm::radians(90.0F), { -1.0F, 0.0F, 0.0F }));
 
 			for (const auto& submesh : collider.CollisionMesh->GetSubmeshes())
 			{
 				physx::PxConvexMeshDesc convexDesc;
 				convexDesc.points.count = submesh.VertexCount;
 				convexDesc.points.stride = sizeof(glm::vec3);
-				convexDesc.points.data = &vertexPositions[submesh.BaseVertex];
-				convexDesc.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX | physx::PxConvexFlag::eCHECK_ZERO_AREA_TRIANGLES |
-					physx::PxConvexFlag::eSHIFT_VERTICES;
+				convexDesc.points.data = &rotatedVertices[submesh.BaseVertex];
+				convexDesc.indices.count = submesh.IndexCount / 3;
+				convexDesc.indices.data = &indices[submesh.BaseIndex / 3];
+				convexDesc.indices.stride = sizeof(Index);
+				convexDesc.flags = physx::PxConvexFlag::eCOMPUTE_CONVEX | physx::PxConvexFlag::eSHIFT_VERTICES;
 
 				physx::PxDefaultMemoryOutputStream buf;
 				physx::PxConvexMeshCookingResult::Enum result;

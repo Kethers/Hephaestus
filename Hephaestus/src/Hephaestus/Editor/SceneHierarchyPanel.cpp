@@ -6,6 +6,8 @@
 #include "Hephaestus/Core/Application.h"
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Script/ScriptEngine.h"
+#include "Hephaestus/Physics/Physics.h"
+#include "Hephaestus/Physics/PhysicsActor.h"
 #include "Hephaestus/Physics/PhysicsLayer.h"
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
 #include "Hephaestus/Renderer/MeshFactory.h"
@@ -917,7 +919,7 @@ namespace Hep
 			UI::EndPropertyGrid();
 		});
 
-		DrawComponent<MeshColliderComponent>("Mesh Collider", entity, [](MeshColliderComponent& mcc)
+		DrawComponent<MeshColliderComponent>("Mesh Collider", entity, [=](MeshColliderComponent& mcc)
 		{
 			ImGui::Columns(3);
 			ImGui::SetColumnWidth(0, 100);

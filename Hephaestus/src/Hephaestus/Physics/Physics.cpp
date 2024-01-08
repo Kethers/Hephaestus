@@ -56,12 +56,6 @@ namespace Hep
 	{
 		HEP_CORE_ASSERT(s_Scene);
 
-		if (!e.HasComponent<RigidBodyComponent>())
-		{
-			HEP_CORE_WARN("Trying to create PhysX actor from a non-rigidbody actor!");
-			return nullptr;
-		}
-
 		Ref<PhysicsActor> actor = Ref<PhysicsActor>::Create(e);
 		s_Actors.push_back(actor);
 		actor->Spawn();

@@ -6,6 +6,7 @@
 namespace physx
 {
 	class PxRigidActor;
+	class PxShape;
 }
 
 namespace Hep
@@ -45,6 +46,8 @@ namespace Hep
 		void Spawn();
 		void Update(float fixedTimestep);
 		void SynchronizeTransform();
+		void AddCollisionShape(physx::PxShape* shape);
+		void RemoveCollisionsShapes(int type);
 
 	private:
 		Entity m_Entity;
@@ -52,6 +55,7 @@ namespace Hep
 		PhysicsMaterialComponent m_Material;
 
 		physx::PxRigidActor* m_ActorInternal;
+		std::unordered_map<int, std::vector<physx::PxShape*>> m_Shapes;
 
 	private:
 		friend class Physics;

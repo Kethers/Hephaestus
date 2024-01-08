@@ -30,7 +30,11 @@ namespace Hep
 
 	PhysicsActor::~PhysicsActor()
 	{
-		m_ActorInternal->release();
+		if (m_ActorInternal && m_ActorInternal->isReleasable())
+		{
+			m_ActorInternal->release();
+			m_ActorInternal = nullptr;
+		}
 	}
 
 	glm::vec3 PhysicsActor::GetPosition()
@@ -264,6 +268,28 @@ namespace Hep
 		{
 			// Synchronize Physics Actor with static Entity
 			m_ActorInternal->setGlobalPose(ToPhysXTransform(m_Entity.Transform()));
+		}
+	}
+
+	void PhysicsActor::AddCollisionShape(physx::PxShape* shape)
+	{
+		if (m_Shapes.find((int)shape->getGeometryType()) == m_Shapes.end())
+		{
+			m_Shapes[(int)shape->getGeometryType()] = std::vector<physx::PxShape*>();
+		}
+
+		m_Shapes[(int)shape->getGeometryType()].push_back(shape);
+	}
+
+	void PhysicsActor::RemoveCollisionsShapes(int type)
+	{
+		if (m_Shapes.find(type) != m_Shapes.end())
+		{
+			for (auto shape : m_Shapes[type])
+				shape->release();
+
+			m_Shapes[type].clear();
+			m_Shapes.erase(type);
 		}
 	}
 }

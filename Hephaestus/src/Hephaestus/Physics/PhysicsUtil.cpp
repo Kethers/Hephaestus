@@ -98,7 +98,7 @@ namespace Hep
 		std::string dirName = p.filename().string().substr(0, firstDot);
 
 		if (IsSerialized(filepath))
-			std::filesystem::remove(p.parent_path() / dirName);
+			std::filesystem::remove_all(p.parent_path() / dirName);
 	}
 
 	void PhysicsMeshSerializer::SerializeMesh(const std::string& filepath, const physx::PxDefaultMemoryOutputStream& data,
@@ -156,7 +156,7 @@ namespace Hep
 		for (const auto& file : std::filesystem::directory_iterator(path))
 		{
 			HEP_CORE_INFO("De-Serializing {0}", file.path().string());
-		
+
 			std::ifstream in(file.path().string(), std::ios::in | std::ios::binary);
 
 			uint32_t size;
