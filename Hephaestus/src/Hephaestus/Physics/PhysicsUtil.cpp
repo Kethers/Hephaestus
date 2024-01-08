@@ -141,46 +141,35 @@ namespace Hep
 		return std::filesystem::is_directory(path);
 	}
 
-	static std::vector<physx::PxU8*> s_MeshDataBuffers;
+	static physx::PxU8* s_MeshDataBuffer;
 
-	std::vector<physx::PxDefaultMemoryInputData> PhysicsMeshSerializer::DeserializeMesh(const std::string& filepath)
+	physx::PxDefaultMemoryInputData PhysicsMeshSerializer::DeserializeMesh(const std::string& filepath, const std::string& submeshName)
 	{
-		std::vector<physx::PxDefaultMemoryInputData> result;
-
 		std::filesystem::path p = filepath;
 		size_t lastDot = p.filename().string().find_first_of(".");
 		lastDot = lastDot == std::string::npos ? p.filename().string().length() - 1 : lastDot;
 		std::string dirName = p.filename().string().substr(0, lastDot);
 		auto path = p.parent_path() / dirName;
+		if (submeshName.length() > 0)
+			path = p.parent_path() / dirName / (submeshName + ".pxm");
 
-		for (const auto& file : std::filesystem::directory_iterator(path))
+		std::ifstream in(path.string(), std::ios::in | std::ios::binary);
+
+		uint32_t size = 0;
+		if (in)
 		{
-			HEP_CORE_INFO("De-Serializing {0}", file.path().string());
+			in.seekg(0, std::ios::end);
+			size = in.tellg();
+			in.seekg(0, std::ios::beg);
 
-			std::ifstream in(file.path().string(), std::ios::in | std::ios::binary);
+			if (s_MeshDataBuffer)
+				delete[] s_MeshDataBuffer;
 
-			uint32_t size;
-			if (in)
-			{
-				in.seekg(0, std::ios::end);
-				size = in.tellg();
-				in.seekg(0, std::ios::beg);
-				physx::PxU8* buffer = new physx::PxU8[size / sizeof(physx::PxU8)];
-				in.read((char*)buffer, size / sizeof(char));
-				in.close();
-				s_MeshDataBuffers.push_back(buffer);
-				result.emplace_back(buffer, size);
-			}
+			s_MeshDataBuffer = new physx::PxU8[size / sizeof(physx::PxU8)];
+			in.read((char*)s_MeshDataBuffer, size / sizeof(char));
+			in.close();
 		}
 
-		return result;
-	}
-
-	void PhysicsMeshSerializer::CleanupDataBuffers()
-	{
-		for (auto buffer : s_MeshDataBuffers)
-			delete[] buffer;
-
-		s_MeshDataBuffers.clear();
+		return physx::PxDefaultMemoryInputData(s_MeshDataBuffer, size);
 	}
 }

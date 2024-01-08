@@ -228,12 +228,11 @@ namespace Hep
 			m_ActorInternal = actor;
 		}
 
-		physx::PxMaterial* physicsMat = physics.
-			createMaterial(m_Material.StaticFriction, m_Material.DynamicFriction, m_Material.Bounciness);
-		if (m_Entity.HasComponent<BoxColliderComponent>()) PXPhysicsWrappers::AddBoxCollider(*this, *physicsMat);
-		if (m_Entity.HasComponent<SphereColliderComponent>()) PXPhysicsWrappers::AddSphereCollider(*this, *physicsMat);
-		if (m_Entity.HasComponent<CapsuleColliderComponent>()) PXPhysicsWrappers::AddCapsuleCollider(*this, *physicsMat);
-		if (m_Entity.HasComponent<MeshColliderComponent>()) PXPhysicsWrappers::AddMeshCollider(*this, *physicsMat);
+		m_MaterialInternal = physics.createMaterial(m_Material.StaticFriction, m_Material.DynamicFriction, m_Material.Bounciness);
+		if (m_Entity.HasComponent<BoxColliderComponent>()) PXPhysicsWrappers::AddBoxCollider(*this);
+		if (m_Entity.HasComponent<SphereColliderComponent>()) PXPhysicsWrappers::AddSphereCollider(*this);
+		if (m_Entity.HasComponent<CapsuleColliderComponent>()) PXPhysicsWrappers::AddCapsuleCollider(*this);
+		if (m_Entity.HasComponent<MeshColliderComponent>()) PXPhysicsWrappers::AddMeshCollider(*this);
 
 		if (!PhysicsLayerManager::IsLayerValid(m_RigidBody.Layer))
 			m_RigidBody.Layer = 0;
@@ -273,23 +272,10 @@ namespace Hep
 
 	void PhysicsActor::AddCollisionShape(physx::PxShape* shape)
 	{
-		if (m_Shapes.find((int)shape->getGeometryType()) == m_Shapes.end())
-		{
-			m_Shapes[(int)shape->getGeometryType()] = std::vector<physx::PxShape*>();
-		}
+		bool status = m_ActorInternal->attachShape(*shape);
+		shape->release();
 
-		m_Shapes[(int)shape->getGeometryType()].push_back(shape);
-	}
-
-	void PhysicsActor::RemoveCollisionsShapes(int type)
-	{
-		if (m_Shapes.find(type) != m_Shapes.end())
-		{
-			for (auto shape : m_Shapes[type])
-				shape->release();
-
-			m_Shapes[type].clear();
-			m_Shapes.erase(type);
-		}
+		if (!status)
+			shape = nullptr;
 	}
 }
