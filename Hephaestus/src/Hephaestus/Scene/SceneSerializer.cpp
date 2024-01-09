@@ -456,6 +456,14 @@ namespace Hep
 		out << YAML::EndMap; // Environment
 	}
 
+	static bool CheckPath(const std::string& path)
+	{
+		std::ifstream f(path, std::ios::in | std::ios::binary);
+		if (f)
+			f.close();
+		return !f.fail();
+	}
+
 	void SceneSerializer::Serialize(const std::string& filepath)
 	{
 		YAML::Emitter out;
@@ -539,6 +547,8 @@ namespace Hep
 				light.Multiplier = lightNode["Multiplier"].as<float>();
 			}
 		}
+
+		std::vector<std::string> missingPaths;
 
 		auto entities = data["Entities"];
 		if (entities)
@@ -647,7 +657,15 @@ namespace Hep
 					std::string meshPath = meshComponent["AssetPath"].as<std::string>();
 					// TEMP (because script creates mesh component...)
 					if (!deserializedEntity.HasComponent<MeshComponent>())
-						deserializedEntity.AddComponent<MeshComponent>(Ref<Mesh>::Create(meshPath));
+					{
+						Ref<Mesh> mesh;
+						if (!CheckPath(meshPath))
+							missingPaths.emplace_back(meshPath);
+						else
+							mesh = Ref<Mesh>::Create(meshPath);
+
+						deserializedEntity.AddComponent<MeshComponent>(mesh);
+					}
 
 					HEP_CORE_INFO("  Mesh Asset Path: {0}", meshPath);
 				}
@@ -678,7 +696,16 @@ namespace Hep
 					auto& component = deserializedEntity.AddComponent<SkyLightComponent>();
 					std::string env = skyLightComponent["EnvironmentAssetPath"].as<std::string>();
 					if (!env.empty())
-						component.SceneEnvironment = Environment::Load(env);
+					{
+						if (!CheckPath(env))
+						{
+							missingPaths.emplace_back(env);
+						}
+						else
+						{
+							component.SceneEnvironment = Environment::Load(env);
+						}
+					}
 					component.Intensity = skyLightComponent["Intensity"].as<float>();
 					component.Angle = skyLightComponent["Angle"].as<float>();
 				}
@@ -792,7 +819,14 @@ namespace Hep
 					if (overrideMesh)
 					{
 						std::string meshPath = meshColliderComponent["AssetPath"].as<std::string>();
-						collisionMesh = Ref<Mesh>::Create(meshPath);
+						if (!CheckPath(meshPath))
+						{
+							missingPaths.emplace_back(meshPath);
+						}
+						else
+						{
+							collisionMesh = Ref<Mesh>::Create(meshPath);
+						}
 					}
 
 					if (collisionMesh)
@@ -837,6 +871,17 @@ namespace Hep
 					}
 				}
 			}
+		}
+
+		if (!missingPaths.empty())
+		{
+			HEP_CORE_ERROR("The following files could not be loaded:");
+			for (auto& path : missingPaths)
+			{
+				HEP_CORE_ERROR("  {0}", path);
+			}
+
+			return false;
 		}
 
 		return true;
