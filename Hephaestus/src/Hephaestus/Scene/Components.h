@@ -33,9 +33,9 @@ namespace Hep
 
 	struct TransformComponent
 	{
-		glm::vec3 Translation = { 0.0F, 0.0F, 0.0F };
-		glm::vec3 Rotation = { 0.0F, 0.0F, 0.0F };
-		glm::vec3 Scale = { 1.0F, 1.0F, 1.0F };
+		glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 Rotation = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 Scale = { 1.0f, 1.0f, 1.0f };
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent& other) = default;
@@ -44,9 +44,9 @@ namespace Hep
 
 		glm::mat4 GetTransform() const
 		{
-			return glm::translate(glm::mat4(1.0F), Translation)
+			return glm::translate(glm::mat4(1.0f), Translation)
 				* glm::toMat4(glm::quat(Rotation))
-				* glm::scale(glm::mat4(1.0F), Scale);
+				* glm::scale(glm::mat4(1.0f), Scale);
 		}
 	};
 
@@ -143,9 +143,9 @@ namespace Hep
 		enum class Type { Static, Dynamic };
 
 		Type BodyType;
-		float Mass = 1.0F;
-		float LinearDrag = 0.0F;
-		float AngularDrag = 0.05F;
+		float Mass = 1.0f;
+		float LinearDrag = 0.0f;
+		float AngularDrag = 0.05f;
 		bool DisableGravity = false;
 		bool IsKinematic = false;
 		uint32_t Layer = 0;
@@ -164,9 +164,9 @@ namespace Hep
 	// TODO: This will eventually be a resource, but that requires object referencing through the editor
 	struct PhysicsMaterialComponent
 	{
-		float StaticFriction = 1.0F;
-		float DynamicFriction = 1.0F;
-		float Bounciness = 1.0F;
+		float StaticFriction = 1.0f;
+		float DynamicFriction = 1.0f;
+		float Bounciness = 1.0f;
 
 		PhysicsMaterialComponent() = default;
 		PhysicsMaterialComponent(const PhysicsMaterialComponent& other) = default;
@@ -174,8 +174,8 @@ namespace Hep
 
 	struct BoxColliderComponent
 	{
-		glm::vec3 Size = { 1.0F, 1.0F, 1.0F };
-		glm::vec3 Offset = { 0.0F, 0.0F, 0.0F };
+		glm::vec3 Size = { 1.0f, 1.0f, 1.0f };
+		glm::vec3 Offset = { 0.0f, 0.0f, 0.0f };
 
 		bool IsTrigger = false;
 
@@ -188,7 +188,7 @@ namespace Hep
 
 	struct SphereColliderComponent
 	{
-		float Radius = 0.5F;
+		float Radius = 0.5f;
 		bool IsTrigger = false;
 
 		// The mesh that will be drawn in the editor to show the collision bounds
@@ -200,8 +200,8 @@ namespace Hep
 
 	struct CapsuleColliderComponent
 	{
-		float Radius = 0.5F;
-		float Height = 1.0F;
+		float Radius = 0.5f;
+		float Height = 1.0f;
 		bool IsTrigger = false;
 
 		Ref<Mesh> DebugMesh;

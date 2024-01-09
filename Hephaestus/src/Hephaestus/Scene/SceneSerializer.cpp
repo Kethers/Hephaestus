@@ -582,7 +582,18 @@ namespace Hep
 					// Entities always have transforms
 					auto& transform = deserializedEntity.GetComponent<TransformComponent>();
 					transform.Translation = transformComponent["Position"].as<glm::vec3>();
-					transform.Rotation = transformComponent["Rotation"].as<glm::vec3>();
+					auto rotationNode = transformComponent["Rotation"];
+					// Rotations used to be stored as quaternions
+					if (rotationNode.size() == 4)
+					{
+						glm::quat rotation = transformComponent["Rotation"].as<glm::quat>();
+						transform.Rotation = glm::eulerAngles(rotation);
+					}
+					else
+					{
+						HEP_CORE_ASSERT(rotationNode.size() == 3);
+						transform.Rotation = transformComponent["Rotation"].as<glm::vec3>();
+					}
 					transform.Scale = transformComponent["Scale"].as<glm::vec3>();
 
 					HEP_CORE_INFO("  Entity Transform:");

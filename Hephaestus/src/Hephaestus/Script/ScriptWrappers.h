@@ -14,14 +14,6 @@ extern "C"
 
 namespace Hep::Script
 {
-	struct ScriptTransform
-	{
-		glm::vec3 Translation;
-		glm::vec3 Rotation;
-		glm::vec3 Scale;
-		glm::vec3 Up, Right, Forward;
-	};
-
 	// Math
 	float Hep_Noise_PerlinNoise(float x, float y);
 
@@ -46,8 +38,14 @@ namespace Hep::Script
 	bool Hep_Entity_HasComponent(uint64_t entityID, void* type);
 	uint64_t Hep_Entity_FindEntityByTag(MonoString* tag);
 
-	void Hep_TransformComponent_GetTransform(uint64_t entityID, ScriptTransform* outTransform);
-	void Hep_TransformComponent_SetTransform(uint64_t entityID, ScriptTransform* inTransform);
+	void Hep_TransformComponent_GetTransform(uint64_t entityID, TransformComponent* outTransform);
+	void Hep_TransformComponent_SetTransform(uint64_t entityID, TransformComponent* inTransform);
+	void Hep_TransformComponent_GetTranslation(uint64_t entityID, glm::vec3* outTranslation);
+	void Hep_TransformComponent_SetTranslation(uint64_t entityID, glm::vec3* inTranslation);
+	void Hep_TransformComponent_GetRotation(uint64_t entityID, glm::vec3* outRotation);
+	void Hep_TransformComponent_SetRotation(uint64_t entityID, glm::vec3* inRotation);
+	void Hep_TransformComponent_GetScale(uint64_t entityID, glm::vec3* outScale);
+	void Hep_TransformComponent_SetScale(uint64_t entityID, glm::vec3* inScale);
 
 	void* Hep_MeshComponent_GetMesh(uint64_t entityID);
 	void Hep_MeshComponent_SetMesh(uint64_t entityID, Ref<Mesh>* inMesh);

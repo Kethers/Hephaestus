@@ -29,6 +29,24 @@ namespace Hep
 		{
 		}
 
+		public Vector3 Translation
+		{
+			get { return GetComponent<TransformComponent>().Translation; }
+			set { GetComponent<TransformComponent>().Translation = value; }
+		}
+
+		public Vector3 Rotation
+		{
+			get { return GetComponent<TransformComponent>().Rotation; }
+			set { GetComponent<TransformComponent>().Rotation = value; }
+		}
+
+		public Vector3 Scale
+		{
+			get { return GetComponent<TransformComponent>().Scale; }
+			set { GetComponent<TransformComponent>().Scale = value; }
+		}
+
 		public T CreateComponent<T>() where T : Component, new()
 		{
 			CreateComponent_Native(ID, typeof(T));

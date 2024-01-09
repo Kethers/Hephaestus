@@ -87,7 +87,8 @@ namespace FPSExample
 		private void UpdateRaycasting()
 		{
 			RaycastHit hitInfo;
-			if (Input.IsKeyPressed(KeyCode.H) && Physics.Raycast(m_CameraTransform.Position + (m_CameraTransform.Transform.Forward * 5.0F),
+			if (Input.IsKeyPressed(KeyCode.H) && Physics.Raycast(
+					m_CameraTransform.Translation + (m_CameraTransform.Transform.Forward * 5.0F),
 					m_CameraTransform.Transform.Forward, 20.0F, out hitInfo))
 			{
 				FindEntityByID(hitInfo.EntityID).GetComponent<MeshComponent>().Mesh.GetMaterial(0)
@@ -99,7 +100,7 @@ namespace FPSExample
 				// NOTE: The NonAlloc version of Overlap functions should be used when possible since it doesn't allocate a new array
 				//			whenever you call it. The normal versions allocates a brand new array every time.
 
-				int numColliders = Physics.OverlapBoxNonAlloc(m_Transform.Position, new Vector3(1.0F), colliders);
+				int numColliders = Physics.OverlapBoxNonAlloc(m_Transform.Translation, new Vector3(1.0F), colliders);
 
 				Console.WriteLine("Colliders: {0}", numColliders);
 
@@ -155,9 +156,9 @@ namespace FPSExample
 
 		private void UpdateCameraTransform()
 		{
-			Vector3 position = m_Transform.Position + m_Transform.Transform.Forward * CameraForwardOffset;
-			position.Y = m_Transform.Position.Y + CameraYOffset;
-			m_CameraTransform.Position = position;
+			Vector3 position = m_Transform.Translation + m_Transform.Transform.Forward * CameraForwardOffset;
+			position.Y = m_Transform.Translation.Y + CameraYOffset;
+			m_CameraTransform.Translation = position;
 		}
 	}
 }
