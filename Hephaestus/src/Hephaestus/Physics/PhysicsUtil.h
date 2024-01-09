@@ -9,6 +9,7 @@ namespace Hep
 {
 	physx::PxTransform ToPhysXTransform(const TransformComponent& transform);
 	physx::PxTransform ToPhysXTransform(const glm::mat4& transform);
+	physx::PxTransform ToPhysXTransform(const glm::vec3& translation, const glm::vec3& rotation);
 	physx::PxMat44 ToPhysXMatrix(const glm::mat4& matrix);
 	physx::PxVec3 ToPhysXVector(const glm::vec3& vector);
 	physx::PxVec4 ToPhysXVector(const glm::vec4& vector);

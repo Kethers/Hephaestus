@@ -6,13 +6,138 @@ Environment:
     Radiance: [0, 0, 0]
     Multiplier: 1
 Entities:
+  - Entity: 10790878375657664772
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Position: [-1.24961185, 4.25943899, 3.38380265]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Sphere1m.fbx
+    RigidBodyComponent:
+      BodyType: 1
+      Mass: 1
+      LinearDrag: 0
+      AngularDrag: 0.0500000007
+      DisableGravity: false
+      IsKinematic: false
+      Layer: 0
+      Constraints:
+        LockPositionX: false
+        LockPositionY: false
+        LockPositionZ: false
+        LockRotationX: false
+        LockRotationY: false
+        LockRotationZ: false
+    PhysicsMaterialComponent:
+      StaticFriction: 1
+      DynamicFriction: 1
+      Bounciness: 1
+    SphereColliderComponent:
+      Radius: 0.5
+      IsTrigger: false
+  - Entity: 18033725156078219843
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Position: [-2.73042727, 3.68213511, 3.38380265]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Sphere1m.fbx
+    RigidBodyComponent:
+      BodyType: 1
+      Mass: 1
+      LinearDrag: 0
+      AngularDrag: 0.0500000007
+      DisableGravity: false
+      IsKinematic: false
+      Layer: 0
+      Constraints:
+        LockPositionX: false
+        LockPositionY: false
+        LockPositionZ: false
+        LockRotationX: false
+        LockRotationY: false
+        LockRotationZ: false
+    PhysicsMaterialComponent:
+      StaticFriction: 1
+      DynamicFriction: 1
+      Bounciness: 1
+    SphereColliderComponent:
+      Radius: 0.5
+      IsTrigger: false
+  - Entity: 16634993330455190223
+    TagComponent:
+      Tag: Sphere
+    TransformComponent:
+      Position: [-2.78621578, 5.48215866, -1.33405685]
+      Rotation: [0, 0, 0]
+      Scale: [1, 1, 1]
+    MeshComponent:
+      AssetPath: assets\meshes\Sphere1m.fbx
+    RigidBodyComponent:
+      BodyType: 1
+      Mass: 1
+      LinearDrag: 0
+      AngularDrag: 0.0500000007
+      DisableGravity: false
+      IsKinematic: false
+      Layer: 0
+      Constraints:
+        LockPositionX: false
+        LockPositionY: false
+        LockPositionZ: false
+        LockRotationX: false
+        LockRotationY: false
+        LockRotationZ: false
+    PhysicsMaterialComponent:
+      StaticFriction: 1
+      DynamicFriction: 1
+      Bounciness: 1
+    SphereColliderComponent:
+      Radius: 0.5
+      IsTrigger: false
+  - Entity: 12975938672247153436
+    TagComponent:
+      Tag: Cube
+    TransformComponent:
+      Position: [-2.01373863, 4.03783751, 2.91641903]
+      Rotation: [9.9061559e-08, 0.719529092, -0.70863378]
+      Scale: [0.389999807, 0.389999926, 0.389999837]
+    MeshComponent:
+      AssetPath: assets\meshes\Cube1m.fbx
+    RigidBodyComponent:
+      BodyType: 1
+      Mass: 0.200000003
+      LinearDrag: 0
+      AngularDrag: 0.0500000007
+      DisableGravity: false
+      IsKinematic: false
+      Layer: 0
+      Constraints:
+        LockPositionX: false
+        LockPositionY: false
+        LockPositionZ: false
+        LockRotationX: false
+        LockRotationY: false
+        LockRotationZ: false
+    PhysicsMaterialComponent:
+      StaticFriction: 1
+      DynamicFriction: 1
+      Bounciness: 1
+    BoxColliderComponent:
+      Offset: [0, 0, 0]
+      Size: [1, 1, 1]
+      IsTrigger: false
   - Entity: 13882838760121718506
     TagComponent:
       Tag: Directional Light
     TransformComponent:
       Position: [0, 0, 0]
-      Rotation: [2.35444903, 0, -0.441568285]
-      Scale: [1, 1, 1]
+      Rotation: [2.50669408, 0.501803458, 0.136891216]
+      Scale: [1, 0.999998569, 0.999998987]
     DirectionalLightComponent:
       Radiance: [1, 1, 1]
       CastShadows: true
@@ -27,17 +152,17 @@ Entities:
       Scale: [1, 1, 1]
     SkyLightComponent:
       EnvironmentAssetPath: assets\env\birchwood_4k.hdr
-      Intensity: 1
+      Intensity: 0.75
       Angle: 0
-  - Entity: 5471747392929574277
+  - Entity: 17035936673948473165
     TagComponent:
-      Tag: Sponza
+      Tag: Mesh
     TransformComponent:
       Position: [0, 0, 0]
       Rotation: [0, 0, 0]
-      Scale: [0.00999999978, 0.00999999978, 0.00999999978]
+      Scale: [1, 1, 1]
     MeshComponent:
-      AssetPath: assets\meshes\sponza\sponza.obj
+      AssetPath: assets\meshes\Tests\TransformTest.fbx
     RigidBodyComponent:
       BodyType: 0
       Mass: 1
@@ -53,10 +178,6 @@ Entities:
         LockRotationX: false
         LockRotationY: false
         LockRotationZ: false
-    PhysicsMaterialComponent:
-      StaticFriction: 0.5
-      DynamicFriction: 0.25
-      Bounciness: 0.100000001
     MeshColliderComponent:
       IsConvex: false
       IsTrigger: false
@@ -65,9 +186,9 @@ Entities:
     TagComponent:
       Tag: Player
     TransformComponent:
-      Position: [0, 6.31091785, 4.11461163]
+      Position: [2.71265602, 1.24520636, 4.11461163]
       Rotation: [0, 0, 0]
-      Scale: [1, 1, 1]
+      Scale: [0.859999776, 0.860000014, 0.859999776]
     ScriptComponent:
       ModuleName: FPSExample.FPSPlayer
       StoredFields:
@@ -107,7 +228,7 @@ Entities:
         LockRotationY: true
         LockRotationZ: true
     PhysicsMaterialComponent:
-      StaticFriction: 0.100000001
+      StaticFriction: 0.200000003
       DynamicFriction: 1
       Bounciness: 0
     MeshColliderComponent:
@@ -119,10 +240,17 @@ Entities:
       Tag: Camera
     TransformComponent:
       Position: [0, 1.0587908, 0]
-      Rotation: [0, 0, 0]
+      Rotation: [0, 0.785398185, 0]
       Scale: [1, 1, 1]
     CameraComponent:
-      Camera: some camera data...
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 65
+        PerspectiveNear: 0.100000001
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 1
       Primary: true
 PhysicsLayers:
   []

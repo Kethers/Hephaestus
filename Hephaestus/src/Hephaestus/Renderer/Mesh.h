@@ -125,6 +125,7 @@ namespace Hep
 		uint32_t VertexCount;
 
 		glm::mat4 Transform;
+		glm::mat4 LocalTransform;
 		AABB BoundingBox;
 
 		std::string NodeName, MeshName;

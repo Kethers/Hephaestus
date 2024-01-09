@@ -10,6 +10,8 @@
 
 #include <PhysX/extensions/PxRigidActorExt.h>
 
+#include "Hephaestus/Core/Math/Math.h"
+
 namespace Hep
 {
 	static PhysicsErrorCallback s_ErrorCallback;
@@ -395,7 +397,7 @@ namespace Hep
 		return shapes;
 	}
 
-	std::vector<physx::PxShape*> PXPhysicsWrappers::CreateTriangleMesh(MeshColliderComponent& collider, const glm::vec3& size,
+	std::vector<physx::PxShape*> PXPhysicsWrappers::CreateTriangleMesh(MeshColliderComponent& collider, const glm::vec3& scale,
 		bool invalidateOld)
 	{
 		std::vector<physx::PxShape*> shapes;
@@ -430,13 +432,16 @@ namespace Hep
 
 				PhysicsMeshSerializer::SerializeMesh(collider.CollisionMesh->GetFilePath(), buf, submesh.MeshName);
 
+				glm::vec3 submeshTranslation, submeshRotation, submeshScale;
+				Math::DecomposeTransform(submesh.LocalTransform, submeshTranslation, submeshRotation, submeshScale);
+
 				physx::PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
 				physx::PxTriangleMesh* trimesh = s_Physics->createTriangleMesh(input);
 				physx::PxTriangleMeshGeometry triangleGeometry = physx::PxTriangleMeshGeometry(trimesh,
-					physx::PxMeshScale(ToPhysXVector(size)));
+					physx::PxMeshScale(ToPhysXVector(submeshScale * scale)));
 				physx::PxMaterial* material = s_Physics->createMaterial(0, 0, 0); // Dummy material, will be replaced at runtime.
 				physx::PxShape* shape = s_Physics->createShape(triangleGeometry, *material, true);
-				shape->setLocalPose(ToPhysXTransform(submesh.Transform));
+				shape->setLocalPose(ToPhysXTransform(submeshTranslation, submeshRotation));
 				shapes.push_back(shape);
 			}
 		}
@@ -444,14 +449,17 @@ namespace Hep
 		{
 			for (const auto& submesh : collider.CollisionMesh->GetSubmeshes())
 			{
+				glm::vec3 submeshTranslation, submeshRotation, submeshScale;
+				Math::DecomposeTransform(submesh.LocalTransform, submeshTranslation, submeshRotation, submeshScale);
+
 				physx::PxDefaultMemoryInputData meshData = PhysicsMeshSerializer::DeserializeMesh(collider.CollisionMesh->GetFilePath(),
 					submesh.MeshName);
 				physx::PxTriangleMesh* trimesh = s_Physics->createTriangleMesh(meshData);
 				physx::PxTriangleMeshGeometry triangleGeometry = physx::PxTriangleMeshGeometry(trimesh,
-					physx::PxMeshScale(ToPhysXVector(size)));
+					physx::PxMeshScale(ToPhysXVector(submeshScale * scale)));
 				physx::PxMaterial* material = s_Physics->createMaterial(0, 0, 0); // Dummy material, will be replaced at runtime.
 				physx::PxShape* shape = s_Physics->createShape(triangleGeometry, *material, true);
-				shape->setLocalPose(ToPhysXTransform(submesh.Transform));
+				shape->setLocalPose(ToPhysXTransform(submeshTranslation, submeshRotation));
 				shapes.push_back(shape);
 			}
 		}
@@ -488,7 +496,10 @@ namespace Hep
 					indices.push_back(index);
 				}
 
-				collider.ProcessedMeshes.push_back(Ref<Mesh>::Create(vertices, indices, FromPhysXTransform(shape->getLocalPose())));
+				glm::mat4 scale = glm::scale(glm::mat4(1.0f), *(glm::vec3*)&triangleGeometry.scale.scale);
+				// scale = glm::mat4(1.0f);
+				glm::mat4 transform = FromPhysXTransform(shape->getLocalPose()) * scale;
+				collider.ProcessedMeshes.push_back(Ref<Mesh>::Create(vertices, indices, transform));
 			}
 		}
 

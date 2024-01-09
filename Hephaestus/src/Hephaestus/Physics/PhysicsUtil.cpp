@@ -14,9 +14,15 @@ namespace Hep
 
 	physx::PxTransform ToPhysXTransform(const glm::mat4& transform)
 	{
+		// TODO: don't trust glm::toQuat since it doesn't normalize the scale
 		physx::PxQuat r = ToPhysXQuat(glm::normalize(glm::toQuat(transform)));
 		physx::PxVec3 p = ToPhysXVector(glm::vec3(transform[3]));
 		return physx::PxTransform(p, r);
+	}
+
+	physx::PxTransform ToPhysXTransform(const glm::vec3& translation, const glm::vec3& rotation)
+	{
+		return physx::PxTransform(ToPhysXVector(translation), ToPhysXQuat(glm::quat(rotation)));
 	}
 
 	physx::PxMat44 ToPhysXMatrix(const glm::mat4& matrix)
@@ -36,7 +42,8 @@ namespace Hep
 
 	physx::PxQuat ToPhysXQuat(const glm::quat& quat)
 	{
-		return *(physx::PxQuat*)&quat;
+		// Note: PxQuat elements are in a different order than glm::quat!
+		return physx::PxQuat(quat.x, quat.y, quat.z, quat.w);
 	}
 
 	glm::mat4 FromPhysXTransform(const physx::PxTransform& transform)

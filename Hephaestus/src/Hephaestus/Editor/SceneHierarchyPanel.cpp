@@ -492,7 +492,7 @@ namespace Hep
 					if (m_SelectionContext.HasComponent<MeshComponent>())
 					{
 						component.CollisionMesh = m_SelectionContext.GetComponent<MeshComponent>().Mesh;
-						PXPhysicsWrappers::CreateTriangleMesh(component, m_SelectionContext.Transform().Scale);
+						PXPhysicsWrappers::CreateTriangleMesh(component);
 					}
 					ImGui::CloseCurrentPopup();
 				}
@@ -948,9 +948,9 @@ namespace Hep
 					{
 						mcc.CollisionMesh = Ref<Mesh>::Create(file);
 						if (mcc.IsConvex)
-							PXPhysicsWrappers::CreateConvexMesh(mcc, entity.Transform().Scale, true);
+							PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
 						else
-							PXPhysicsWrappers::CreateTriangleMesh(mcc, entity.Transform().Scale, true);
+							PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
 					}
 				}
 				ImGui::Columns(1);
@@ -960,9 +960,9 @@ namespace Hep
 			if (UI::Property("Is Convex", mcc.IsConvex))
 			{
 				if (mcc.IsConvex)
-					PXPhysicsWrappers::CreateConvexMesh(mcc, entity.Transform().Scale, true);
+					PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
 				else
-					PXPhysicsWrappers::CreateTriangleMesh(mcc, entity.Transform().Scale, true);
+					PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
 			}
 			UI::Property("Is Trigger", mcc.IsTrigger);
 			if (UI::Property("Override Mesh", mcc.OverrideMesh))
@@ -972,9 +972,9 @@ namespace Hep
 					mcc.CollisionMesh = entity.GetComponent<MeshComponent>().Mesh;
 
 					if (mcc.IsConvex)
-						PXPhysicsWrappers::CreateConvexMesh(mcc, entity.Transform().Scale, true);
+						PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
 					else
-						PXPhysicsWrappers::CreateTriangleMesh(mcc, entity.Transform().Scale, true);
+						PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
 				}
 			}
 			UI::EndPropertyGrid();
