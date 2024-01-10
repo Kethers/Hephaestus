@@ -35,10 +35,15 @@ namespace Hep
 
 	std::map<std::string, AssetType> AssetTypes::s_Types;
 
-	AssetManager::AssetManager()
-	{}
+	AssetManager::AssetManager(const AssetsChangeEventFn& callback)
+		: m_AssetsChangeCallback(callback)
+	{
+		FileSystemWatcher::SetChangeCallback(HEP_BIND_EVENT_FN(AssetManager::OnFileSystemChanged));
 
-	std::string AssetManager::ParseFilename(const std::string& filepath, const char& delim)
+		m_LoadedAssets = GetDirectoryContents("assets", true);
+	}
+
+	std::string AssetManager::ParseFilename(const std::string& filepath, const char* delim)
 	{
 		std::vector<std::string> out;
 		size_t start;
@@ -46,7 +51,7 @@ namespace Hep
 
 		while ((start = filepath.find_first_not_of(delim, end)) != std::string::npos)
 		{
-			end = filepath.find(delim, start);
+			end = filepath.find_first_of(delim, start);
 			out.push_back(filepath.substr(start, end - start));
 		}
 
@@ -73,7 +78,7 @@ namespace Hep
 
 	void AssetManager::ProcessAsset(const std::string& assetPath)
 	{
-		std::string filename = ParseFilename(assetPath, '/\\');
+		std::string filename = ParseFilename(assetPath, "/\\");
 		std::string filetype = ParseFileType(assetPath);
 
 		if (filetype == "blend")
@@ -122,21 +127,43 @@ namespace Hep
 		system(convCommand.c_str());
 	}
 
-	std::vector<DirectoryInfo> AssetManager::GetFileSystemContents()
+	void AssetManager::OnFileSystemChanged(FileSystemChangedEvent e)
 	{
-		std::string path = "assets";
-		std::vector<DirectoryInfo> directories;
+		e.NewName = RemoveExtension(e.NewName);
+		e.OldName = RemoveExtension(e.OldName);
 
-		for (const auto& entry : std::filesystem::directory_iterator(path))
+		if (e.Action == FileSystemAction::Added)
 		{
-			bool isDir = std::filesystem::is_directory(entry);
-
-			std::string dir_data = ParseFilename(entry.path().string(), '/\\');
-			std::string fileExt = ParseFileType(dir_data);
-			directories.emplace_back(dir_data, fileExt, entry.path().string(), !isDir);
+			m_LoadedAssets = GetDirectoryContents("assets", true);
 		}
 
-		return directories;
+		if (e.Action == FileSystemAction::Modified)
+		{
+			// TODO(Peter): Re-import asset
+		}
+
+		if (e.Action == FileSystemAction::Rename)
+		{
+			for (auto& entry : m_LoadedAssets)
+			{
+				if (entry.Filename == e.OldName)
+					entry.Filename = e.NewName;
+			}
+		}
+
+		if (e.Action == FileSystemAction::Delete)
+		{
+			for (auto it = m_LoadedAssets.begin(); it != m_LoadedAssets.end(); ++it)
+			{
+				if (it->Filename != e.NewName)
+					continue;
+
+				m_LoadedAssets.erase(it);
+				break;
+			}
+		}
+
+		m_AssetsChangeCallback();
 	}
 
 	std::vector<DirectoryInfo> AssetManager::GetDirectoryContents(const std::string& filepath, bool recursive)
@@ -148,7 +175,7 @@ namespace Hep
 			for (const auto& entry : std::filesystem::recursive_directory_iterator(filepath))
 			{
 				bool isDir = std::filesystem::is_directory(entry);
-				std::string dir_data = ParseFilename(entry.path().string(), '/\\');
+				std::string dir_data = ParseFilename(entry.path().string(), "/\\");
 				std::string fileExt = ParseFileType(dir_data);
 				directories.emplace_back(dir_data, fileExt, entry.path().string(), !isDir);
 			}
@@ -158,7 +185,7 @@ namespace Hep
 			for (const auto& entry : std::filesystem::directory_iterator(filepath))
 			{
 				bool isDir = std::filesystem::is_directory(entry);
-				std::string dir_data = ParseFilename(entry.path().string(), '/\\');
+				std::string dir_data = ParseFilename(entry.path().string(), "/\\");
 				std::string fileExt = ParseFileType(dir_data);
 				directories.emplace_back(dir_data, fileExt, entry.path().string(), !isDir);
 			}
@@ -173,12 +200,12 @@ namespace Hep
 
 		if (!searchPath.empty())
 		{
-			std::vector<DirectoryInfo> contents = GetDirectoryContents(searchPath, true);
-
-			for (auto& entry : contents)
+			for (const auto& entry : m_LoadedAssets)
 			{
-				if (entry.Filename.find(query) != std::string::npos)
-					result.emplace_back(std::move(entry));
+				if (entry.Filename.find(query) != std::string::npos && entry.AbsolutePath.find(searchPath) != std::string::npos)
+				{
+					result.push_back(entry);
+				}
 			}
 		}
 
@@ -190,15 +217,15 @@ namespace Hep
 		return std::filesystem::path(path).parent_path().string();
 	}
 
-	std::vector<std::string> AssetManager::GetDirectories(const std::string& filepath)
+	std::vector<std::string> AssetManager::GetDirectoryNames(const std::string& filepath)
 	{
 		std::vector<std::string> result;
 		size_t start;
 		size_t end = 0;
 
-		while ((start = filepath.find_first_not_of('/\\', end)) != std::string::npos)
+		while ((start = filepath.find_first_not_of("/\\", end)) != std::string::npos)
 		{
-			end = filepath.find('/\\', start);
+			end = filepath.find_first_of("/\\", start);
 			result.push_back(filepath.substr(start, end - start));
 		}
 
@@ -208,8 +235,17 @@ namespace Hep
 	bool AssetManager::MoveFile(const std::string& originalPath, const std::string& dest)
 	{
 		std::filesystem::rename(originalPath, dest);
-		std::string newPath = dest + "/" + ParseFilename(originalPath, '/\\');
+		std::string newPath = dest + "/" + ParseFilename(originalPath, "/\\");
 		return std::filesystem::exists(newPath);
+	}
+
+	std::string AssetManager::RemoveExtension(const std::string& filename)
+	{
+		std::string newName;
+		size_t end = filename.find_last_of('.');
+
+		newName = filename.substr(0, end);
+		return newName;
 	}
 
 	std::string AssetManager::StripExtras(const std::string& filename)

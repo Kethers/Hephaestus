@@ -6,6 +6,7 @@
 #include "Hephaestus/Renderer/Renderer2D.h"
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Editor/PhysicsSettingsWindow.h"
+#include "Hephaestus/Utilities/FileSystemWatcher.h"
 
 #include <filesystem>
 
@@ -57,10 +58,14 @@ namespace Hep
 
 		//OpenScene("assets/scenes/FPSDemo.hsc");
 		NewScene();
+
+		FileSystemWatcher::StartWatching();
 	}
 
 	void EditorLayer::OnDetach()
-	{}
+	{
+		FileSystemWatcher::StopWatching();
+	}
 
 	void EditorLayer::OnScenePlay()
 	{

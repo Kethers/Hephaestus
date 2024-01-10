@@ -6,6 +6,7 @@
 namespace Hep
 {
 	AssetManagerPanel::AssetManagerPanel()
+		: m_AssetManager([&]() { m_CurrentDir = m_AssetManager.GetDirectoryContents(m_CurrentDirPath); })
 	{
 		AssetTypes::Init();
 
@@ -36,7 +37,7 @@ namespace Hep
 		m_BaseDirPath = "assets";
 		m_CurrentDirPath = m_BaseDirPath;
 		m_PrevDirPath = m_CurrentDirPath;
-		m_BaseProjectDir = m_AssetManager.GetFileSystemContents();
+		m_BaseProjectDir = m_AssetManager.GetDirectoryContents(m_BaseDirPath);
 		m_CurrentDir = m_BaseProjectDir;
 		m_BasePathLen = strlen(m_BaseDirPath.c_str());
 		m_DirDataLen = 0;
@@ -202,6 +203,7 @@ namespace Hep
 					{
 						HEP_CORE_INFO("Moved File: " + a + " to " + m_MovePath);
 					}
+
 					m_IsDragging = false;
 				}
 				ImGui::EndDragDropTarget();
@@ -219,11 +221,8 @@ namespace Hep
 
 					if (ImGui::MenuItem("Refresh", "Ctrl + R"))
 					{
-						auto data = m_AssetManager.GetFileSystemContents();
-						for (int i = 0; i < data.size(); i++)
-						{
-							HEP_CORE_INFO(data[i].Filename);
-						}
+						m_BaseProjectDir = m_AssetManager.GetDirectoryContents(m_BaseDirPath);
+						m_CurrentDir = m_AssetManager.GetDirectoryContents(m_CurrentDirPath);
 					}
 
 					ImGui::EndMenu();
@@ -416,10 +415,12 @@ namespace Hep
 				ImGui::SameLine();
 				ImGui::PushItemWidth(200);
 
-				// TODO: Search function is currently broken
-				if (ImGui::InputTextWithHint("", "Search...", m_InputBuffer, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+				if (ImGui::InputTextWithHint("", "Search...", m_InputBuffer, 100))
 				{
-					m_CurrentDir = m_AssetManager.SearchFiles(m_InputBuffer, m_CurrentDirPath);
+					if (strlen(m_InputBuffer) == 0)
+						m_CurrentDir = m_AssetManager.GetDirectoryContents(m_CurrentDirPath);
+					else
+						m_CurrentDir = m_AssetManager.SearchFiles(m_InputBuffer, m_CurrentDirPath);
 				}
 
 				ImGui::PopItemWidth();
@@ -445,7 +446,7 @@ namespace Hep
 
 			ImGui::SameLine();
 
-			auto data = m_AssetManager.GetDirectories(m_CurrentDirPath);
+			auto data = m_AssetManager.GetDirectoryNames(m_CurrentDirPath);
 
 			for (int i = 0; i < data.size(); i++)
 			{

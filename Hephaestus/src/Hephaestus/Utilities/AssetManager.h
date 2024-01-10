@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Hephaestus/Utilities/FileSystemWatcher.h"
+
 #include <map>
 
 namespace Hep
@@ -35,7 +37,7 @@ namespace Hep
 			: Filename(other.Filename), FileType(other.FileType), AbsolutePath(other.AbsolutePath), IsFile(other.IsFile)
 		{}
 
-		DirectoryInfo(DirectoryInfo&& other)
+		DirectoryInfo(DirectoryInfo&& other) noexcept
 			: Filename(std::move(other.Filename)), FileType(std::move(other.FileType)), AbsolutePath(std::move(other.AbsolutePath)),
 			  IsFile(std::move(other.IsFile))
 		{}
@@ -53,28 +55,36 @@ namespace Hep
 	class AssetManager
 	{
 	public:
-		AssetManager();
+		using AssetsChangeEventFn = std::function<void()>;
 
-		std::string ParseFilename(const std::string& filepath, const char& delim);
+	public:
+		AssetManager(const AssetsChangeEventFn& callback);
+
+		std::string ParseFilename(const std::string& filepath, const char* delim);
 		std::string ParseFileType(const std::string& filename);
 
 		void HandleAsset(const std::string& filepath);
 		void ProcessAsset(const std::string& assetPath);
 		void ConvertAsset(const std::string& assetPath, const std::string& conversionType);
 
-		std::vector<DirectoryInfo> GetFileSystemContents();
+		void OnFileSystemChanged(FileSystemChangedEvent e);
 		std::vector<DirectoryInfo> GetDirectoryContents(const std::string& filepath, bool recursive = false);
 		std::vector<DirectoryInfo> SearchFiles(const std::string& query, const std::string& searchPath);
 
 		std::string GetParentPath(const std::string& path);
 
-		std::vector<std::string> GetDirectories(const std::string& filepath);
+		std::vector<std::string> GetDirectoryNames(const std::string& filepath);
 
 		bool MoveFile(const std::string& originalPath, const std::string& dest);
 
+		std::string RemoveExtension(const std::string& filename);
 		std::string StripExtras(const std::string& filename);
 
 	private:
 		void ImportAsset(const std::string assetPath, const std::string& assetName);
+
+	private:
+		std::vector<DirectoryInfo> m_LoadedAssets;
+		AssetsChangeEventFn m_AssetsChangeCallback;
 	};
 }
