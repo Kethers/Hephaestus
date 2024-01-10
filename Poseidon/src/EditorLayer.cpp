@@ -17,6 +17,7 @@
 
 #include "Hephaestus/Physics/Physics.h"
 #include "Hephaestus/Core/Math/Math.h"
+#include "Hephaestus/Utilities/DragDropData.h"
 
 namespace Hep
 {
@@ -51,7 +52,11 @@ namespace Hep
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(HEP_BIND_EVENT_FN(EditorLayer::SelectEntity));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(HEP_BIND_EVENT_FN(EditorLayer::OnEntityDeleted));
 
-		OpenScene("assets/scenes/Physics2DTest2.hsc");
+		m_AssetManagerPanel = CreateScope<AssetManagerPanel>();
+		m_ObjectsPanel = CreateScope<ObjectsPanel>();
+
+		//OpenScene("assets/scenes/FPSDemo.hsc");
+		NewScene();
 	}
 
 	void EditorLayer::OnDetach()
@@ -71,6 +76,7 @@ namespace Hep
 
 		m_RuntimeScene->OnRuntimeStart();
 		m_SceneHierarchyPanel->SetContext(m_RuntimeScene);
+		m_CurrentScene = m_RuntimeScene;
 	}
 
 	void EditorLayer::OnSceneStop()
@@ -84,6 +90,7 @@ namespace Hep
 		m_SelectionContext.clear();
 		ScriptEngine::SetSceneContext(m_EditorScene);
 		m_SceneHierarchyPanel->SetContext(m_EditorScene);
+		m_CurrentScene = m_EditorScene;
 	}
 
 	void EditorLayer::UpdateWindowTitle(const std::string& sceneName)
@@ -374,6 +381,8 @@ namespace Hep
 
 		m_EditorScene->SetSelectedEntity({});
 		m_SelectionContext.clear();
+
+		m_CurrentScene = m_EditorScene;
 	}
 
 	void EditorLayer::SaveScene()
@@ -491,6 +500,9 @@ namespace Hep
 			ShowBoundingBoxes(m_UIShowBoundingBoxes, m_UIShowBoundingBoxesOnTop);
 		if (m_UIShowBoundingBoxes && Property("On Top", m_UIShowBoundingBoxesOnTop))
 			ShowBoundingBoxes(m_UIShowBoundingBoxes, m_UIShowBoundingBoxesOnTop);
+
+		m_AssetManagerPanel->OnImGuiRender();
+		m_ObjectsPanel->OnImGuiRender();
 
 		const char* label = m_SelectionMode == SelectionMode::Entity ? "Entity" : "Mesh";
 		if (ImGui::Button(label))
@@ -623,7 +635,7 @@ namespace Hep
 			bool snap = Input::IsKeyPressed(HEP_KEY_LEFT_CONTROL);
 
 			TransformComponent& entityTransform = selection.Entity.Transform();
-			glm::mat4 transform = entityTransform.GetTransform();
+			glm::mat4 transform = entityTransform.GetTransform(); // m_CurrentScene->GetTransformRelativeToParent(selection.Entity);
 			float snapValue = GetSnapValue();
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 
@@ -662,6 +674,45 @@ namespace Hep
 				selection.Mesh->Transform = glm::inverse(transform) * transformBase;
 			}
 		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			auto data = ImGui::AcceptDragDropPayload("scene_entity_objectP");
+			if (data)
+			{
+				auto d = (DragDropData*)data->Data;
+				if (d->Type == "Mesh")
+				{
+					auto entity = m_EditorScene->CreateEntity(d->Name);
+					entity.AddComponent<MeshComponent>(Ref<Mesh>::Create(d->SourcePath));
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		/* Payload Implementation For Getting Assets In The Viewport From Asset Manager */
+		if (ImGui::BeginDragDropTarget())
+		{
+			auto data = ImGui::AcceptDragDropPayload("scene_entity_assetsP");
+			if (data)
+			{
+				auto d = (DragDropData*)data->Data;
+
+				if (d->Type == "HephaestusScene")
+				{
+					auto sceneName = d->SourcePath;
+					OpenScene(sceneName);
+				}
+
+				if (d->Type == "Mesh")
+				{
+					auto entity = m_EditorScene->CreateEntity(d->Name);
+					entity.AddComponent<MeshComponent>(Ref<Mesh>::Create(d->SourcePath));
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+
 
 		ImGui::End();
 		ImGui::PopStyleVar();

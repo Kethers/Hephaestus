@@ -203,15 +203,18 @@ namespace Hep
 	{
 		physx::PxPhysics& physics = PXPhysicsWrappers::GetPhysics();
 
+		Ref<Scene> scene = Scene::GetScene(m_Entity.GetSceneUUID());
+		glm::mat4 transform = scene->GetTransformRelativeToParent(m_Entity);
+
 		if (m_RigidBody.BodyType == RigidBodyComponent::Type::Static)
 		{
-			m_ActorInternal = physics.createRigidStatic(ToPhysXTransform(m_Entity.Transform()));
+			m_ActorInternal = physics.createRigidStatic(ToPhysXTransform(transform));
 		}
 		else
 		{
 			const PhysicsSettings& settings = Physics::GetSettings();
 
-			physx::PxRigidDynamic* actor = physics.createRigidDynamic(ToPhysXTransform(m_Entity.Transform()));
+			physx::PxRigidDynamic* actor = physics.createRigidDynamic(ToPhysXTransform(transform));
 			actor->setLinearDamping(m_RigidBody.LinearDrag);
 			actor->setAngularDamping(m_RigidBody.AngularDrag);
 			actor->setRigidBodyFlag(physx::PxRigidBodyFlag::eKINEMATIC, m_RigidBody.IsKinematic);
@@ -266,7 +269,8 @@ namespace Hep
 		else
 		{
 			// Synchronize Physics Actor with static Entity
-			m_ActorInternal->setGlobalPose(ToPhysXTransform(m_Entity.Transform()));
+			Ref<Scene> scene = Scene::GetScene(m_Entity.GetSceneUUID());
+			m_ActorInternal->setGlobalPose(ToPhysXTransform(scene->GetTransformRelativeToParent(m_Entity)));
 		}
 	}
 
