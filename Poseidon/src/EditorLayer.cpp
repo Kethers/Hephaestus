@@ -6,7 +6,7 @@
 #include "Hephaestus/Renderer/Renderer2D.h"
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Editor/PhysicsSettingsWindow.h"
-#include "Hephaestus/Utilities/FileSystemWatcher.h"
+#include "Hephaestus/Utilities/FileSystem.h"
 
 #include <filesystem>
 
@@ -59,12 +59,12 @@ namespace Hep
 		//OpenScene("assets/scenes/FPSDemo.hsc");
 		NewScene();
 
-		FileSystemWatcher::StartWatching();
+		FileSystem::StartWatching();
 	}
 
 	void EditorLayer::OnDetach()
 	{
-		FileSystemWatcher::StopWatching();
+		FileSystem::StopWatching();
 	}
 
 	void EditorLayer::OnScenePlay()
@@ -701,18 +701,18 @@ namespace Hep
 			auto data = ImGui::AcceptDragDropPayload("scene_entity_assetsP");
 			if (data)
 			{
-				auto d = (DragDropData*)data->Data;
+				UUID assetId = *(UUID*)data->Data;
+				Asset& asset = AssetManager::GetAssetFromId(assetId);
 
-				if (d->Type == "HephaestusScene")
+				if (asset.Type == AssetType::Scene)
 				{
-					auto sceneName = d->SourcePath;
-					OpenScene(sceneName);
+					OpenScene((char*)asset.Data);
 				}
 
-				if (d->Type == "Mesh")
+				if (asset.Type == AssetType::Mesh)
 				{
-					auto entity = m_EditorScene->CreateEntity(d->Name);
-					entity.AddComponent<MeshComponent>(Ref<Mesh>::Create(d->SourcePath));
+					Entity entity = m_EditorScene->CreateEntity(asset.FileName);
+					entity.AddComponent<MeshComponent>(AssetManager::InstantiateAsset<Mesh>(assetId));
 				}
 			}
 			ImGui::EndDragDropTarget();

@@ -1,36 +1,48 @@
 #include "heppch.h"
-#include "Hephaestus/Utilities/FileSystemWatcher.h"
+#include "Hephaestus/Utilities/FileSystem.h"
+#include "Hephaestus/Utilities/AssetManager.h"
 
-#include <Windows.h>
 #include <filesystem>
 
 namespace Hep
 {
-	FileSystemWatcher::FileSystemChangedCallbackFn FileSystemWatcher::s_Callback;
+	FileSystem::FileSystemChangedCallbackFn FileSystem::s_Callback;
 
 	static bool s_Watching = true;
 	static HANDLE s_WatcherThread;
 
-	void FileSystemWatcher::SetChangeCallback(const FileSystemChangedCallbackFn& callback)
+	void FileSystem::SetChangeCallback(const FileSystemChangedCallbackFn& callback)
 	{
 		s_Callback = callback;
 	}
 
-	static std::string wchar_to_string(wchar_t* input)
+	bool FileSystem::CreateFolder(const std::string& filepath)
 	{
-		std::wstring string_input(input);
-		std::string converted(string_input.begin(), string_input.end());
-		return converted;
+		BOOL created = CreateDirectoryA(filepath.c_str(), NULL);
+		if (!created)
+		{
+			DWORD error = GetLastError();
+
+			if (error == ERROR_ALREADY_EXISTS)
+				HEP_CORE_ERROR("{0} already exists!", filepath);
+
+			if (error == ERROR_PATH_NOT_FOUND)
+				HEP_CORE_ERROR("{0}: One or more directories don't exist.", filepath);
+
+			return false;
+		}
+
+		return true;
 	}
 
-	void FileSystemWatcher::StartWatching()
+	void FileSystem::StartWatching()
 	{
 		DWORD threadId;
 		s_WatcherThread = CreateThread(NULL, 0, Watch, 0, 0, &threadId);
 		HEP_CORE_ASSERT(s_WatcherThread != NULL);
 	}
 
-	void FileSystemWatcher::StopWatching()
+	void FileSystem::StopWatching()
 	{
 		s_Watching = false;
 		DWORD result = WaitForSingleObject(s_WatcherThread, 5000);
@@ -39,15 +51,13 @@ namespace Hep
 		CloseHandle(s_WatcherThread);
 	}
 
-	unsigned long FileSystemWatcher::Watch(void* param)
+	unsigned long FileSystem::Watch(void* param)
 	{
 		LPCSTR filepath = "assets";
-		char* buffer = new char[1024];
+		BYTE buffer[1024];
 		OVERLAPPED overlapped = { 0 };
 		HANDLE handle = NULL;
 		DWORD bytesReturned = 0;
-
-		ZeroMemory(buffer, 1024);
 
 		handle = CreateFile(
 			filepath,
@@ -77,7 +87,7 @@ namespace Hep
 			DWORD status = ReadDirectoryChangesW(
 				handle,
 				buffer,
-				1024,
+				sizeof(buffer),
 				TRUE,
 				FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME,
 				&bytesReturned,
@@ -88,27 +98,30 @@ namespace Hep
 			if (!status)
 				HEP_CORE_ERROR(GetLastError());
 
-			// NOTE: We can't use 'INFINITE' here since that will prevent the thread from closing when we close the editor
 			DWORD waitOperation = WaitForSingleObject(overlapped.hEvent, 5000);
-
-			// If nothing changed, just continue
 			if (waitOperation != WAIT_OBJECT_0)
 				continue;
 
 			std::string oldName;
 
+			char fileName[MAX_PATH] = "";
+
+			BYTE* current = buffer;
 			for (;;)
 			{
-				FILE_NOTIFY_INFORMATION& fni = (FILE_NOTIFY_INFORMATION&)*buffer;
-				std::filesystem::path fniFilepath = "assets/" + wchar_to_string(fni.FileName);
+				ZeroMemory(fileName, sizeof(fileName));
+
+				FILE_NOTIFY_INFORMATION* fni = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(current);
+				WideCharToMultiByte(CP_ACP, 0, fni->FileName, fni->FileNameLength / sizeof(WCHAR), fileName, sizeof(fileName), NULL, NULL);
+				std::filesystem::path fniFilepath = "assets/" + std::string(fileName);
 
 				FileSystemChangedEvent e;
-				e.Filepath = fniFilepath.string();
+				e.FilePath = fniFilepath.string();
 				e.NewName = fniFilepath.filename().string();
 				e.OldName = fniFilepath.filename().string();
 				e.IsDirectory = std::filesystem::is_directory(fniFilepath);
 
-				switch (fni.Action)
+				switch (fni->Action)
 				{
 					case FILE_ACTION_ADDED:
 					{
@@ -118,6 +131,7 @@ namespace Hep
 					}
 					case FILE_ACTION_REMOVED:
 					{
+						e.IsDirectory = AssetManager::IsDirectory(e.FilePath);
 						e.Action = FileSystemAction::Delete;
 						s_Callback(e);
 						break;
@@ -142,13 +156,10 @@ namespace Hep
 					}
 				}
 
-				if (!fni.NextEntryOffset)
-				{
-					ZeroMemory(buffer, 1024);
+				if (!fni->NextEntryOffset)
 					break;
-				}
 
-				buffer += fni.NextEntryOffset;
+				current += fni->NextEntryOffset;
 			}
 		}
 

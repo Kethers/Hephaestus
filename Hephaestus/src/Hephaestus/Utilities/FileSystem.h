@@ -12,14 +12,17 @@ namespace Hep
 	struct FileSystemChangedEvent
 	{
 		FileSystemAction Action;
-		std::string Filepath;
+		std::string FilePath;
 		std::string OldName;
 		std::string NewName;
 		bool IsDirectory;
 	};
 
-	class FileSystemWatcher
+	class FileSystem
 	{
+	public:
+		static bool CreateFolder(const std::string& filepath);
+
 	public:
 		using FileSystemChangedCallbackFn = std::function<void(FileSystemChangedEvent)>;
 
