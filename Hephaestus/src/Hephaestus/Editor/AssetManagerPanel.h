@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Hephaestus/Utilities/AssetManager.h"
+#include "Hephaestus/Asset/AssetManager.h"
 #include "Hephaestus/Renderer/Texture.h"
 #include "Hephaestus/ImGui/ImGui.h"
 

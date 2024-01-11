@@ -91,11 +91,11 @@ namespace Hep
 				if (data)
 				{
 					std::string file = (char*)data->Data;
-					if (AssetManager::MoveFile(file, m_MovePath))
+					/*if (AssetManager::MoveFile(file, m_MovePath))
 					{
 						HEP_CORE_INFO("Moved File: " + file + " to " + m_MovePath);
 						UpdateCurrentDirectory(m_CurrentDirIndex);
-					}
+					}*/
 					m_IsDragging = false;
 				}
 				ImGui::EndDragDropTarget();
@@ -174,6 +174,13 @@ namespace Hep
 							HEP_CORE_INFO("Creating Prefab...");
 						}
 
+						if (ImGui::MenuItem("Physics Material"))
+						{
+							AssetManager::CreateAsset<PhysicsMaterial>("New Physics Material.hpm", AssetType::PhysicsMat, m_CurrentDirIndex,
+								0.6F, 0.6F, 0.0F);
+							UpdateCurrentDirectory(m_CurrentDirIndex);
+						}
+
 						ImGui::EndMenu();
 					}
 
@@ -200,10 +207,10 @@ namespace Hep
 				if (data)
 				{
 					std::string a = (char*)data->Data;
-					if (AssetManager::MoveFile(a, m_MovePath))
+					/*if (AssetManager::MoveFile(a, m_MovePath))
 					{
 						UpdateCurrentDirectory(m_CurrentDirIndex);
-					}
+					}*/
 
 					m_IsDragging = false;
 				}
@@ -293,6 +300,7 @@ namespace Hep
 		ImGui::BeginGroup();
 
 		size_t fileID = AssetTypes::GetAssetTypeID(asset->Extension);
+		fileID = m_AssetIconMap.find(fileID) != m_AssetIconMap.end() ? fileID : -1;
 		RendererID iconRef = m_AssetIconMap[fileID]->GetRendererID();
 		float columnWidth = ImGui::GetColumnWidth();
 

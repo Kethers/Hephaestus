@@ -9,6 +9,8 @@
 
 #include "Hephaestus/Renderer/Renderer.h"
 
+#include "Hephaestus/Utilities/StringUtils.h"
+
 namespace Hep
 {
 #define UNIFORM_LOGGING 0
@@ -153,47 +155,14 @@ namespace Hep
 		return nullptr;
 	}
 
-	const char* FindToken(const std::string& string, const std::string& token)
-	{
-		return FindToken(string.c_str(), token);
-	}
-
-	std::vector<std::string> SplitString(const std::string& string, const std::string& delimiters)
-	{
-		size_t start = 0;
-		size_t end = string.find_first_of(delimiters);
-
-		std::vector<std::string> result;
-
-		while (end <= std::string::npos)
-		{
-			std::string token = string.substr(start, end - start);
-			if (!token.empty())
-				result.push_back(token);
-
-			if (end == std::string::npos)
-				break;
-
-			start = end + 1;
-			end = string.find_first_of(delimiters, start);
-		}
-
-		return result;
-	}
-
-	std::vector<std::string> SplitString(const std::string& string, const char delimiter)
-	{
-		return SplitString(string, std::string(1, delimiter));
-	}
-
 	std::vector<std::string> Tokenize(const std::string& string)
 	{
-		return SplitString(string, " \t\n\r");
+		return Utils::SplitString(string, " \t\n\r");
 	}
 
 	std::vector<std::string> GetLines(const std::string& string)
 	{
-		return SplitString(string, "\n");
+		return Utils::SplitString(string, "\n");
 	}
 
 	std::string GetBlock(const char* str, const char** outPosition)
@@ -219,12 +188,6 @@ namespace Hep
 		uint32_t length = end - str + 1;
 		return std::string(str, length);
 	}
-
-	bool StartsWith(const std::string& string, const std::string& start)
-	{
-		return string.find(start) == 0;
-	}
-
 
 	void OpenGLShader::Parse()
 	{
@@ -328,7 +291,7 @@ namespace Hep
 				declaration = new OpenGLShaderUniformDeclaration(domain, t, name, count);
 			}
 
-			if (StartsWith(name, "r_"))
+			if (Utils::StartsWith(name, "r_"))
 			{
 				if (domain == ShaderDomain::Vertex)
 					((OpenGLShaderUniformBufferDeclaration*)m_VSRendererUniformBuffers.front())->PushUniform(

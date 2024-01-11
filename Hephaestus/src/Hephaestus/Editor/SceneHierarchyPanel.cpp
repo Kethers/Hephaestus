@@ -12,7 +12,7 @@
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
 #include "Hephaestus/Renderer/MeshFactory.h"
 
-#include "Hephaestus/Utilities/AssetManager.h"
+#include "Hephaestus/Asset/AssetManager.h"
 
 #include <assimp/scene.h>
 
@@ -524,14 +524,6 @@ namespace Hep
 					ImGui::CloseCurrentPopup();
 				}
 			}
-			if (!m_SelectionContext.HasComponent<PhysicsMaterialComponent>())
-			{
-				if (ImGui::Button("Physics Material"))
-				{
-					m_SelectionContext.AddComponent<PhysicsMaterialComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-			}
 			if (!m_SelectionContext.HasComponent<BoxColliderComponent>())
 			{
 				if (ImGui::Button("Box Collider"))
@@ -917,17 +909,6 @@ namespace Hep
 			}
 		});
 
-		DrawComponent<PhysicsMaterialComponent>("Physics Material", entity, [](PhysicsMaterialComponent& pmc)
-		{
-			UI::BeginPropertyGrid();
-
-			UI::Property("Static Friction", pmc.StaticFriction);
-			UI::Property("Dynamic Friction", pmc.DynamicFriction);
-			UI::Property("Bounciness", pmc.Bounciness);
-
-			UI::EndPropertyGrid();
-		});
-
 		DrawComponent<BoxColliderComponent>("Box Collider", entity, [](BoxColliderComponent& bcc)
 		{
 			UI::BeginPropertyGrid();
@@ -939,6 +920,7 @@ namespace Hep
 
 			// UI::Property("Offset", bcc.Offset);
 			UI::Property("Is Trigger", bcc.IsTrigger);
+			UI::PropertyAssetReference("Material", bcc.Material, AssetType::PhysicsMat);
 
 			UI::EndPropertyGrid();
 		});
@@ -953,6 +935,7 @@ namespace Hep
 			}
 
 			UI::Property("Is Trigger", scc.IsTrigger);
+			UI::PropertyAssetReference("Material", scc.Material, AssetType::PhysicsMat);
 
 			UI::EndPropertyGrid();
 		});
@@ -970,6 +953,7 @@ namespace Hep
 				changed = true;
 
 			UI::Property("Is Trigger", ccc.IsTrigger);
+			UI::PropertyAssetReference("Material", ccc.Material, AssetType::PhysicsMat);
 
 			if (changed)
 			{
@@ -1003,6 +987,7 @@ namespace Hep
 			}
 
 			UI::Property("Is Trigger", mcc.IsTrigger);
+			UI::PropertyAssetReference("Material", mcc.Material, AssetType::PhysicsMat);
 
 			if (UI::Property("Override Mesh", mcc.OverrideMesh))
 			{

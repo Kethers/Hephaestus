@@ -1,6 +1,6 @@
 #include "heppch.h"
 #include "Hephaestus/Utilities/FileSystem.h"
-#include "Hephaestus/Utilities/AssetManager.h"
+#include "Hephaestus/Asset/AssetManager.h"
 
 #include <filesystem>
 

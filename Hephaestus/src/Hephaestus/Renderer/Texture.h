@@ -3,7 +3,7 @@
 #include "Hephaestus/Core/Base.h"
 #include "Hephaestus/Core/Buffer.h"
 #include "RendererAPI.h"
-#include "Hephaestus/Utilities/Asset.h"
+#include "..\Asset\Assets.h"
 
 namespace Hep
 {

@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "Hephaestus/Utilities/Asset.h"
-#include "Hephaestus/Utilities/AssetManager.h"
+#include "..\Asset\Assets.h"
+#include "Hephaestus/Asset/AssetManager.h"
 
 #include "imgui/imgui.h"
 

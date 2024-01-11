@@ -1,7 +1,9 @@
 ﻿#pragma once
 
+#include "Assets.h"
+#include "AssetSerializer.h"
 #include "Hephaestus/Utilities/FileSystem.h"
-#include "Hephaestus/Utilities/Asset.h"
+#include "Hephaestus/Utilities/StringUtils.h"
 
 #include <map>
 #include <unordered_map>
@@ -46,7 +48,6 @@ namespace Hep
 
 		static DirectoryInfo& GetDirectoryInfo(int index);
 		static std::vector<Ref<Asset>> GetAssetsInDirectory(int dirIndex);
-		static std::vector<std::string> GetDirectoryNames(const std::string& filepath);
 
 		static SearchResults SearchFiles(const std::string& query, const std::string& searchPath);
 		static std::string GetParentPath(const std::string& path);
@@ -55,6 +56,27 @@ namespace Hep
 
 		static AssetHandle GetAssetIDForFile(const std::string& filepath);
 		static bool IsAssetHandleValid(AssetHandle assetHandle);
+
+		template <typename T, typename... Args>
+		static Ref<T> CreateAsset(const std::string& filename, AssetType type, int directoryIndex, Args&&... args)
+		{
+			static_assert(std::is_base_of<Asset, T>::value, "CreateAsset only works for types derived from Asset");
+
+			auto& directory = GetDirectoryInfo(directoryIndex);
+
+			Ref<T> asset = Ref<T>::Create(std::forward<Args>(args)...);
+			asset->Type = type;
+			asset->FilePath = directory.FilePath + "/" + filename;
+			asset->FileName = Utils::RemoveExtension(Utils::GetFilename(asset->FilePath));
+			asset->Extension = Utils::GetExtension(filename);
+			asset->ParentDirectory = directoryIndex;
+			asset->Handle = std::hash<std::string>()(asset->FilePath);
+			s_LoadedAssets[asset->Handle] = asset;
+
+			AssetSerializer::SerializeAsset(asset);
+
+			return asset;
+		}
 
 		template <typename T>
 		static Ref<T> GetAsset(AssetHandle assetHandle)
@@ -68,21 +90,12 @@ namespace Hep
 			return s_LoadedAssets.find(assetHandle) != s_LoadedAssets.end() && s_LoadedAssets[assetHandle]->Type == type;
 		}
 
-		// TODO: This will NOT live here
-		static bool MoveFile(const std::string& originalPath, const std::string& dest);
-
 		static std::string StripExtras(const std::string& filename);
 
 	private:
-		static std::string ParseFilename(const std::string& filepath, const std::string& delim);
-		static std::string ParseFileType(const std::string& filename);
-		static std::string RemoveExtension(const std::string& filename);
-
-		static void RemoveDirectory(DirectoryInfo& dir);
+		// static void RemoveDirectory(DirectoryInfo& dir);
 
 		static void ImportAsset(const std::string& filepath, bool reimport = false, int parentIndex = -1);
-		static void CreateMetaFile(const Ref<Asset>& asset);
-		static void LoadMetaData(Ref<Asset>& asset, const std::string& filepath);
 		static void ConvertAsset(const std::string& assetPath, const std::string& conversionType);
 		static int ProcessDirectory(const std::string& directoryPath, int parentIndex = -1);
 		static void ReloadAssets();

@@ -10,7 +10,7 @@
 
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Physics/Physics.h"
-#include "Hephaestus/Utilities/AssetManager.h"
+#include "Hephaestus/Asset/AssetManager.h"
 
 #include "Input.h"
 

@@ -185,6 +185,10 @@ namespace Hep
 	void PXPhysicsWrappers::AddBoxCollider(PhysicsActor& actor)
 	{
 		auto& collider = actor.m_Entity.GetComponent<BoxColliderComponent>();
+
+		if (!collider.Material)
+			collider.Material = Ref<PhysicsMaterial>::Create(0.6F, 0.6F, 0.0F);
+
 		glm::vec3 size = actor.m_Entity.Transform().Scale;
 		glm::vec3 colliderSize = collider.Size;
 
@@ -193,8 +197,9 @@ namespace Hep
 		if (size.z != 0.0F) colliderSize.z *= size.z;
 
 		physx::PxBoxGeometry boxGeometry = physx::PxBoxGeometry(colliderSize.x / 2.0F, colliderSize.y / 2.0F, colliderSize.z / 2.0F);
-		physx::PxShape* shape =
-			physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, boxGeometry, *actor.m_MaterialInternal);
+		physx::PxMaterial* material = s_Physics->createMaterial(collider.Material->StaticFriction, collider.Material->DynamicFriction,
+			collider.Material->Bounciness);
+		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, boxGeometry, *material);
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 		shape->setLocalPose(ToPhysXTransform(glm::translate(glm::mat4(1.0F), collider.Offset)));
@@ -204,14 +209,18 @@ namespace Hep
 	{
 		auto& collider = actor.m_Entity.GetComponent<SphereColliderComponent>();
 
+		if (!collider.Material)
+			collider.Material = Ref<PhysicsMaterial>::Create(0.6F, 0.6F, 0.0F);
+
 		float colliderRadius = collider.Radius;
 
 		glm::vec3 size = actor.m_Entity.Transform().Scale;
 		if (size.x != 0.0F) colliderRadius *= size.x;
 
 		auto sphereGeometry = physx::PxSphereGeometry(colliderRadius);
-		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, sphereGeometry,
-			*actor.m_MaterialInternal);
+		physx::PxMaterial* material = s_Physics->createMaterial(collider.Material->StaticFriction, collider.Material->DynamicFriction,
+			collider.Material->Bounciness);
+		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, sphereGeometry, *material);
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 	}
@@ -219,6 +228,9 @@ namespace Hep
 	void PXPhysicsWrappers::AddCapsuleCollider(PhysicsActor& actor)
 	{
 		auto& collider = actor.m_Entity.GetComponent<CapsuleColliderComponent>();
+
+		if (!collider.Material)
+			collider.Material = Ref<PhysicsMaterial>::Create(0.6F, 0.6F, 0.0F);
 
 		float colliderRadius = collider.Radius;
 		float colliderHeight = collider.Height;
@@ -228,8 +240,9 @@ namespace Hep
 		if (size.y != 0.0F) colliderHeight *= size.y;
 
 		physx::PxCapsuleGeometry capsuleGeometry = physx::PxCapsuleGeometry(colliderRadius, colliderHeight / 2.0F);
-		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, capsuleGeometry,
-			*actor.m_MaterialInternal);
+		physx::PxMaterial* material = s_Physics->createMaterial(collider.Material->StaticFriction, collider.Material->DynamicFriction,
+			collider.Material->Bounciness);
+		physx::PxShape* shape = physx::PxRigidActorExt::createExclusiveShape(*actor.m_ActorInternal, capsuleGeometry, *material);
 		shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 		shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
 		shape->setLocalPose(physx::PxTransform(physx::PxQuat(physx::PxHalfPi, physx::PxVec3(0, 0, 1))));
@@ -238,7 +251,14 @@ namespace Hep
 	void PXPhysicsWrappers::AddMeshCollider(PhysicsActor& actor)
 	{
 		auto& collider = actor.m_Entity.GetComponent<MeshColliderComponent>();
+
+		if (!collider.Material)
+			collider.Material = Ref<PhysicsMaterial>::Create(0.6F, 0.6F, 0.0F);
+
 		glm::vec3 size = actor.m_Entity.Transform().Scale;
+		physx::PxMaterial* material = s_Physics->createMaterial(collider.Material->StaticFriction, collider.Material->DynamicFriction,
+			collider.Material->Bounciness);
+		physx::PxMaterial* materials[] = { material };
 
 		if (collider.IsConvex)
 		{
@@ -247,7 +267,6 @@ namespace Hep
 
 			for (auto shape : shapes)
 			{
-				physx::PxMaterial* materials[] = { actor.m_MaterialInternal };
 				shape->setMaterials(materials, 1);
 				shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 				shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);
@@ -261,7 +280,6 @@ namespace Hep
 
 			for (auto shape : shapes)
 			{
-				physx::PxMaterial* materials[] = { actor.m_MaterialInternal };
 				shape->setMaterials(materials, 1);
 				shape->setFlag(physx::PxShapeFlag::eSIMULATION_SHAPE, !collider.IsTrigger);
 				shape->setFlag(physx::PxShapeFlag::eTRIGGER_SHAPE, collider.IsTrigger);

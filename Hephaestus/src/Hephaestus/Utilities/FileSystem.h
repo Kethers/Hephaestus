@@ -23,6 +23,7 @@ namespace Hep
 	public:
 		static bool CreateFolder(const std::string& filepath);
 		static bool Exists(const std::string& filepath);
+		// static bool MoveFile(const std::string& filepath, const std::string& dest);
 
 	public:
 		using FileSystemChangedCallbackFn = std::function<void(FileSystemChangedEvent)>;

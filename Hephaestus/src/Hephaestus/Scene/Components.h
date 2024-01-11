@@ -10,6 +10,7 @@
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Renderer/SceneEnvironment.h"
 #include "Hephaestus/Scene/SceneCamera.h"
+#include "..\Asset\Assets.h"
 
 namespace Hep
 {
@@ -183,23 +184,12 @@ namespace Hep
 		RigidBodyComponent(const RigidBodyComponent& other) = default;
 	};
 
-	// TODO: This will eventually be a resource, but that requires object referencing through the editor
-	struct PhysicsMaterialComponent
-	{
-		float StaticFriction = 1.0f;
-		float DynamicFriction = 1.0f;
-		float Bounciness = 1.0f;
-
-		PhysicsMaterialComponent() = default;
-		PhysicsMaterialComponent(const PhysicsMaterialComponent& other) = default;
-	};
-
 	struct BoxColliderComponent
 	{
 		glm::vec3 Size = { 1.0f, 1.0f, 1.0f };
 		glm::vec3 Offset = { 0.0f, 0.0f, 0.0f };
-
 		bool IsTrigger = false;
+		Ref<PhysicsMaterial> Material;
 
 		// The mesh that will be drawn in the editor to show the collision bounds
 		Ref<Mesh> DebugMesh;
@@ -212,6 +202,7 @@ namespace Hep
 	{
 		float Radius = 0.5f;
 		bool IsTrigger = false;
+		Ref<PhysicsMaterial> Material;
 
 		// The mesh that will be drawn in the editor to show the collision bounds
 		Ref<Mesh> DebugMesh;
@@ -225,6 +216,7 @@ namespace Hep
 		float Radius = 0.5f;
 		float Height = 1.0f;
 		bool IsTrigger = false;
+		Ref<PhysicsMaterial> Material;
 
 		Ref<Mesh> DebugMesh;
 
@@ -239,6 +231,7 @@ namespace Hep
 		bool IsConvex = false;
 		bool IsTrigger = false;
 		bool OverrideMesh = false;
+		Ref<PhysicsMaterial> Material;
 
 		MeshColliderComponent() = default;
 		MeshColliderComponent(const MeshColliderComponent& other) = default;
