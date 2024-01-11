@@ -2,6 +2,9 @@
 #include "AssetManager.h"
 
 #include "Hephaestus/Renderer/Mesh.h"
+#include "Hephaestus/Renderer/SceneRenderer.h"
+
+#include "yaml-cpp/yaml.h"
 
 #include <filesystem>
 
@@ -72,19 +75,25 @@ namespace Hep
 		s_AssetsChangeCallback = callback;
 	}
 
+	void AssetManager::Shutdown()
+	{
+		s_LoadedAssets.clear();
+		s_Directories.clear();
+	}
+
 	DirectoryInfo& AssetManager::GetDirectoryInfo(int index)
 	{
 		HEP_CORE_ASSERT(index >= 0 && index < s_Directories.size());
 		return s_Directories[index];
 	}
 
-	std::vector<Asset> AssetManager::GetAssetsInDirectory(int dirIndex)
+	std::vector<Ref<Asset>> AssetManager::GetAssetsInDirectory(int dirIndex)
 	{
-		std::vector<Asset> results;
+		std::vector<Ref<Asset>> results;
 
 		for (auto& asset : s_LoadedAssets)
 		{
-			if (asset.second.ParentDirectory == dirIndex)
+			if (asset.second->ParentDirectory == dirIndex)
 				results.push_back(asset.second);
 		}
 
@@ -195,10 +204,10 @@ namespace Hep
 			{
 				for (auto it = s_LoadedAssets.begin(); it != s_LoadedAssets.end(); ++it)
 				{
-					if (it->second.FileName == e.OldName)
+					if (it->second->FileName == e.OldName)
 					{
-						it->second.FilePath = e.FilePath;
-						it->second.FileName = e.NewName;
+						it->second->FilePath = e.FilePath;
+						it->second->FileName = e.NewName;
 					}
 				}
 			}
@@ -221,7 +230,7 @@ namespace Hep
 			{
 				for (auto it = s_LoadedAssets.begin(); it != s_LoadedAssets.end(); it++)
 				{
-					if (it->second.FilePath != e.FilePath)
+					if (it->second->FilePath != e.FilePath)
 						continue;
 
 					s_LoadedAssets.erase(it);
@@ -249,7 +258,7 @@ namespace Hep
 
 			for (const auto& [key, asset] : s_LoadedAssets)
 			{
-				if (asset.FileName.find(query) != std::string::npos && asset.FilePath.find(searchPath) != std::string::npos)
+				if (asset->FileName.find(query) != std::string::npos && asset->FilePath.find(searchPath) != std::string::npos)
 				{
 					results.Assets.push_back(asset);
 				}
@@ -273,6 +282,22 @@ namespace Hep
 		}
 
 		return false;
+	}
+
+	AssetHandle AssetManager::GetAssetIDForFile(const std::string& filepath)
+	{
+		for (auto& [id, asset] : s_LoadedAssets)
+		{
+			if (asset->FilePath == filepath)
+				return id;
+		}
+
+		return 0;
+	}
+
+	bool AssetManager::IsAssetHandleValid(AssetHandle assetHandle)
+	{
+		return s_LoadedAssets.find(assetHandle) != s_LoadedAssets.end();
 	}
 
 	std::vector<std::string> AssetManager::GetDirectoryNames(const std::string& filepath)
@@ -373,45 +398,39 @@ namespace Hep
 
 	void AssetManager::ImportAsset(const std::string& filepath, bool reimport, int parentIndex)
 	{
-		Asset asset;
-		asset.ID = UUID();
-		asset.FilePath = filepath;
-		asset.Extension = ParseFileType(filepath);
-		asset.FileName = RemoveExtension(ParseFilename(filepath, "/\\"));
-		asset.Type = AssetTypes::GetAssetTypeFromExtension(asset.Extension);
-		asset.ParentDirectory = parentIndex;
+		std::string extension = ParseFileType(filepath);
+		if (extension == "meta")
+			return;
 
-		switch (asset.Type)
+		Ref<Asset> asset;
+		AssetType type = AssetTypes::GetAssetTypeFromExtension(extension);
+
+		switch (type)
 		{
 			case AssetType::Scene:
 			{
-				asset.Data = (void*)asset.FilePath.c_str();
+				asset = Ref<Asset>::Create();
 				break;
 			}
 			case AssetType::Mesh:
 			{
-				if (asset.Extension == "blend")
-					break;
-
-				Ref<Mesh> mesh = Ref<Mesh>::Create(filepath);
-				// NOTE: Required to make sure that the asset doesn't get destroyed when Ref goes out of scope
-				mesh->IncRefCount();
-				asset.Data = mesh.Raw();
+				if (extension == "blend")
+					asset = Ref<Asset>::Create();
+				else
+					asset = Ref<Mesh>::Create(filepath);
 				break;
 			}
 			case AssetType::Texture:
 			{
-				Ref<Texture2D> texture = Texture2D::Create(filepath);
-				texture->IncRefCount();
-				asset.Data = texture.Raw();
+				asset = Texture2D::Create(filepath);
 				break;
 			}
 			case AssetType::EnvMap:
 			{
+				asset = Ref<Asset>::Create();
 				// TODO
-				/*Ref<TextureCube> texture = Ref<TextureCube>::Create(filepath);
-				texture->IncRefCount();
-				asset.Data = texture.Raw();*/
+				/*auto [radiance, irradiance] = SceneRenderer::CreateEnvironmentMap(filepath);
+				asset = Ref<Environment>::Create(radiance, irradiance);*/
 				break;
 			}
 			case AssetType::Audio:
@@ -420,31 +439,84 @@ namespace Hep
 			}
 			case AssetType::Script:
 			{
-				asset.Data = &asset.FilePath;
+				asset = Ref<Asset>::Create();
 				break;
 			}
 			case AssetType::Other:
 			{
-				asset.Data = &asset.FilePath;
+				asset = Ref<Asset>::Create();
 				break;
 			}
 		}
 
-		if (reimport)
+		asset->Handle = std::hash<std::string>()(filepath);
+		asset->FilePath = filepath;
+		asset->FileName = RemoveExtension(ParseFilename(filepath, "/\\"));
+		asset->Extension = extension;
+		asset->ParentDirectory = parentIndex;
+		asset->Type = type;
+
+		bool hasMeta = FileSystem::Exists(filepath + ".meta");
+		if (hasMeta)
+			LoadMetaData(asset, filepath + ".meta");
+
+		std::replace(asset->FilePath.begin(), asset->FilePath.end(), '\\', '/');
+
+		if (!hasMeta || reimport)
+			CreateMetaFile(asset);
+
+		/*if (reimport)
 		{
 			for (auto it = s_LoadedAssets.begin(); it != s_LoadedAssets.end(); ++it)
 			{
 				if (it->second.FilePath == filepath)
 				{
-					delete it->second.Data;	// TODO: buggy memory leak
+					delete it->second.Data; // TODO: buggy memory leak
 					it->second.Data = asset.Data;
 					asset.Data = nullptr;
 					return;
 				}
 			}
-		}
+		}*/
 
-		s_LoadedAssets[asset.ID] = asset;
+		s_LoadedAssets[asset->Handle] = asset;
+	}
+
+	void AssetManager::CreateMetaFile(const Ref<Asset>& asset)
+	{
+		if (FileSystem::Exists(asset->FilePath + ".meta"))
+			return;
+
+		YAML::Emitter out;
+		out << YAML::BeginMap;
+		out << YAML::Key << "Asset" << YAML::Value << asset->Handle;
+		out << YAML::Key << "FileName" << YAML::Value << asset->FileName;
+		out << YAML::Key << "FilePath" << YAML::Value << asset->FilePath;
+		out << YAML::Key << "Extension" << YAML::Value << asset->Extension;
+		out << YAML::Key << "Directory" << YAML::Value << asset->ParentDirectory;
+		out << YAML::Key << "Type" << YAML::Value << (int)asset->Type;
+		out << YAML::EndMap;
+
+		std::ofstream fout(asset->FilePath + ".meta");
+		fout << out.c_str();
+	}
+
+	void AssetManager::LoadMetaData(Ref<Asset>& asset, const std::string& filepath)
+	{
+		std::ifstream stream(filepath);
+		std::stringstream strStream;
+		strStream << stream.rdbuf();
+
+		YAML::Node data = YAML::Load(strStream.str());
+		if (!data["Asset"])
+			HEP_CORE_ASSERT(false, "Invalid File Format");
+
+		asset->Handle = data["Asset"].as<AssetHandle>();
+		asset->FileName = data["FileName"].as<std::string>();
+		asset->FilePath = data["FilePath"].as<std::string>();
+		asset->Extension = data["Extension"].as<std::string>();
+		asset->ParentDirectory = data["Directory"].as<int>();
+		asset->Type = (AssetType)data["Type"].as<int>();
 	}
 
 	int AssetManager::ProcessDirectory(const std::string& directoryPath, int parentIndex)
@@ -453,18 +525,19 @@ namespace Hep
 		dirInfo.DirectoryName = std::filesystem::path(directoryPath).filename().string();
 		dirInfo.ParentIndex = parentIndex;
 		dirInfo.FilePath = directoryPath;
-		dirInfo.DirectoryIndex = s_Directories.size();
 		s_Directories.push_back(dirInfo);
+		int currentIndex = s_Directories.size() - 1;
+		s_Directories[currentIndex].DirectoryIndex = currentIndex;
 
 		if (parentIndex != -1)
-			s_Directories[parentIndex].ChildrenIndices.push_back(dirInfo.DirectoryIndex);
+			s_Directories[parentIndex].ChildrenIndices.push_back(currentIndex);
 
 		for (auto entry : std::filesystem::directory_iterator(directoryPath))
 		{
 			if (entry.is_directory())
-				ProcessDirectory(entry.path().string(), dirInfo.DirectoryIndex);
+				ProcessDirectory(entry.path().string(), currentIndex);
 			else
-				ImportAsset(entry.path().string(), false, dirInfo.DirectoryIndex);
+				ImportAsset(entry.path().string(), false, currentIndex);
 		}
 
 		return dirInfo.DirectoryIndex;
@@ -475,7 +548,7 @@ namespace Hep
 		ProcessDirectory("assets");
 	}
 
-	std::unordered_map<UUID, Asset> AssetManager::s_LoadedAssets;
+	std::unordered_map<AssetHandle, Ref<Asset>> AssetManager::s_LoadedAssets;
 	std::vector<DirectoryInfo> AssetManager::s_Directories;
 	AssetManager::AssetsChangeEventFn AssetManager::s_AssetsChangeCallback;
 }

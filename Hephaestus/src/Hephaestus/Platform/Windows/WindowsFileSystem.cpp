@@ -35,6 +35,16 @@ namespace Hep
 		return true;
 	}
 
+	bool FileSystem::Exists(const std::string& filepath)
+	{
+		DWORD attribs = GetFileAttributesA(filepath.c_str());
+
+		if (attribs == INVALID_FILE_ATTRIBUTES)
+			return false;
+
+		return true;
+	}
+
 	void FileSystem::StartWatching()
 	{
 		DWORD threadId;

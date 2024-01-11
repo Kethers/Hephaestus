@@ -3,6 +3,7 @@
 #include "Hephaestus/Core/Base.h"
 #include "Hephaestus/Core/Buffer.h"
 #include "RendererAPI.h"
+#include "Hephaestus/Utilities/Asset.h"
 
 namespace Hep
 {
@@ -21,7 +22,7 @@ namespace Hep
 		Repeat = 2
 	};
 
-	class Texture : public RefCounted
+	class Texture : public Asset
 	{
 	public:
 		virtual ~Texture() {}

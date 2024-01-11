@@ -52,6 +52,8 @@ namespace Hep
 
 		Physics::Shutdown();
 		ScriptEngine::Shutdown();
+
+		AssetManager::Shutdown();
 	}
 
 	void Application::PushLayer(Layer* layer)

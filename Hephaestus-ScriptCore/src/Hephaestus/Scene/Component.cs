@@ -215,6 +215,7 @@ namespace Hep
 			SetAngularVelocity_Native(Entity.ID, ref velocity);
 		}
 
+		// Rotation should be in radians
 		public void Rotate(Vector3 rotation)
 		{
 			Rotate_Native(Entity.ID, ref rotation);

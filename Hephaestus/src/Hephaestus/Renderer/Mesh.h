@@ -5,6 +5,8 @@
 
 #include "Hephaestus/Core/Timestep.h"
 
+#include "Hephaestus/Utilities/Asset.h"
+
 #include "Hephaestus/Renderer/Pipeline.h"
 #include "Hephaestus/Renderer/IndexBuffer.h"
 #include "Hephaestus/Renderer/VertexBuffer.h"
@@ -131,7 +133,7 @@ namespace Hep
 		std::string NodeName, MeshName;
 	};
 
-	class Mesh : public RefCounted
+	class Mesh : public Asset
 	{
 	public:
 		Mesh(const std::string& filename);

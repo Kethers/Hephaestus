@@ -7,13 +7,13 @@ Environment:
     Multiplier: 1
 Entities:
   - Entity: 12392346523579991874
-    Parent: 0
+    Parent: 5561134054991576534
     Children:
       []
     TagComponent:
       Tag: Camera
     TransformComponent:
-      Position: [0, 1.0587908, 0]
+      Position: [0, 1, 0]
       Rotation: [0, 0.785398185, 0]
       Scale: [1, 1, 1]
     CameraComponent:
@@ -29,13 +29,13 @@ Entities:
   - Entity: 5561134054991576534
     Parent: 0
     Children:
-      []
+      - Handle: 12392346523579991874
     TagComponent:
       Tag: Player
     TransformComponent:
       Position: [2.71265602, 1.24520636, 4.11461163]
       Rotation: [0, 0, 0]
-      Scale: [0.859999776, 0.860000014, 0.859999776]
+      Scale: [1, 1, 1]
     ScriptComponent:
       ModuleName: FPSExample.FPSPlayer
       StoredFields:
@@ -48,17 +48,11 @@ Entities:
         - Name: JumpForce
           Type: 1
           Data: 1
-        - Name: CameraForwardOffset
-          Type: 1
-          Data: 0.200000003
-        - Name: CameraYOffset
-          Type: 1
-          Data: 0.850000024
         - Name: MouseSensitivity
           Type: 1
-          Data: 2
+          Data: 4
     MeshComponent:
-      AssetPath: assets\meshes\Capsule.fbx
+      AssetID: 17523092873766587173
     RigidBodyComponent:
       BodyType: 1
       Mass: 1
@@ -93,7 +87,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      AssetPath: assets\meshes\Tests\TransformTest.fbx
+      AssetID: 11407590181439473350
     RigidBodyComponent:
       BodyType: 0
       Mass: 1
@@ -153,7 +147,7 @@ Entities:
       Rotation: [9.9061559e-08, 0.719529092, -0.70863378]
       Scale: [0.389999807, 0.389999926, 0.389999837]
     MeshComponent:
-      AssetPath: assets\meshes\Cube1m.fbx
+      AssetID: 8065591610254392454
     RigidBodyComponent:
       BodyType: 1
       Mass: 0.200000003
@@ -188,7 +182,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      AssetPath: assets\meshes\Sphere1m.fbx
+      AssetID: 14983128427839407070
     RigidBodyComponent:
       BodyType: 1
       Mass: 1
@@ -222,7 +216,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      AssetPath: assets\meshes\Sphere1m.fbx
+      AssetID: 14983128427839407070
     RigidBodyComponent:
       BodyType: 1
       Mass: 1
@@ -256,7 +250,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      AssetPath: assets\meshes\Sphere1m.fbx
+      AssetID: 14983128427839407070
     RigidBodyComponent:
       BodyType: 1
       Mass: 1

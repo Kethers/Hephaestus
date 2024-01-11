@@ -682,37 +682,22 @@ namespace Hep
 
 		if (ImGui::BeginDragDropTarget())
 		{
-			auto data = ImGui::AcceptDragDropPayload("scene_entity_objectP");
-			if (data)
-			{
-				auto d = (DragDropData*)data->Data;
-				if (d->Type == "Mesh")
-				{
-					auto entity = m_EditorScene->CreateEntity(d->Name);
-					entity.AddComponent<MeshComponent>(Ref<Mesh>::Create(d->SourcePath));
-				}
-			}
-			ImGui::EndDragDropTarget();
-		}
-
-		/* Payload Implementation For Getting Assets In The Viewport From Asset Manager */
-		if (ImGui::BeginDragDropTarget())
-		{
 			auto data = ImGui::AcceptDragDropPayload("scene_entity_assetsP");
 			if (data)
 			{
-				UUID assetId = *(UUID*)data->Data;
-				Asset& asset = AssetManager::GetAssetFromId(assetId);
+				AssetHandle assetHandle = *(AssetHandle*)data->Data;
+				Ref<Asset> asset = AssetManager::GetAsset<Asset>(assetHandle);
 
-				if (asset.Type == AssetType::Scene)
+				if (asset->Type == AssetType::Scene)
 				{
-					OpenScene((char*)asset.Data);
+					OpenScene(asset->FilePath);
 				}
 
-				if (asset.Type == AssetType::Mesh)
+				if (asset->Type == AssetType::Mesh)
 				{
-					Entity entity = m_EditorScene->CreateEntity(asset.FileName);
-					entity.AddComponent<MeshComponent>(AssetManager::InstantiateAsset<Mesh>(assetId));
+					Entity entity = m_EditorScene->CreateEntity(asset->FileName);
+					entity.AddComponent<MeshComponent>(Ref<Mesh>(asset));
+					SelectEntity(entity);
 				}
 			}
 			ImGui::EndDragDropTarget();

@@ -30,3 +30,6 @@ hooks/
 
 # imgui
 #**imgui.ini
+
+# Meta Files
+**.meta

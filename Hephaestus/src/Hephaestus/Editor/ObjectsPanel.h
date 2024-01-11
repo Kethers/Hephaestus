@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Hephaestus/Renderer/Texture.h"
+#include "Hephaestus/Utilities/AssetManager.h"
 
 namespace Hep
 {
@@ -10,6 +11,9 @@ namespace Hep
 		ObjectsPanel();
 
 		void OnImGuiRender();
+
+	private:
+		void DrawObject(const char* label, AssetHandle handle);
 
 	private:
 		Ref<Texture2D> m_CubeImage;

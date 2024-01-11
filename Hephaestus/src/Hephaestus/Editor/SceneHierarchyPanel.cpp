@@ -12,6 +12,8 @@
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
 #include "Hephaestus/Renderer/MeshFactory.h"
 
+#include "Hephaestus/Utilities/AssetManager.h"
+
 #include <assimp/scene.h>
 
 #include "Hephaestus/Core/Math/Mat4.h"
@@ -581,26 +583,9 @@ namespace Hep
 
 		DrawComponent<MeshComponent>("Mesh", entity, [](MeshComponent& mc)
 		{
-			ImGui::Columns(3);
-			ImGui::SetColumnWidth(0, 100);
-			ImGui::SetColumnWidth(1, 300);
-			ImGui::SetColumnWidth(2, 40);
-			ImGui::Text("File Path");
-			ImGui::NextColumn();
-			ImGui::PushItemWidth(-1);
-			if (mc.Mesh)
-				ImGui::InputText("##meshfilepath", (char*)mc.Mesh->GetFilePath().c_str(), 256, ImGuiInputTextFlags_ReadOnly);
-			else
-				ImGui::InputText("##meshfilepath", (char*)"Null", 256, ImGuiInputTextFlags_ReadOnly);
-			ImGui::PopItemWidth();
-			ImGui::NextColumn();
-			if (ImGui::Button("...##openmesh"))
-			{
-				std::string file = Application::Get().OpenFile();
-				if (!file.empty())
-					mc.Mesh = Ref<Mesh>::Create(file);
-			}
-			ImGui::Columns(1);
+			UI::BeginPropertyGrid();
+			UI::PropertyAssetReference("Mesh", mc.Mesh, AssetType::Mesh);
+			UI::EndPropertyGrid();
 		});
 
 		DrawComponent<CameraComponent>("Camera", entity, [](CameraComponent& cc)
@@ -996,37 +981,19 @@ namespace Hep
 
 		DrawComponent<MeshColliderComponent>("Mesh Collider", entity, [&](MeshColliderComponent& mcc)
 		{
+			UI::BeginPropertyGrid();
+
 			if (mcc.OverrideMesh)
 			{
-				ImGui::Columns(3);
-				ImGui::SetColumnWidth(0, 100);
-				ImGui::SetColumnWidth(1, 300);
-				ImGui::SetColumnWidth(2, 40);
-				ImGui::Text("File Path");
-				ImGui::NextColumn();
-				ImGui::PushItemWidth(-1);
-				if (mcc.CollisionMesh)
-					ImGui::InputText("##meshfilepath", (char*)mcc.CollisionMesh->GetFilePath().c_str(), 256, ImGuiInputTextFlags_ReadOnly);
-				else
-					ImGui::InputText("##meshfilepath", (char*)"Null", 256, ImGuiInputTextFlags_ReadOnly);
-				ImGui::PopItemWidth();
-				ImGui::NextColumn();
-				if (ImGui::Button("...##openmesh"))
+				if (UI::PropertyAssetReference("Mesh", mcc.CollisionMesh, AssetType::Mesh))
 				{
-					std::string file = Application::Get().OpenFile();
-					if (!file.empty())
-					{
-						mcc.CollisionMesh = Ref<Mesh>::Create(file);
-						if (mcc.IsConvex)
-							PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
-						else
-							PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
-					}
+					if (mcc.IsConvex)
+						PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
+					else
+						PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
 				}
-				ImGui::Columns(1);
 			}
 
-			UI::BeginPropertyGrid();
 			if (UI::Property("Is Convex", mcc.IsConvex))
 			{
 				if (mcc.IsConvex)
@@ -1034,7 +1001,9 @@ namespace Hep
 				else
 					PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
 			}
+
 			UI::Property("Is Trigger", mcc.IsTrigger);
+
 			if (UI::Property("Override Mesh", mcc.OverrideMesh))
 			{
 				if (!mcc.OverrideMesh && entity.HasComponent<MeshComponent>())

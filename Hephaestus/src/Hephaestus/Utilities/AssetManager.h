@@ -1,18 +1,13 @@
 ﻿#pragma once
 
 #include "Hephaestus/Utilities/FileSystem.h"
-#include "Hephaestus/Core/UUID.h"
+#include "Hephaestus/Utilities/Asset.h"
 
 #include <map>
 #include <unordered_map>
 
 namespace Hep
 {
-	enum class AssetType
-	{
-		Scene, Mesh, Texture, EnvMap, Audio, Script, Other
-	};
-
 	class AssetTypes
 	{
 	public:
@@ -33,21 +28,10 @@ namespace Hep
 		std::vector<int> ChildrenIndices;
 	};
 
-	struct Asset
-	{
-		UUID ID;
-		std::string FilePath;
-		std::string FileName;
-		std::string Extension;
-		AssetType Type;
-		int ParentDirectory;
-		void* Data;
-	};
-
 	struct SearchResults
 	{
 		std::vector<DirectoryInfo> Directories;
-		std::vector<Asset> Assets;
+		std::vector<Ref<Asset>> Assets;
 	};
 
 	class AssetManager
@@ -58,8 +42,10 @@ namespace Hep
 	public:
 		static void Init();
 		static void SetAssetChangeCallback(const AssetsChangeEventFn& callback);
+		static void Shutdown();
+
 		static DirectoryInfo& GetDirectoryInfo(int index);
-		static std::vector<Asset> GetAssetsInDirectory(int dirIndex);
+		static std::vector<Ref<Asset>> GetAssetsInDirectory(int dirIndex);
 		static std::vector<std::string> GetDirectoryNames(const std::string& filepath);
 
 		static SearchResults SearchFiles(const std::string& query, const std::string& searchPath);
@@ -67,17 +53,19 @@ namespace Hep
 
 		static bool IsDirectory(const std::string& filepath);
 
+		static AssetHandle GetAssetIDForFile(const std::string& filepath);
+		static bool IsAssetHandleValid(AssetHandle assetHandle);
+
 		template <typename T>
-		static Ref<T> InstantiateAsset(UUID assetId)
+		static Ref<T> GetAsset(AssetHandle assetHandle)
 		{
-			HEP_CORE_ASSERT(s_LoadedAssets.find(assetId) != s_LoadedAssets.end());
-			return Ref<T>((T*)s_LoadedAssets[assetId].Data);
+			HEP_CORE_ASSERT(s_LoadedAssets.find(assetHandle) != s_LoadedAssets.end());
+			return (Ref<T>)s_LoadedAssets[assetHandle];
 		}
 
-		static Asset& GetAssetFromId(UUID assetId)
+		static bool IsAssetType(AssetHandle assetHandle, AssetType type)
 		{
-			HEP_CORE_ASSERT(s_LoadedAssets.find(assetId) != s_LoadedAssets.end());
-			return s_LoadedAssets[assetId];
+			return s_LoadedAssets.find(assetHandle) != s_LoadedAssets.end() && s_LoadedAssets[assetHandle]->Type == type;
 		}
 
 		// TODO: This will NOT live here
@@ -93,10 +81,11 @@ namespace Hep
 		static void RemoveDirectory(DirectoryInfo& dir);
 
 		static void ImportAsset(const std::string& filepath, bool reimport = false, int parentIndex = -1);
+		static void CreateMetaFile(const Ref<Asset>& asset);
+		static void LoadMetaData(Ref<Asset>& asset, const std::string& filepath);
 		static void ConvertAsset(const std::string& assetPath, const std::string& conversionType);
 		static int ProcessDirectory(const std::string& directoryPath, int parentIndex = -1);
 		static void ReloadAssets();
-		// static void WriteAssetsToDisk();
 
 		static void OnFileSystemChanged(FileSystemChangedEvent e);
 
@@ -104,7 +93,7 @@ namespace Hep
 		static int FindParentIndex(const std::string& filepath);
 
 	private:
-		static std::unordered_map<UUID, Asset> s_LoadedAssets;
+		static std::unordered_map<AssetHandle, Ref<Asset>> s_LoadedAssets;
 		static std::vector<DirectoryInfo> s_Directories;
 		static AssetsChangeEventFn s_AssetsChangeCallback;
 	};
