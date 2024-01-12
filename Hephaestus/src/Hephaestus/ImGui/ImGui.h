@@ -142,7 +142,7 @@ namespace Hep::UI
 		return modified;
 	}
 
-	static bool Property(const char* label, float& value, float delta = 0.1f, float min = 0.0f, float max = 0.0f)
+	static bool Property(const char* label, float& value, float delta = 0.1f, float min = 0.0f, float max = 0.0f, bool readOnly = false)
 	{
 		bool modified = false;
 
@@ -154,8 +154,16 @@ namespace Hep::UI
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
 		itoa(s_Counter++, s_IDBuffer + 2, 16);
-		if (ImGui::DragFloat(s_IDBuffer, &value, delta, min, max))
-			modified = true;
+
+		if (!readOnly)
+		{
+			if (ImGui::DragFloat(s_IDBuffer, &value, delta, min, max))
+				modified = true;
+		}
+		else
+		{
+			ImGui::InputFloat(s_IDBuffer, &value, 0.0F, 0.0F, "%.3f", ImGuiInputTextFlags_ReadOnly);
+		}
 
 		ImGui::PopItemWidth();
 		ImGui::NextColumn();

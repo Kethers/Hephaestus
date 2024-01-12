@@ -21,5 +21,7 @@ namespace Hep
 		static Ref<Asset> DeserializeYAML(const std::string& filepath, AssetType type);
 		static void LoadMetaData(Ref<Asset>& asset);
 		static void CreateMetaFile(const Ref<Asset>& asset);
+
+		friend class AssetManager;
 	};
 }

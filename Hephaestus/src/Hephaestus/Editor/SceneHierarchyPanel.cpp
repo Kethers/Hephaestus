@@ -200,17 +200,33 @@ namespace Hep
 				UUID droppedHandle = *((UUID*)payload->Data);
 				Entity e = m_Context->FindEntityByUUID(droppedHandle);
 
-				// Remove from previous parent
-				Entity previousParent = m_Context->FindEntityByUUID(e.GetParentUUID());
-				if (previousParent)
+				// NOTE: We probably don't want to parent a parent to it's own children since this could cause a lot of edge-cases that will be difficult to handle
+				bool reparentToChild = false;
+				for (auto child : e.Children())
 				{
-					auto& parentChildren = previousParent.Children();
-					parentChildren.erase(std::remove(parentChildren.begin(), parentChildren.end(), droppedHandle), parentChildren.end());
+					if (child == entity.GetUUID())
+					{
+						reparentToChild = true;
+						break;
+					}
 				}
 
-				e.SetParentUUID(entity.GetUUID());
-				auto& children = entity.Children();
-				children.push_back(droppedHandle);
+				if (!reparentToChild)
+				{
+					// Remove from previous parent
+					Entity previousParent = m_Context->FindEntityByUUID(e.GetParentUUID());
+					if (previousParent)
+					{
+						auto& parentChildren = previousParent.Children();
+						parentChildren.erase(std::remove(parentChildren.begin(), parentChildren.end(), droppedHandle),
+							parentChildren.end());
+					}
+
+					e.SetParentUUID(entity.GetUUID());
+					entity.Children().push_back(droppedHandle);
+
+					HEP_CORE_INFO("Dropping Entity {0} on {1}", droppedHandle, entity.GetUUID());
+				}
 
 				HEP_CORE_INFO("Dropping Entity {0} on {1}", droppedHandle, entity.GetUUID());
 			}

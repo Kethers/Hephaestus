@@ -6,7 +6,7 @@
 #include "Hephaestus/Renderer/Renderer2D.h"
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Editor/PhysicsSettingsWindow.h"
-#include "Hephaestus/Utilities/FileSystem.h"
+#include "Hephaestus/Editor/AssetEditorPanel.h"
 
 #include <filesystem>
 
@@ -19,6 +19,7 @@
 #include "Hephaestus/Physics/Physics.h"
 #include "Hephaestus/Core/Math/Math.h"
 #include "Hephaestus/Utilities/DragDropData.h"
+#include "Hephaestus/Utilities/FileSystem.h"
 
 namespace Hep
 {
@@ -59,6 +60,7 @@ namespace Hep
 		//OpenScene("assets/scenes/FPSDemo.hsc");
 		NewScene();
 
+		AssetEditorPanel::RegisterDefaultEditors();
 		FileSystem::StartWatching();
 	}
 
@@ -508,6 +510,7 @@ namespace Hep
 
 		m_AssetManagerPanel->OnImGuiRender();
 		m_ObjectsPanel->OnImGuiRender();
+		AssetEditorPanel::OnImGuiRender();
 
 		const char* label = m_SelectionMode == SelectionMode::Entity ? "Entity" : "Mesh";
 		if (ImGui::Button(label))

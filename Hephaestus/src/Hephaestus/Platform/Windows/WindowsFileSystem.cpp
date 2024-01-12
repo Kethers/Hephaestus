@@ -9,6 +9,7 @@ namespace Hep
 	FileSystem::FileSystemChangedCallbackFn FileSystem::s_Callback;
 
 	static bool s_Watching = true;
+	static bool s_IgnoreNextChange = false;
 	static HANDLE s_WatcherThread;
 
 	void FileSystem::SetChangeCallback(const FileSystemChangedCallbackFn& callback)
@@ -45,6 +46,16 @@ namespace Hep
 		return true;
 	}
 
+	std::string FileSystem::Rename(const std::string& filepath, const std::string& newName)
+	{
+		s_IgnoreNextChange = true;
+		std::filesystem::path p = filepath;
+		std::string newFilePath = p.parent_path().string() + "/" + newName + p.extension().string();
+		MoveFileA(filepath.c_str(), newFilePath.c_str());
+		s_IgnoreNextChange = false;
+		return newFilePath;
+	}
+
 	void FileSystem::StartWatching()
 	{
 		DWORD threadId;
@@ -61,10 +72,17 @@ namespace Hep
 		CloseHandle(s_WatcherThread);
 	}
 
+	static std::string wchar_to_string(wchar_t* input)
+	{
+		std::wstring string_input(input);
+		std::string converted(string_input.begin(), string_input.end());
+		return converted;
+	}
+
 	unsigned long FileSystem::Watch(void* param)
 	{
 		LPCSTR filepath = "assets";
-		BYTE buffer[1024];
+		BYTE* buffer = new BYTE[10 * 1024]; // 1 MB
 		OVERLAPPED overlapped = { 0 };
 		HANDLE handle = NULL;
 		DWORD bytesReturned = 0;
@@ -97,7 +115,7 @@ namespace Hep
 			DWORD status = ReadDirectoryChangesW(
 				handle,
 				buffer,
-				sizeof(buffer),
+				10 * 1024 * sizeof(BYTE),
 				TRUE,
 				FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME,
 				&bytesReturned,
@@ -112,17 +130,20 @@ namespace Hep
 			if (waitOperation != WAIT_OBJECT_0)
 				continue;
 
+			if (s_IgnoreNextChange)
+				continue;
+
 			std::string oldName;
 
-			char fileName[MAX_PATH] = "";
+			char fileName[MAX_PATH * 10] = "";
 
-			BYTE* current = buffer;
+			FILE_NOTIFY_INFORMATION* current = (FILE_NOTIFY_INFORMATION*)buffer;
 			for (;;)
 			{
 				ZeroMemory(fileName, sizeof(fileName));
 
-				FILE_NOTIFY_INFORMATION* fni = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(current);
-				WideCharToMultiByte(CP_ACP, 0, fni->FileName, fni->FileNameLength / sizeof(WCHAR), fileName, sizeof(fileName), NULL, NULL);
+				WideCharToMultiByte(CP_ACP, 0, current->FileName, current->FileNameLength / sizeof(WCHAR), fileName, sizeof(fileName), NULL,
+					NULL);
 				std::filesystem::path fniFilepath = "assets/" + std::string(fileName);
 
 				FileSystemChangedEvent e;
@@ -131,7 +152,7 @@ namespace Hep
 				e.OldName = fniFilepath.filename().string();
 				e.IsDirectory = std::filesystem::is_directory(fniFilepath);
 
-				switch (fni->Action)
+				switch (current->Action)
 				{
 					case FILE_ACTION_ADDED:
 					{
@@ -166,10 +187,10 @@ namespace Hep
 					}
 				}
 
-				if (!fni->NextEntryOffset)
+				if (!current->NextEntryOffset)
 					break;
 
-				current += fni->NextEntryOffset;
+				current += current->NextEntryOffset;
 			}
 		}
 

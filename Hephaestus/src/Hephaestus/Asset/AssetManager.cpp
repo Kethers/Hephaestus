@@ -4,8 +4,6 @@
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Renderer/SceneRenderer.h"
 
-#include "Hephaestus/Utilities/StringUtils.h"
-
 #include "yaml-cpp/yaml.h"
 
 #include <filesystem>
@@ -44,21 +42,6 @@ namespace Hep
 
 	std::map<std::string, AssetType> AssetTypes::s_Types;
 
-	/*std::string AssetManager::ParseFileType(const std::string& filename)
-	{
-		size_t start;
-		size_t end = 0;
-		std::vector<std::string> out;
-
-		while ((start = filename.find_first_not_of('.', end)) != std::string::npos)
-		{
-			end = filename.find('.', start);
-			out.push_back(filename.substr(start, end - start));
-		}
-
-		return out[out.size() - 1];
-	}*/
-
 	void AssetManager::Init()
 	{
 		FileSystem::SetChangeCallback(AssetManager::OnFileSystemChanged);
@@ -88,7 +71,7 @@ namespace Hep
 
 		for (auto& asset : s_LoadedAssets)
 		{
-			if (asset.second->ParentDirectory == dirIndex)
+			if (asset.second && asset.second->ParentDirectory == dirIndex)
 				results.push_back(asset.second);
 		}
 
@@ -292,7 +275,29 @@ namespace Hep
 
 	bool AssetManager::IsAssetHandleValid(AssetHandle assetHandle)
 	{
-		return s_LoadedAssets.find(assetHandle) != s_LoadedAssets.end();
+		return assetHandle != 0 && s_LoadedAssets.find(assetHandle) != s_LoadedAssets.end();
+	}
+
+	void AssetManager::Rename(Ref<Asset>& asset, const std::string& newName)
+	{
+		std::string newFilePath = FileSystem::Rename(asset->FilePath, newName);
+		std::string oldFilePath = asset->FilePath;
+		asset->FilePath = newFilePath;
+		asset->FileName = newName;
+
+		if (FileSystem::Exists(oldFilePath + ".meta"))
+		{
+			FileSystem::Rename(oldFilePath + ".meta", newName + "." + asset->Extension);
+			AssetSerializer::CreateMetaFile(asset);
+		}
+	}
+
+	void AssetManager::Rename(int directoryIndex, const std::string& newName)
+	{
+		DirectoryInfo& dir = GetDirectoryInfo(directoryIndex);
+		std::string newFilePath = FileSystem::Rename(dir.FilePath, newName);
+		dir.FilePath = newFilePath;
+		dir.DirectoryName = newName;
 	}
 
 	/*void AssetManager::RemoveDirectory(DirectoryInfo& dir)

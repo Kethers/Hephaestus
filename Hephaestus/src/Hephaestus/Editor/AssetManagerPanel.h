@@ -60,6 +60,7 @@ namespace Hep
 		bool m_DirectoryChanged = false;
 
 		char m_InputBuffer[1024];
+		char m_RenameBuffer[512];
 
 		DirectoryInfo m_CurrentDir;
 		DirectoryInfo m_BaseProjectDir;
@@ -69,6 +70,9 @@ namespace Hep
 		std::vector<DirectoryInfo> m_BreadCrumbData;
 
 		AssetHandle m_DraggedAssetId = 0;
+		AssetHandle m_SelectedAsset = -1;
+		int m_SelectedDirectory = -1;
+		bool m_RenamingSelected = false;
 
 		ImGuiInputTextCallbackData m_Data;
 		std::map<size_t, Ref<Texture2D>> m_AssetIconMap;
