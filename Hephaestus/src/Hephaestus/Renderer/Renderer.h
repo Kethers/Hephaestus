@@ -42,7 +42,7 @@ namespace Hep
 				// NOTE: Instead of destroying we could try and enforce all items to be trivally destructible
 				// however some items like uniforms which contain std::strings still exist for now
 				// static_assert(std::is_trivially_destructible_v<FuncT>, "FuncT must be trivially destructible");
-				pFunc->~FuncT();
+				// pFunc->~FuncT();
 			};
 			auto storageBuffer = GetRenderCommandQueue().Allocate(renderCmd, sizeof(func));
 			new(storageBuffer) FuncT(std::forward<FuncT>(func));

@@ -289,7 +289,7 @@ namespace Hep::UI
 	}
 
 	template <typename T>
-	static bool PropertyAssetReference(const char* label, Ref<T>& object, AssetType supportedType)
+	static bool PropertyAssetReference(const char* label, Ref<T>& object, AssetType supportedType = AssetType::Any)
 	{
 		bool modified = false;
 
@@ -311,7 +311,7 @@ namespace Hep::UI
 			if (data)
 			{
 				AssetHandle assetHandle = *(AssetHandle*)data->Data;
-				if (AssetManager::IsAssetType(assetHandle, supportedType))
+				if (supportedType == AssetType::Any || AssetManager::IsAssetType(assetHandle, supportedType))
 				{
 					object = AssetManager::GetAsset<T>(assetHandle);
 					modified = true;

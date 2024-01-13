@@ -567,11 +567,20 @@ namespace Hep
 		std::string sceneName = data["Scene"].as<std::string>();
 		HEP_CORE_INFO("Deserializing scene '{0}'", sceneName);
 
-		auto environment = data["Environment"];
+		/*auto environment = data["Environment"];
 		if (environment)
 		{
-			std::string envPath = environment["AssetPath"].as<std::string>();
-			// m_Scene->SetEnvironment(Environment::Load(envPath));
+			AssetHandle assetHandle;
+			if (environment["AssetPath"])
+			{
+				std::string envPath = environment["AssetPath"].as<std::string>();
+				assetHandle = AssetManager::GetAssetIDForFile(envPath);
+			}
+			else
+			{
+				assetHandle = environment["AssetHandle"].as<uint64_t>();
+			}
+			//m_Scene->SetEnvironment(Environment::Load(envPath));
 
 			auto lightNode = environment["Light"];
 			if (lightNode)
@@ -581,7 +590,7 @@ namespace Hep
 				light.Radiance = lightNode["Radiance"].as<glm::vec3>();
 				light.Multiplier = lightNode["Multiplier"].as<float>();
 			}
-		}
+		}*/
 
 		std::vector<std::string> missingPaths;
 

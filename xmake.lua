@@ -8,7 +8,7 @@ set_allowedplats("windows")
 set_allowedmodes("debug", "release", "dist")
 
 if is_os("windows") then
-	add_defines("HEP_PLATFORM_WINDOWS")
+	add_defines("HEP_PLATFORM_WINDOWS", "UNICODE", "NOMINMAX")
 end
 
 if is_mode("debug") then

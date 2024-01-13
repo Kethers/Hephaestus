@@ -74,45 +74,6 @@ namespace Hep
 		return results;
 	}
 
-	void AssetManager::ConvertAsset(const std::string& assetPath, const std::string& conversionType)
-	{
-		// Create a filestream to write a blender python script for conversion of the asset
-		// The 'bpy.ops.export_scene.(asset-type-to-convert) function runs blender in background and exports the file'
-		std::string path = std::filesystem::temp_directory_path().string();
-		std::ofstream fileStream(path + "export.py");
-
-		// Importing the python modules required for the export to work out
-		fileStream << "import bpy\n";
-		fileStream << "import sys\n";
-
-		if (conversionType == "fbx")
-			fileStream << "bpy.ops.export_scene.fbx(filepath=r'" + path + "asset.fbx" + "', axis_forward='-Z', axis_up='Y')\n";
-
-		if (conversionType == "obj")
-			fileStream << "bpy.ops.export_scene.obj(filepath=r'" + path + "asset.obj" + "', axis_forward='-Z', axis_up='Y')\n";
-
-		fileStream.close();
-
-		// This section involves creating the command to export the .blend file to the required asset type
-		// The command goes something like this..
-		// blender.exe D:\Program Files\cube.blend --background --python D:\Program Files\export.py
-
-		// TODO: bad hard-coding
-		std::string blender_base_path = R"(C:\Program Files\Blender Foundation\Blender 2.90\blender.exe)";
-		std::string p_asset_path = '"' + assetPath + '"';
-		std::string p_blender_path = '"' + blender_base_path + '"';
-		std::string p_script_path = '"' + path + "export.py" + '"';
-
-		// Creating the actual command that will execute
-		std::string convCommand = '"' + p_blender_path + " " + p_asset_path + " --background --python " + p_script_path + "" + '"';
-
-		// Just for debugging
-		HEP_CORE_INFO(convCommand.c_str());
-
-		// Fire the above created command
-		system(convCommand.c_str());
-	}
-
 	// Utility function to find the parent of an unprocessed directory
 	AssetHandle AssetManager::FindParentHandleInChildren(Ref<Directory>& dir, const std::string& dirName)
 	{

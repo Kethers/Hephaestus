@@ -1,6 +1,7 @@
 ﻿#include "heppch.h"
 #include "AssetEditorPanel.h"
 #include "DefaultAssetEditors.h"
+#include "Hephaestus/Asset/AssetManager.h"
 
 namespace Hep
 {
@@ -59,7 +60,7 @@ namespace Hep
 		}
 
 		s_Editors[asset->Type]->SetOpen(true);
-		s_Editors[asset->Type]->SetAsset(asset);
+		s_Editors[asset->Type]->SetAsset(AssetManager::GetAsset<Asset>(asset->Handle));
 	}
 
 	std::unordered_map<AssetType, Scope<AssetEditor>> AssetEditorPanel::s_Editors;

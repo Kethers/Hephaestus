@@ -94,6 +94,7 @@ namespace Hep
 				{
 					m_SelectedAssets.Clear();
 					m_RenamingSelected = false;
+					memset(m_InputBuffer, 0, MAX_INPUT_BUFFER_LENGTH);
 				}
 
 				m_IsAnyItemHovered = false;
@@ -158,15 +159,14 @@ namespace Hep
 
 				for (Ref<Asset>& asset : m_CurrentDirAssets)
 				{
-					if (m_SkipRenderingThisFrame)
-					{
-						m_SkipRenderingThisFrame = false;
-						break;
-					}
-
 					RenderAsset(asset);
-
 					ImGui::NextColumn();
+				}
+
+				if (m_UpdateDirectoryNextFrame)
+				{
+					UpdateCurrentDirectory(m_CurrentDirHandle);
+					m_UpdateDirectoryNextFrame = false;
 				}
 
 				if (m_IsDragging && !ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.1F))
@@ -229,8 +229,8 @@ namespace Hep
 				if (asset->Type == AssetType::Directory)
 				{
 					m_PrevDirHandle = m_CurrentDirHandle;
-					UpdateCurrentDirectory(assetHandle);
-					m_SkipRenderingThisFrame = true;
+					m_CurrentDirHandle = assetHandle;
+					m_UpdateDirectoryNextFrame = true;
 				}
 				else
 				{
@@ -299,8 +299,7 @@ namespace Hep
 				{
 					FileSystem::DeleteFile(filepath + ".meta");
 					AssetManager::RemoveAsset(assetHandle);
-					m_SkipRenderingThisFrame = true;
-					UpdateCurrentDirectory(m_CurrentDirHandle);
+					m_UpdateDirectoryNextFrame = true;
 				}
 
 				ImGui::CloseCurrentPopup();
@@ -332,6 +331,30 @@ namespace Hep
 
 	void AssetManagerPanel::HandleDragDrop(RendererID icon, Ref<Asset>& asset)
 	{
+		if (asset->Type == AssetType::Directory && m_IsDragging)
+		{
+			if (ImGui::BeginDragDropTarget())
+			{
+				auto payload = ImGui::AcceptDragDropPayload("asset_payload");
+				if (payload)
+				{
+					int count = payload->DataSize / sizeof(AssetHandle);
+
+					for (int i = 0; i < count; i++)
+					{
+						AssetHandle handle = *(((AssetHandle*)payload->Data) + i);
+						Ref<Asset> droppedAsset = AssetManager::GetAsset<Asset>(handle, false);
+
+						bool result = FileSystem::MoveFile(droppedAsset->FilePath, asset->FilePath);
+						if (result)
+							droppedAsset->ParentDirectory = asset->Handle;
+					}
+
+					m_UpdateDirectoryNextFrame = true;
+				}
+			}
+		}
+
 		if (!m_SelectedAssets.IsSelected(asset->Handle) || m_IsDragging)
 			return;
 
@@ -454,17 +477,14 @@ namespace Hep
 				AssetManager::Rename(asset, m_InputBuffer);
 				m_RenamingSelected = false;
 				m_SelectedAssets.Clear();
-				m_SkipRenderingThisFrame = true;
-				UpdateCurrentDirectory(m_CurrentDirHandle);
+				m_UpdateDirectoryNextFrame = true;
 			}
 		}
 	}
 
 	void AssetManagerPanel::UpdateCurrentDirectory(AssetHandle directoryHandle)
 	{
-		if (m_CurrentDirHandle != directoryHandle)
-			m_UpdateBreadCrumbs = true;
-
+		m_UpdateBreadCrumbs = true;
 		m_CurrentDirAssets.clear();
 		m_CurrentDirHandle = directoryHandle;
 		m_CurrentDirectory = AssetManager::GetAsset<Directory>(m_CurrentDirHandle);

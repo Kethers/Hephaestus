@@ -2,6 +2,7 @@
 #include "Hephaestus/Utilities/FileSystem.h"
 #include "Hephaestus/Asset/AssetManager.h"
 
+#include <Windows.h>
 #include <filesystem>
 
 namespace Hep
@@ -56,6 +57,16 @@ namespace Hep
 		return newFilePath;
 	}
 
+	bool FileSystem::MoveFile(const std::string& filepath, const std::string& dest)
+	{
+		s_IgnoreNextChange = true;
+		std::filesystem::path p = filepath;
+		std::string destFilePath = dest + "/" + p.filename().string();
+		BOOL result = MoveFileA(filepath.c_str(), destFilePath.c_str());
+		s_IgnoreNextChange = false;
+		return result != 0;
+	}
+
 	bool FileSystem::DeleteFile(const std::string& filepath)
 	{
 		s_IgnoreNextChange = true;
@@ -100,7 +111,7 @@ namespace Hep
 
 	unsigned long FileSystem::Watch(void* param)
 	{
-		LPCSTR filepath = "assets";
+		LPCWSTR filepath = L"assets";
 		BYTE* buffer = new BYTE[10 * 1024]; // 1 MB
 		OVERLAPPED overlapped = { 0 };
 		HANDLE handle = NULL;

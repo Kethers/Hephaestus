@@ -16,7 +16,8 @@ namespace Hep
 		Script,
 		PhysicsMat,
 		Directory,
-		Other
+		Other,
+		Any,
 	};
 
 	using AssetHandle = UUID;

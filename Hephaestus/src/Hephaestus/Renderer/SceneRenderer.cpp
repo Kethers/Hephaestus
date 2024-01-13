@@ -336,7 +336,7 @@ namespace Hep
 		bool outline = s_Data.SelectedMeshDrawList.size() > 0;
 		bool collider = s_Data.ColliderDrawList.size() > 0;
 
-		if (outline || collider)
+		if (outline)
 		{
 			Renderer::Submit([]()
 			{
@@ -346,7 +346,7 @@ namespace Hep
 
 		Renderer::BeginRenderPass(s_Data.GeoPass);
 
-		if (outline || collider)
+		if (outline)
 		{
 			Renderer::Submit([]()
 			{
@@ -427,7 +427,7 @@ namespace Hep
 			Renderer::SubmitMesh(dc.Mesh, dc.Transform, overrideMaterial);
 		}
 
-		if (outline || collider)
+		if (outline)
 		{
 			Renderer::Submit([]()
 			{
@@ -540,9 +540,6 @@ namespace Hep
 		{
 			Renderer::Submit([]()
 			{
-				glStencilFunc(GL_NOTEQUAL, 1, 0xff);
-				glStencilMask(0);
-
 				glLineWidth(1);
 				glEnable(GL_LINE_SMOOTH);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -570,8 +567,6 @@ namespace Hep
 			Renderer::Submit([]()
 			{
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				glStencilMask(0xff);
-				glStencilFunc(GL_ALWAYS, 1, 0xff);
 				glEnable(GL_DEPTH_TEST);
 			});
 		}
