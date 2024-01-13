@@ -44,7 +44,7 @@ namespace Hep
 	class Scene : public RefCounted
 	{
 	public:
-		Scene(const std::string& debugName = "Scene");
+		Scene(const std::string& debugName = "Scene", bool isEditorScene = false);
 		~Scene();
 
 		void Init();
@@ -119,7 +119,8 @@ namespace Hep
 
 		entt::entity m_SelectedEntity;
 
-		Entity* m_PhysicsBodyEntityBuffer = nullptr;
+		Entity* m_Physics3DBodyEntityBuffer = nullptr;
+		Entity* m_Physics2DBodyEntityBuffer = nullptr;
 
 		float m_SkyboxLod = 1.0f;
 		bool m_IsPlaying = false;

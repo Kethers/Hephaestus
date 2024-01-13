@@ -1,6 +1,9 @@
 ﻿#pragma once
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include "Hephaestus/Core/UUID.h"
 #include "Hephaestus/Renderer/Texture.h"
@@ -30,15 +33,21 @@ namespace Hep
 
 	struct TransformComponent
 	{
-		glm::mat4 Transform;
+		glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 Rotation = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 Scale = { 1.0f, 1.0f, 1.0f };
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent& other) = default;
-		TransformComponent(const glm::mat4& transform)
-			: Transform(transform) {}
+		TransformComponent(const glm::vec3& translation)
+			: Translation(translation) {}
 
-		operator glm::mat4&() { return Transform; }
-		operator const glm::mat4&() const { return Transform; }
+		glm::mat4 GetTransform() const
+		{
+			return glm::translate(glm::mat4(1.0f), Translation)
+				* glm::toMat4(glm::quat(Rotation))
+				* glm::scale(glm::mat4(1.0f), Scale);
+		}
 	};
 
 	struct MeshComponent
@@ -129,8 +138,96 @@ namespace Hep
 		CircleCollider2DComponent(const CircleCollider2DComponent& other) = default;
 	};
 
-	// Lights
+	struct RigidBodyComponent
+	{
+		enum class Type { Static, Dynamic };
 
+		Type BodyType;
+		float Mass = 1.0f;
+		float LinearDrag = 0.0f;
+		float AngularDrag = 0.05f;
+		bool DisableGravity = false;
+		bool IsKinematic = false;
+		uint32_t Layer = 0;
+
+		bool LockPositionX = false;
+		bool LockPositionY = false;
+		bool LockPositionZ = false;
+		bool LockRotationX = false;
+		bool LockRotationY = false;
+		bool LockRotationZ = false;
+
+		RigidBodyComponent() = default;
+		RigidBodyComponent(const RigidBodyComponent& other) = default;
+	};
+
+	// TODO: This will eventually be a resource, but that requires object referencing through the editor
+	struct PhysicsMaterialComponent
+	{
+		float StaticFriction = 1.0f;
+		float DynamicFriction = 1.0f;
+		float Bounciness = 1.0f;
+
+		PhysicsMaterialComponent() = default;
+		PhysicsMaterialComponent(const PhysicsMaterialComponent& other) = default;
+	};
+
+	struct BoxColliderComponent
+	{
+		glm::vec3 Size = { 1.0f, 1.0f, 1.0f };
+		glm::vec3 Offset = { 0.0f, 0.0f, 0.0f };
+
+		bool IsTrigger = false;
+
+		// The mesh that will be drawn in the editor to show the collision bounds
+		Ref<Mesh> DebugMesh;
+
+		BoxColliderComponent() = default;
+		BoxColliderComponent(const BoxColliderComponent& other) = default;
+	};
+
+	struct SphereColliderComponent
+	{
+		float Radius = 0.5f;
+		bool IsTrigger = false;
+
+		// The mesh that will be drawn in the editor to show the collision bounds
+		Ref<Mesh> DebugMesh;
+
+		SphereColliderComponent() = default;
+		SphereColliderComponent(const SphereColliderComponent& other) = default;
+	};
+
+	struct CapsuleColliderComponent
+	{
+		float Radius = 0.5f;
+		float Height = 1.0f;
+		bool IsTrigger = false;
+
+		Ref<Mesh> DebugMesh;
+
+		CapsuleColliderComponent() = default;
+		CapsuleColliderComponent(const CapsuleColliderComponent& other) = default;
+	};
+
+	struct MeshColliderComponent
+	{
+		Ref<Mesh> CollisionMesh;
+		std::vector<Ref<Mesh>> ProcessedMeshes;
+		bool IsConvex = false;
+		bool IsTrigger = false;
+		bool OverrideMesh = false;
+
+		MeshColliderComponent() = default;
+		MeshColliderComponent(const MeshColliderComponent& other) = default;
+		MeshColliderComponent(const Ref<Mesh>& mesh)
+			: CollisionMesh(mesh)
+		{}
+
+		operator Ref<Mesh>() { return CollisionMesh; }
+	};
+
+	// Lights
 	// TODO: Move to renderer
 	enum class LightType
 	{

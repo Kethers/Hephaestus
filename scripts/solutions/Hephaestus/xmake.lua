@@ -7,10 +7,11 @@ includes("../../../external/yaml-cpp")
 includes("../../../external/Box2D")
 add_repositories("glfw /external/GLFW", {rootdir = os.projectdir()})
 add_requires("glfw")
--- if (is_mode("debug")) then
--- 	add_requires("assimp >= 5.2.4")
+-- TEMP: bug on 5.2.4 MTd, disable for, emm... now?
+-- if is_mode("debug") then
+-- 	add_requires("assimp >= 5.2.4", {configs = {debug = true, vs_runtime = "MTd"}} )
 -- else
--- 	add_requires("assimp >= 5.2.4")
+-- 	add_requires("assimp >= 5.2.4", {configs = {debug = false, vs_runtime = "MT"}} )
 -- end
 
 IncludeDir = {}
@@ -25,14 +26,24 @@ IncludeDir["FastNoise"] = "$(projectdir)/external/FastNoise"
 IncludeDir["mono"] 		= "$(projectdir)/external/mono/include"
 IncludeDir["yaml-cpp"] 	= "$(projectdir)/external/yaml-cpp/include"
 IncludeDir["Box2D"] 	= "$(projectdir)/external/Box2D/include"
+IncludeDir["PhysX"]		= "$(projectdir)/external/PhysX/include"
 
 LibraryDir = {}
-LibraryDir["mono"] = "$(projectdir)/external/mono/lib/Debug/mono-2.0-sgen.lib"
+LibraryDir["mono"] 							= "$(projectdir)/external/mono/lib/Debug/mono-2.0-sgen.lib"
+
+LibraryDir["PhysX"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysX_static_64.lib"
+LibraryDir["PhysXCharacterKinematic"] 		= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCharacterKinematic_static_64.lib"
+LibraryDir["PhysXCommon"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCommon_static_64.lib"
+LibraryDir["PhysXCooking"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCooking_static_64.lib"
+LibraryDir["PhysXExtensions"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXExtensions_static_64.lib"
+LibraryDir["PhysXFoundation"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXFoundation_static_64.lib"
+LibraryDir["PhysXPvd"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXPvdSDK_static_64.lib"
+
 
 BuildProject({
 	projectName = "Hephaestus",
 	projectType = "static",
-	macros = {"HEP_BUILD_DLL"},
+	macros = {"HEP_BUILD_DLL", "PX_PHYSX_STATIC_LIB"},
 	languages = {"clatest", "cxx20"},
 	depends = {"Glad", "ImGui", "yaml-cpp", "Box2D"},
 	files = {
@@ -60,11 +71,21 @@ BuildProject({
 		IncludeDir.mono,
 		IncludeDir["yaml-cpp"],
 		IncludeDir.Box2D,
+		IncludeDir.PhysX,
 	},
 	packages = {"glfw"},
 	debugLink = {},
 	releaseLink = {},
-	link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", LibraryDir.mono },
+	link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", 
+		LibraryDir.mono,
+		LibraryDir.PhysX,
+		LibraryDir.PhysXCharacterKinematic,
+		LibraryDir.PhysXCommon,
+		LibraryDir.PhysXCooking,
+		LibraryDir.PhysXExtensions,
+		LibraryDir.PhysXFoundation,
+		LibraryDir.PhysXPvd,
+	},
 	cxflags = {},
 	afterBuildFunc = nil,
 	enableException = true,

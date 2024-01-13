@@ -5,15 +5,18 @@
 #include "Hephaestus/ImGui/ImGuizmo.h"
 #include "Hephaestus/Renderer/Renderer2D.h"
 #include "Hephaestus/Script/ScriptEngine.h"
+#include "Hephaestus/Editor/PhysicsSettingsWindow.h"
 
 #include <filesystem>
 
+#include "Hephaestus/Core/Math/Mat4.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <imgui/imgui_internal.h>
+#include "Hephaestus/Physics/Physics.h"
+#include "Hephaestus/Core/Math/Math.h"
 
 namespace Hep
 {
@@ -28,16 +31,6 @@ namespace Hep
 			ImGui::PopTextWrapPos();
 			ImGui::EndTooltip();
 		}
-	}
-
-	static std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
-	{
-		glm::vec3 scale, translation, skew;
-		glm::vec4 perspective;
-		glm::quat orientation;
-		glm::decompose(transform, scale, orientation, translation, skew, perspective);
-
-		return { translation, orientation, scale };
 	}
 
 	EditorLayer::EditorLayer()
@@ -58,7 +51,7 @@ namespace Hep
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(HEP_BIND_EVENT_FN(EditorLayer::SelectEntity));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(HEP_BIND_EVENT_FN(EditorLayer::OnEntityDeleted));
 
-		OpenScene("assets/scenes/LightingTest.hsc");
+		OpenScene("assets/scenes/Physics2DTest2.hsc");
 	}
 
 	void EditorLayer::OnDetach()
@@ -149,28 +142,40 @@ namespace Hep
 											  ? glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f }
 											  : glm::vec4{ 0.2f, 0.9f, 0.2f, 1.0f };
 						Renderer::DrawAABB(selection.Mesh->BoundingBox,
-							selection.Entity.GetComponent<TransformComponent>().Transform * selection.Mesh->Transform, color);
+							selection.Entity.Transform().GetTransform() * selection.Mesh->Transform,
+							color);
 						Renderer2D::EndScene();
 						Renderer::EndRenderPass();
 					}
 				}
 
-				if (m_SelectionContext.size())
+				if (!m_SelectionContext.empty())
 				{
 					auto& selection = m_SelectionContext[0];
 
 					if (selection.Entity.HasComponent<BoxCollider2DComponent>())
 					{
 						const auto& size = selection.Entity.GetComponent<BoxCollider2DComponent>().Size;
-						auto [translation, rotationQuat, scale] = GetTransformDecomposition(
-							selection.Entity.GetComponent<TransformComponent>().Transform);
-						glm::vec3 rotation = glm::eulerAngles(rotationQuat);
+						const TransformComponent& transform = selection.Entity.GetComponent<TransformComponent>();
 
 						Renderer::BeginRenderPass(SceneRenderer::GetFinalRenderPass(), false);
 						auto viewProj = m_EditorCamera.GetViewProjection();
 						Renderer2D::BeginScene(viewProj, false);
-						Renderer2D::DrawRotatedQuad({ translation.x, translation.y }, size * 2.0f, glm::degrees(rotation.z),
-							{ 1.0f, 0.0f, 1.0f, 1.0f });
+						Renderer2D::DrawRotatedRect({ transform.Translation.x, transform.Translation.y }, size * 2.0f, transform.Rotation.z,
+							{ 0.0f, 1.0f, 1.0f, 1.0f });
+						Renderer2D::EndScene();
+						Renderer::EndRenderPass();
+					}
+
+					if (selection.Entity.HasComponent<CircleCollider2DComponent>())
+					{
+						const auto& size = selection.Entity.GetComponent<CircleCollider2DComponent>().Radius;
+						const TransformComponent& transform = selection.Entity.GetComponent<TransformComponent>();
+
+						Renderer::BeginRenderPass(SceneRenderer::GetFinalRenderPass(), false);
+						auto viewProj = m_EditorCamera.GetViewProjection();
+						Renderer2D::BeginScene(viewProj, false);
+						Renderer2D::DrawCircle({ transform.Translation.x, transform.Translation.y }, size, { 0.0f, 1.0f, 1.0f, 1.0f });
 						Renderer2D::EndScene();
 						Renderer::EndRenderPass();
 					}
@@ -321,9 +326,12 @@ namespace Hep
 		SelectedSubmesh selection;
 		if (entity.HasComponent<MeshComponent>())
 		{
-			auto mesh = entity.GetComponent<MeshComponent>().Mesh;
-			if (mesh)
-				selection.Mesh = &mesh->GetSubmeshes()[0];
+			auto& meshComp = entity.GetComponent<MeshComponent>();
+
+			if (meshComp.Mesh)
+			{
+				selection.Mesh = meshComp.Mesh->GetSubmeshes().data();
+			}
 		}
 		selection.Entity = entity;
 		m_SelectionContext.clear();
@@ -334,7 +342,7 @@ namespace Hep
 
 	void EditorLayer::NewScene()
 	{
-		m_EditorScene = Ref<Scene>::Create();
+		m_EditorScene = Ref<Scene>::Create("Empty Scene", true);
 		m_SceneHierarchyPanel->SetContext(m_EditorScene);
 		ScriptEngine::SetSceneContext(m_EditorScene);
 		UpdateWindowTitle("Untitled Scene");
@@ -353,10 +361,12 @@ namespace Hep
 
 	void EditorLayer::OpenScene(const std::string& filepath)
 	{
-		Ref<Scene> newScene = Ref<Scene>::Create();
+		Ref<Scene> newScene = Ref<Scene>::Create("New Scene", true);
 		SceneSerializer serializer(newScene);
 		serializer.Deserialize(filepath);
 		m_EditorScene = newScene;
+		m_SceneFilePath = filepath;
+
 		std::filesystem::path path = filepath;
 		UpdateWindowTitle(path.filename().string());
 		m_SceneHierarchyPanel->SetContext(m_EditorScene);
@@ -612,22 +622,35 @@ namespace Hep
 
 			bool snap = Input::IsKeyPressed(HEP_KEY_LEFT_CONTROL);
 
-			auto& entityTransform = selection.Entity.Transform();
+			TransformComponent& entityTransform = selection.Entity.Transform();
+			glm::mat4 transform = entityTransform.GetTransform();
 			float snapValue = GetSnapValue();
 			float snapValues[3] = { snapValue, snapValue, snapValue };
+
 			if (m_SelectionMode == SelectionMode::Entity)
 			{
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
 					glm::value_ptr(m_EditorCamera.GetProjectionMatrix()),
 					(ImGuizmo::OPERATION)m_GizmoType,
 					ImGuizmo::LOCAL,
-					glm::value_ptr(entityTransform),
+					glm::value_ptr(transform),
 					nullptr,
 					snap ? snapValues : nullptr);
+
+				if (ImGuizmo::IsUsing())
+				{
+					glm::vec3 translation, rotation, scale;
+					Math::DecomposeTransform(transform, translation, rotation, scale);
+
+					glm::vec3 deltaRotation = rotation - entityTransform.Rotation;
+					entityTransform.Translation = translation;
+					entityTransform.Rotation += deltaRotation;
+					entityTransform.Scale = scale;
+				}
 			}
 			else
 			{
-				glm::mat4 transformBase = entityTransform * selection.Mesh->Transform;
+				glm::mat4 transformBase = transform * selection.Mesh->Transform;
 				ImGuizmo::Manipulate(glm::value_ptr(m_EditorCamera.GetViewMatrix()),
 					glm::value_ptr(m_EditorCamera.GetProjectionMatrix()),
 					(ImGuizmo::OPERATION)m_GizmoType,
@@ -636,7 +659,7 @@ namespace Hep
 					nullptr,
 					snap ? snapValues : nullptr);
 
-				selection.Mesh->Transform = glm::inverse(entityTransform) * transformBase;
+				selection.Mesh->Transform = glm::inverse(transform) * transformBase;
 			}
 		}
 
@@ -671,6 +694,14 @@ namespace Hep
 				ImGui::MenuItem("Reload assembly on play", nullptr, &m_ReloadScriptOnPlay);
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Edit"))
+			{
+				ImGui::MenuItem("Physics Settings", nullptr, &m_ShowPhysicsSettings);
+
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenuBar();
 		}
 
@@ -884,6 +915,7 @@ namespace Hep
 
 		ScriptEngine::OnImGuiRender();
 		SceneRenderer::OnImGuiRender();
+		PhysicsSettingsWindow::OnImGuiRender(m_ShowPhysicsSettings);
 
 		ImGui::End();
 	}
@@ -1020,8 +1052,8 @@ namespace Hep
 					{
 						auto& submesh = submeshes[i];
 						Ray ray = {
-							glm::inverse(entity.Transform() * submesh.Transform) * glm::vec4(origin, 1.0f),
-							glm::inverse(glm::mat3(entity.Transform()) * glm::mat3(submesh.Transform)) * direction
+							glm::inverse(entity.Transform().GetTransform() * submesh.Transform) * glm::vec4(origin, 1.0f),
+							glm::inverse(glm::mat3(entity.Transform().GetTransform()) * glm::mat3(submesh.Transform)) * direction
 						};
 
 						float t;
@@ -1042,7 +1074,7 @@ namespace Hep
 					}
 				}
 				std::sort(m_SelectionContext.begin(), m_SelectionContext.end(), [](auto& a, auto& b) { return a.Distance < b.Distance; });
-				if (m_SelectionContext.size())
+				if (!m_SelectionContext.empty())
 					OnSelected(m_SelectionContext[0]);
 			}
 		}

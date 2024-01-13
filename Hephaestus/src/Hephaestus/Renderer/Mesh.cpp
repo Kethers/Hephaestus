@@ -21,6 +21,8 @@
 #include "Hephaestus/Renderer/Renderer.h"
 #include "Hephaestus/Renderer/VertexBuffer.h"
 
+#include "Hephaestus/Physics/PhysicsUtil.h"
+
 #include <filesystem>
 
 namespace Hep
@@ -36,22 +38,12 @@ namespace Hep
 	{
 		glm::mat4 result;
 		//the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
-		result[0][0] = matrix.a1;
-		result[1][0] = matrix.a2;
-		result[2][0] = matrix.a3;
-		result[3][0] = matrix.a4;
-		result[0][1] = matrix.b1;
-		result[1][1] = matrix.b2;
-		result[2][1] = matrix.b3;
-		result[3][1] = matrix.b4;
-		result[0][2] = matrix.c1;
-		result[1][2] = matrix.c2;
-		result[2][2] = matrix.c3;
-		result[3][2] = matrix.c4;
-		result[0][3] = matrix.d1;
-		result[1][3] = matrix.d2;
-		result[2][3] = matrix.d3;
-		result[3][3] = matrix.d4;
+		// @formatter:off
+		result[0][0] = matrix.a1; result[1][0] = matrix.a2; result[2][0] = matrix.a3; result[3][0] = matrix.a4;
+		result[0][1] = matrix.b1; result[1][1] = matrix.b2; result[2][1] = matrix.b3; result[3][1] = matrix.b4;
+		result[0][2] = matrix.c1; result[1][2] = matrix.c2; result[2][2] = matrix.c3; result[3][2] = matrix.c4;
+		result[0][3] = matrix.d1; result[1][3] = matrix.d2; result[2][3] = matrix.d3; result[3][3] = matrix.d4;
+		// @formatter:on
 		return result;
 	}
 
@@ -117,9 +109,10 @@ namespace Hep
 			submesh.BaseIndex = indexCount;
 			submesh.MaterialIndex = mesh->mMaterialIndex;
 			submesh.IndexCount = mesh->mNumFaces * 3;
+			submesh.VertexCount = mesh->mNumVertices;
 			submesh.MeshName = mesh->mName.C_Str();
 
-			vertexCount += mesh->mNumVertices;
+			vertexCount += submesh.VertexCount;
 			indexCount += submesh.IndexCount;
 
 			HEP_CORE_ASSERT(mesh->HasPositions(), "Meshes require positions.");
@@ -267,7 +260,7 @@ namespace Hep
 				bool hasAlbedoMap = aiMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &aiTexPath) == AI_SUCCESS;
 				if (hasAlbedoMap)
 				{
-					// TODO: Temp - this should be handled by Hazel's filesystem
+					// TODO: Temp - this should be handled by customized filesystem
 					std::filesystem::path path = filename;
 					auto parentPath = path.parent_path();
 					parentPath /= std::string(aiTexPath.data);
@@ -299,7 +292,7 @@ namespace Hep
 				mi->Set("u_NormalTexToggle", 0.0f);
 				if (aiMaterial->GetTexture(aiTextureType_NORMALS, 0, &aiTexPath) == AI_SUCCESS)
 				{
-					// TODO: Temp - this should be handled by Hazel's filesystem
+					// TODO: Temp - this should be handled by customized filesystem
 					std::filesystem::path path = filename;
 					auto parentPath = path.parent_path();
 					parentPath /= std::string(aiTexPath.data);
@@ -326,7 +319,7 @@ namespace Hep
 				// mi->Set("u_RoughnessTexToggle", 0.0f);
 				if (aiMaterial->GetTexture(aiTextureType_SHININESS, 0, &aiTexPath) == AI_SUCCESS)
 				{
-					// TODO: Temp - this should be handled by Hazel's filesystem
+					// TODO: Temp - this should be handled by customized filesystem
 					std::filesystem::path path = filename;
 					auto parentPath = path.parent_path();
 					parentPath /= std::string(aiTexPath.data);
@@ -353,7 +346,7 @@ namespace Hep
 				// Metalness map (or is it??)
 				if (aiMaterial->Get("$raw.ReflectionFactor|file", aiPTI_String, 0, aiTexPath) == AI_SUCCESS)
 				{
-					// TODO: Temp - this should be handled by Hazel's filesystem
+					// TODO: Temp - this should be handled by customized filesystem
 					std::filesystem::path path = filename;
 					auto parentPath = path.parent_path();
 					parentPath /= std::string(aiTexPath.data);
@@ -444,7 +437,7 @@ namespace Hep
 						{
 							metalnessTextureFound = true;
 
-							// TODO: Temp - this should be handled by Hazel's filesystem
+							// TODO: Temp - this should be handled by customized filesystem
 							std::filesystem::path path = filename;
 							auto parentPath = path.parent_path();
 							parentPath /= str;
@@ -510,6 +503,30 @@ namespace Hep
 		m_Pipeline = Pipeline::Create(pipelineSpecification);
 	}
 
+	Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<Index>& indices, const glm::mat4& transform)
+		: m_StaticVertices(vertices), m_Indices(indices), m_IsAnimated(false)
+	{
+		Submesh submesh;
+		submesh.BaseVertex = 0;
+		submesh.BaseIndex = 0;
+		submesh.IndexCount = indices.size() * 3;
+		submesh.Transform = transform;
+		m_Submeshes.push_back(submesh);
+
+		m_VertexBuffer = VertexBuffer::Create(m_StaticVertices.data(), m_StaticVertices.size() * sizeof(Vertex));
+		m_IndexBuffer = IndexBuffer::Create(m_Indices.data(), m_Indices.size() * sizeof(Index));
+
+		PipelineSpecification pipelineSpecification;
+		pipelineSpecification.Layout = {
+			{ ShaderDataType::Float3, "a_Position" },
+			{ ShaderDataType::Float3, "a_Normal" },
+			{ ShaderDataType::Float3, "a_Tangent" },
+			{ ShaderDataType::Float3, "a_Binormal" },
+			{ ShaderDataType::Float2, "a_TexCoord" },
+		};
+		m_Pipeline = Pipeline::Create(pipelineSpecification);
+	}
+
 	Mesh::~Mesh()
 	{}
 
@@ -543,13 +560,15 @@ namespace Hep
 
 	void Mesh::TraverseNodes(aiNode* node, const glm::mat4& parentTransform, uint32_t level)
 	{
-		glm::mat4 transform = parentTransform * Mat4FromAssimpMat4(node->mTransformation);
+		glm::mat4 localTransform = Mat4FromAssimpMat4(node->mTransformation);
+		glm::mat4 transform = parentTransform * localTransform;
 		for (uint32_t i = 0; i < node->mNumMeshes; i++)
 		{
 			uint32_t mesh = node->mMeshes[i];
 			auto& submesh = m_Submeshes[mesh];
 			submesh.NodeName = node->mName.C_Str();
 			submesh.Transform = transform;
+			submesh.LocalTransform = localTransform;
 		}
 
 		// HEP_MESH_LOG("{0} {1}", LevelToSpaces(level), node->mName.C_Str());

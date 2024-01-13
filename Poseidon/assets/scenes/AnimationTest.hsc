@@ -11,7 +11,7 @@ Entities:
       Tag: Sky Light
     TransformComponent:
       Position: [0, 0, 0]
-      Rotation: [1, 0, 0, 0]
+      Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     SkyLightComponent:
       EnvironmentAssetPath: assets\env\birchwood_4k.hdr
@@ -22,7 +22,7 @@ Entities:
       Tag: Directional Light
     TransformComponent:
       Position: [0, 0, 0]
-      Rotation: [0.68972528, 0.70944953, 0.144718781, -0.00410703989]
+      Rotation: [0, 0, 0]
       Scale: [1.00000012, 0.999994099, 0.999999523]
     DirectionalLightComponent:
       Radiance: [1, 1, 1]
@@ -34,7 +34,7 @@ Entities:
       Tag: Scene
     TransformComponent:
       Position: [-2.90346504e-23, -0.274215937, -4.87120601e-16]
-      Rotation: [1, 8.8820616e-16, 2.98023224e-08, -2.64706063e-23]
+      Rotation: [0, 0, 0]
       Scale: [21.1364994, 21.1364994, 21.1364994]
     MeshComponent:
       AssetPath: assets\meshes\CubeScene.fbx
@@ -43,7 +43,7 @@ Entities:
       Tag: Sphere
     TransformComponent:
       Position: [3.20819902, 4.03841782, -7.22279453]
-      Rotation: [1, 0, 0, 0]
+      Rotation: [0, 0, 0]
       Scale: [3.71339679, 3.71339679, 3.71339679]
     MeshComponent:
       AssetPath: assets\meshes\Sphere1m.fbx
@@ -52,7 +52,7 @@ Entities:
       Tag: Gun
     TransformComponent:
       Position: [3.64099932, 3.55597281, 5.70084906]
-      Rotation: [0.953514934, 0.0584657155, -0.295065552, 0.0180922709]
+      Rotation: [0, 0, 0]
       Scale: [25.793951, 25.7939529, 25.7939472]
     MeshComponent:
       AssetPath: assets\models\m1911\m1911.fbx
@@ -61,16 +61,16 @@ Entities:
       Tag: Stormtrooper
     TransformComponent:
       Position: [-10.306489, 0.14903906, -7.11563587]
-      Rotation: [0.99873203, 0, -0.0503417216, 0]
+      Rotation: [0, 0, 0]
       Scale: [2.06998873, 2.06998801, 2.06998873]
     MeshComponent:
-      AssetPath: assets\meshes\stormtrooper\silly_dancing.fbx
+      AssetPath: assets\meshes\stormtrooper\source\silly_dancing.fbx
   - Entity: 11848937967922634750
     TagComponent:
       Tag: Pilot
     TransformComponent:
       Position: [-10.306489, 0.14903906, -7.11563587]
-      Rotation: [0.99873203, 0, -0.0503417216, 0]
+      Rotation: [0, 0, 0]
       Scale: [-2.59314743e-36, 7.41286888e-43, 2.06998873]
     MeshComponent:
       AssetPath: assets\meshes\pilot\Pilot_LP_Animated.fbx

@@ -104,11 +104,11 @@ namespace Hep
 	void Renderer::SetClearColor(float r, float g, float b, float a)
 	{}
 
-	void Renderer::DrawIndexed(uint32_t count, PrimitiveType type, bool depthTest)
+	void Renderer::DrawIndexed(uint32_t count, PrimitiveType type, bool depthTest, bool faceCulling)
 	{
 		Submit([=]()
 		{
-			RendererAPI::DrawIndexed(count, type, depthTest);
+			RendererAPI::DrawIndexed(count, type, depthTest, faceCulling);
 		});
 	}
 
@@ -165,15 +165,10 @@ namespace Hep
 			shader->SetMat4("u_Transform", transform);
 		}
 
-		if (cullFace)
-			Renderer::Submit([]() { glEnable(GL_CULL_FACE); });
-		else
-			Renderer::Submit([]() { glDisable(GL_CULL_FACE); });
-
 		s_Data.m_FullscreenQuadVertexBuffer->Bind();
 		s_Data.m_FullscreenQuadPipeline->Bind();
 		s_Data.m_FullscreenQuadIndexBuffer->Bind();
-		Renderer::DrawIndexed(6, PrimitiveType::Triangles, depthTest);
+		Renderer::DrawIndexed(6, PrimitiveType::Triangles, depthTest, cullFace);
 	}
 
 	void Renderer::SubmitFullscreenQuad(Ref<MaterialInstance> material)
@@ -187,15 +182,11 @@ namespace Hep
 			cullFace = !material->GetFlag(MaterialFlag::TwoSided);
 		}
 
-		if (cullFace)
-			Renderer::Submit([]() { glEnable(GL_CULL_FACE); });
-		else
-			Renderer::Submit([]() { glDisable(GL_CULL_FACE); });
-
 		s_Data.m_FullscreenQuadVertexBuffer->Bind();
 		s_Data.m_FullscreenQuadPipeline->Bind();
 		s_Data.m_FullscreenQuadIndexBuffer->Bind();
-		Renderer::DrawIndexed(6, PrimitiveType::Triangles, depthTest);
+
+		Renderer::DrawIndexed(6, PrimitiveType::Triangles, depthTest, cullFace);
 	}
 
 	void Renderer::SubmitMesh(Ref<Mesh> mesh, const glm::mat4& transform, Ref<MaterialInstance> overrideMaterial)

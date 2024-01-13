@@ -71,10 +71,10 @@ namespace Hep
 	}
 
 	void RendererAPI::Shutdown()
-	{ }
+	{}
 
 	void RendererAPI::LoadRequiredAssets()
-	{ }
+	{}
 
 	void RendererAPI::Clear(float r, float g, float b, float a)
 	{
@@ -87,7 +87,7 @@ namespace Hep
 		glClearColor(r, g, b, a);
 	}
 
-	void RendererAPI::DrawIndexed(uint32_t count, PrimitiveType type, bool depthTest)
+	void RendererAPI::DrawIndexed(uint32_t count, PrimitiveType type, bool depthTest, bool faceCulling)
 	{
 		if (!depthTest)
 			glDisable(GL_DEPTH_TEST);
@@ -102,6 +102,11 @@ namespace Hep
 				glPrimitiveType = GL_LINES;
 				break;
 		}
+
+		if (faceCulling)
+			glEnable(GL_CULL_FACE);
+		else
+			glDisable(GL_CULL_FACE);
 
 		glDrawElements(glPrimitiveType, count, GL_UNSIGNED_INT, nullptr);
 

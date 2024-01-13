@@ -172,7 +172,7 @@ namespace Hep::UI
 		s_IDBuffer[1] = '#';
 		memset(s_IDBuffer + 2, 0, 14);
 		itoa(s_Counter++, s_IDBuffer + 2, 16);
-		if (ImGui::DragFloat3(s_IDBuffer, glm::value_ptr(value), delta))
+		if (ImGui::DragFloat2(s_IDBuffer, glm::value_ptr(value), delta))
 			modified = true;
 
 		ImGui::PopItemWidth();
@@ -244,6 +244,39 @@ namespace Hep::UI
 		return modified;
 	}
 
+	static bool PropertyDropdown(const char* label, const char** options, int32_t optionCount, int32_t* selected)
+	{
+		const char* current = options[*selected];
+		ImGui::Text(label);
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+
+		bool changed = false;
+
+		std::string id = "##" + std::string(label);
+		if (ImGui::BeginCombo(id.c_str(), current))
+		{
+			for (int i = 0; i < optionCount; i++)
+			{
+				bool is_selected = (current == options[i]);
+				if (ImGui::Selectable(options[i], is_selected))
+				{
+					current = options[i];
+					*selected = i;
+					changed = true;
+				}
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
+
+		return changed;
+	}
+
 	static void EndPropertyGrid()
 	{
 		ImGui::Columns(1);
@@ -262,5 +295,41 @@ namespace Hep::UI
 	static void EndTreeNode()
 	{
 		ImGui::TreePop();
+	}
+
+	static int s_CheckboxCount = 0;
+
+	static void BeginCheckboxGroup(const char* label)
+	{
+		ImGui::Text(label);
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+	}
+
+	static bool PropertyCheckboxGroup(const char* label, bool& value)
+	{
+		bool modified = false;
+
+		if (++s_CheckboxCount > 1)
+			ImGui::SameLine();
+
+		ImGui::Text(label);
+		ImGui::SameLine();
+
+		s_IDBuffer[0] = '#';
+		s_IDBuffer[1] = '#';
+		memset(s_IDBuffer + 2, 0, 14);
+		itoa(s_Counter++, s_IDBuffer + 2, 16);
+		if (ImGui::Checkbox(s_IDBuffer, &value))
+			modified = true;
+
+		return modified;
+	}
+
+	static void EndCheckboxGroup()
+	{
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
+		s_CheckboxCount = 0;
 	}
 }

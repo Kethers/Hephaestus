@@ -4,11 +4,15 @@
 #include "Entity.h"
 #include "Components.h"
 
+#include "Hephaestus/Core/Input.h"
 #include "Hephaestus/Renderer/SceneRenderer.h"
 #include "Hephaestus/Script/ScriptEngine.h"
 
 #include "Hephaestus/Renderer/Renderer2D.h"
+#include "Hephaestus/Physics/Physics.h"
+#include "Hephaestus/Physics/PhysicsActor.h"
 
+#include "Hephaestus/Core/Math/Mat4.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
@@ -17,8 +21,6 @@
 // Box2D
 #include <box2d/box2d.h>
 
-// TEMP
-#include "Hephaestus/Core/Input.h"
 
 namespace Hep
 {
@@ -32,7 +34,7 @@ namespace Hep
 	};
 
 	// TODO: MOVE TO PHYSICS FILE!
-	class ContactListener : public b2ContactListener
+	class ContactListener2D : public b2ContactListener
 	{
 	public:
 		void BeginContact(b2Contact* contact) override
@@ -91,7 +93,7 @@ namespace Hep
 		}
 	};
 
-	static ContactListener s_Box2DContactListener;
+	static ContactListener2D s_Box2DContactListener;
 
 	struct Box2DWorldComponent
 	{
@@ -121,7 +123,7 @@ namespace Hep
 		ScriptEngine::OnScriptComponentDestroyed(sceneID, entityID);
 	}
 
-	Scene::Scene(const std::string& debugName)
+	Scene::Scene(const std::string& debugName, bool isEditorScene)
 		: m_DebugName(debugName)
 	{
 		m_Registry.on_construct<ScriptComponent>().connect<&OnScriptComponentConstruct>();
@@ -136,6 +138,9 @@ namespace Hep
 		b2dWorld.World->SetContactListener(&s_Box2DContactListener);
 
 		s_ActiveScenes[m_SceneID] = this;
+
+		if (!isEditorScene)
+			Physics::CreateScene();
 
 		Init();
 	}
@@ -156,16 +161,6 @@ namespace Hep
 		m_SkyboxMaterial->SetFlag(MaterialFlag::DepthTest, false);
 	}
 
-	static std::tuple<glm::vec3, glm::quat, glm::vec3> GetTransformDecomposition(const glm::mat4& transform)
-	{
-		glm::vec3 scale, translation, skew;
-		glm::vec4 perspective;
-		glm::quat orientation;
-		glm::decompose(transform, scale, orientation, translation, skew, perspective);
-
-		return { translation, orientation, scale };
-	}
-
 	// Merge OnUpdate/Render into one function?
 	void Scene::OnUpdate(Timestep ts)
 	{
@@ -181,17 +176,15 @@ namespace Hep
 			for (auto entity : view)
 			{
 				Entity e = { entity, this };
-				auto& transform = e.Transform();
 				auto& rb2d = e.GetComponent<RigidBody2DComponent>();
 				b2Body* body = static_cast<b2Body*>(rb2d.RuntimeBody);
 
 				auto& position = body->GetPosition();
-				auto [translation, rotationQuat, scale] = GetTransformDecomposition(transform);
-				glm::vec3 rotation = glm::eulerAngles(rotationQuat);
+				auto& transform = e.GetComponent<TransformComponent>();
 
-				transform = glm::translate(glm::mat4(1.0f), { position.x, position.y, transform[3].z }) *
-					glm::toMat4(glm::quat({ rotation.x, rotation.y, body->GetAngle() })) *
-					glm::scale(glm::mat4(1.0f), scale);
+				transform.Translation.x = position.x;
+				transform.Translation.y = position.y;
+				transform.Rotation.z = body->GetAngle();
 			}
 		}
 
@@ -200,12 +193,12 @@ namespace Hep
 			auto view = m_Registry.view<ScriptComponent>();
 			for (auto entity : view)
 			{
-				UUID entityID = m_Registry.get<IDComponent>(entity).ID;
 				Entity e = { entity, this };
 				if (ScriptEngine::ModuleExists(e.GetComponent<ScriptComponent>().ModuleName))
-					ScriptEngine::OnUpdateEntity(m_SceneID, entityID, ts);
+					ScriptEngine::OnUpdateEntity(e, ts);
 			}
 		}
+		Physics::Simulate(ts);
 	}
 
 	void Scene::OnRenderRuntime(Timestep ts)
@@ -217,8 +210,7 @@ namespace Hep
 		if (!cameraEntity)
 			return;
 
-		// Process camera entity
-		glm::mat4 cameraViewMatrix = glm::inverse(cameraEntity.GetComponent<TransformComponent>().Transform);
+		glm::mat4 cameraViewMatrix = glm::inverse(cameraEntity.Transform().GetTransform());
 		HEP_CORE_ASSERT(cameraEntity, "Scene does not contain any cameras!");
 		SceneCamera& camera = cameraEntity.GetComponent<CameraComponent>();
 		camera.SetViewportSize(m_ViewportWidth, m_ViewportHeight);
@@ -231,7 +223,7 @@ namespace Hep
 			for (auto entity : lights)
 			{
 				auto [transformComponent, lightComponent] = lights.get<TransformComponent, DirectionalLightComponent>(entity);
-				glm::vec3 direction = -glm::normalize(glm::mat3(transformComponent.Transform) * glm::vec3(1.0f));
+				glm::vec3 direction = -glm::normalize(glm::mat3(transformComponent.GetTransform()) * glm::vec3(1.0f));
 				m_LightEnvironment.DirectionalLights[directionalLightIndex++] =
 				{
 					direction,
@@ -267,7 +259,7 @@ namespace Hep
 				meshComponent.Mesh->OnUpdate(ts);
 
 				// TODO: Should we render (logically)
-				SceneRenderer::SubmitMesh(meshComponent, transformComponent, nullptr);
+				SceneRenderer::SubmitMesh(meshComponent, transformComponent.GetTransform());
 			}
 		}
 		SceneRenderer::EndScene();
@@ -305,7 +297,7 @@ namespace Hep
 			for (auto entity : lights)
 			{
 				auto [transformComponent, lightComponent] = lights.get<TransformComponent, DirectionalLightComponent>(entity);
-				glm::vec3 direction = -glm::normalize(glm::mat3(transformComponent.Transform) * glm::vec3(1.0f));
+				glm::vec3 direction = -glm::normalize(glm::mat3(transformComponent.GetTransform()) * glm::vec3(1.0f));
 				m_LightEnvironment.DirectionalLights[directionalLightIndex++] =
 				{
 					direction,
@@ -332,7 +324,7 @@ namespace Hep
 		m_SkyboxMaterial->Set("u_TextureLod", m_SkyboxLod);
 
 		auto group = m_Registry.group<MeshComponent>(entt::get<TransformComponent>);
-		SceneRenderer::BeginScene(this, { editorCamera, editorCamera.GetViewMatrix(), 0.1f, 1000.0f, 45.0f });
+		SceneRenderer::BeginScene(this, { editorCamera, editorCamera.GetViewMatrix(), 0.1f, 1000.0f, 45.0f }); // TODO: real values
 		for (auto entity : group)
 		{
 			auto [meshComponent, transformComponent] = group.get<MeshComponent, TransformComponent>(entity);
@@ -341,11 +333,60 @@ namespace Hep
 				meshComponent.Mesh->OnUpdate(ts);
 				// TODO: Should we render (logically)
 				if (m_SelectedEntity == entity)
-					SceneRenderer::SubmitSelectedMesh(meshComponent, transformComponent);
+					SceneRenderer::SubmitSelectedMesh(meshComponent, transformComponent.GetTransform());
 				else
-					SceneRenderer::SubmitMesh(meshComponent, transformComponent);
+					SceneRenderer::SubmitMesh(meshComponent, transformComponent.GetTransform());
 			}
 		}
+
+		{
+			auto view = m_Registry.view<BoxColliderComponent>();
+			for (auto entity : view)
+			{
+				Entity e = { entity, this };
+				auto& collider = e.GetComponent<BoxColliderComponent>();
+
+				if (m_SelectedEntity == entity)
+					SceneRenderer::SubmitColliderMesh(collider, e.GetComponent<TransformComponent>().GetTransform());
+			}
+		}
+
+		{
+			auto view = m_Registry.view<SphereColliderComponent>();
+			for (auto entity : view)
+			{
+				Entity e = { entity, this };
+				auto& collider = e.GetComponent<SphereColliderComponent>();
+
+				if (m_SelectedEntity == entity)
+					SceneRenderer::SubmitColliderMesh(collider, e.GetComponent<TransformComponent>().GetTransform());
+			}
+		}
+
+		{
+			auto view = m_Registry.view<CapsuleColliderComponent>();
+			for (auto entity : view)
+			{
+				Entity e = { entity, this };
+				auto& collider = e.GetComponent<CapsuleColliderComponent>();
+
+				if (m_SelectedEntity == entity)
+					SceneRenderer::SubmitColliderMesh(collider, e.GetComponent<TransformComponent>().GetTransform());
+			}
+		}
+
+		{
+			auto view = m_Registry.view<MeshColliderComponent>();
+			for (auto entity : view)
+			{
+				Entity e = { entity, this };
+				auto& collider = e.GetComponent<MeshColliderComponent>();
+
+				if (m_SelectedEntity == entity)
+					SceneRenderer::SubmitColliderMesh(collider, e.GetComponent<TransformComponent>().GetTransform());
+			}
+		}
+
 
 		SceneRenderer::EndScene();
 		/////////////////////////////////////////////////////////////////////
@@ -390,13 +431,13 @@ namespace Hep
 		auto& world = m_Registry.get<Box2DWorldComponent>(sceneView.front()).World;
 		{
 			auto view = m_Registry.view<RigidBody2DComponent>();
-			m_PhysicsBodyEntityBuffer = new Entity[view.size()];
+			m_Physics2DBodyEntityBuffer = new Entity[view.size()];
 			uint32_t physicsBodyEntityBufferIndex = 0;
 			for (auto entity : view)
 			{
 				Entity e = { entity, this };
 				UUID entityID = e.GetComponent<IDComponent>().ID;
-				auto& transform = e.Transform();
+				TransformComponent& transform = e.GetComponent<TransformComponent>();
 				auto& rigidBody2D = m_Registry.get<RigidBody2DComponent>(entity);
 
 				b2BodyDef bodyDef;
@@ -406,12 +447,11 @@ namespace Hep
 					bodyDef.type = b2_dynamicBody;
 				else if (rigidBody2D.BodyType == RigidBody2DComponent::Type::Kinematic)
 					bodyDef.type = b2_kinematicBody;
-				bodyDef.position.Set(transform[3].x, transform[3].y);
+				bodyDef.position.Set(transform.Translation.x, transform.Translation.y);
 
-				auto [translation, rotationQuat, scale] = GetTransformDecomposition(transform);
-				glm::vec3 rotation = glm::eulerAngles(rotationQuat);
-				bodyDef.angle = rotation.z;
-				Entity* entityStorage = &m_PhysicsBodyEntityBuffer[physicsBodyEntityBufferIndex++];
+				bodyDef.angle = transform.Rotation.z;
+
+				Entity* entityStorage = &m_Physics2DBodyEntityBuffer[physicsBodyEntityBufferIndex++];
 				*entityStorage = e;
 				bodyDef.userData.pointer = reinterpret_cast<uintptr_t>(entityStorage);
 				b2Body* body = world->CreateBody(&bodyDef);
@@ -472,12 +512,23 @@ namespace Hep
 			}
 		}
 
+		{
+			auto view = m_Registry.view<RigidBodyComponent>();
+			for (auto entity : view)
+			{
+				Entity e = { entity, this };
+				Physics::CreateActor(e);
+			}
+		}
+
 		m_IsPlaying = true;
 	}
 
 	void Scene::OnRuntimeStop()
 	{
-		delete[] m_PhysicsBodyEntityBuffer;
+		Input::SetCursorMode(CursorMode::Normal);
+		delete[] m_Physics2DBodyEntityBuffer;
+		Physics::DestroyScene();
 		m_IsPlaying = false;
 	}
 
@@ -511,7 +562,7 @@ namespace Hep
 		auto& idComponent = entity.AddComponent<IDComponent>();
 		idComponent.ID = {};
 
-		entity.AddComponent<TransformComponent>(glm::mat4(1.0f));
+		entity.AddComponent<TransformComponent>();
 		if (!name.empty())
 			entity.AddComponent<TagComponent>(name);
 
@@ -525,7 +576,7 @@ namespace Hep
 		auto& idComponent = entity.AddComponent<IDComponent>();
 		idComponent.ID = uuid;
 
-		entity.AddComponent<TransformComponent>(glm::mat4(1.0f));
+		entity.AddComponent<TransformComponent>();
 		if (!name.empty())
 			entity.AddComponent<TagComponent>(name);
 
@@ -584,6 +635,12 @@ namespace Hep
 		CopyComponentIfExists<RigidBody2DComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<BoxCollider2DComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<CircleCollider2DComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<RigidBodyComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<PhysicsMaterialComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<BoxColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<SphereColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<CapsuleColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
+		CopyComponentIfExists<MeshColliderComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 	}
 
 	Entity Scene::FindEntityByTag(const std::string& tag)
@@ -632,6 +689,12 @@ namespace Hep
 		CopyComponent<RigidBody2DComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<BoxCollider2DComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<CircleCollider2DComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<RigidBodyComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<PhysicsMaterialComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<BoxColliderComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<SphereColliderComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<CapsuleColliderComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<MeshColliderComponent>(target->m_Registry, m_Registry, enttMap);
 
 		const auto& entityInstanceMap = ScriptEngine::GetEntityInstanceMap();
 		if (entityInstanceMap.find(target->GetUUID()) != entityInstanceMap.end())

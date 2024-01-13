@@ -39,11 +39,11 @@ OStream& operator<<(OStream& os, const glm::vec4& vec)
 #define HEP_CORE_INFO(...)		::Hep::Log::GetCoreLogger()->info(__VA_ARGS__)
 #define HEP_CORE_WARN(...)		::Hep::Log::GetCoreLogger()->warn(__VA_ARGS__)
 #define HEP_CORE_ERROR(...)		::Hep::Log::GetCoreLogger()->error(__VA_ARGS__)
-#define HEP_CORE_CRITICAL(...)	::Hep::Log::GetCoreLogger()->critical(__VA_ARGS__)
+#define HEP_CORE_FATAL(...)		::Hep::Log::GetCoreLogger()->critical(__VA_ARGS__)
 
 // Client log macros
 #define HEP_TRACE(...)			::Hep::Log::GetClientLogger()->trace(__VA_ARGS__)
 #define HEP_INFO(...)			::Hep::Log::GetClientLogger()->info(__VA_ARGS__)
 #define HEP_WARN(...)			::Hep::Log::GetClientLogger()->warn(__VA_ARGS__)
 #define HEP_ERROR(...)			::Hep::Log::GetClientLogger()->error(__VA_ARGS__)
-#define HEP_CRITICAL(...)		::Hep::Log::GetClientLogger()->critical(__VA_ARGS__)
+#define HEP_FATAL(...)			::Hep::Log::GetClientLogger()->critical(__VA_ARGS__)
