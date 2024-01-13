@@ -539,6 +539,7 @@ namespace Hep
 			case MONO_TYPE_I4: return FieldType::Int;
 			case MONO_TYPE_U4: return FieldType::UnsignedInt;
 			case MONO_TYPE_STRING: return FieldType::String;
+			case MONO_TYPE_CLASS: return FieldType::ClassReference;
 			case MONO_TYPE_VALUETYPE:
 			{
 				char* name = mono_type_get_name(monoType);
@@ -624,15 +625,24 @@ namespace Hep
 				// TODO: Attributes
 				MonoCustomAttrInfo* attr = mono_custom_attrs_from_field(scriptClass.Class, iter);
 
+				char* typeName = mono_type_get_name(fieldType);
+
 				if (oldFields.find(name) != oldFields.end())
 				{
 					fieldMap.emplace(name, std::move(oldFields.at(name)));
 				}
 				else
 				{
-					PublicField field = { name, hepFieldType };
+					PublicField field = { name, typeName, hepFieldType };
 					field.m_EntityInstance = &entityInstance;
 					field.m_MonoClassField = iter;
+
+					if (field.Type == FieldType::ClassReference)
+					{
+						Ref<Asset>* asset = new Ref<Asset>();
+						field.SetStoredValueRaw(asset);
+					}
+
 					fieldMap.emplace(name, std::move(field));
 				}
 			}
@@ -698,13 +708,14 @@ namespace Hep
 			case FieldType::Vec2: return 4 * 2;
 			case FieldType::Vec3: return 4 * 3;
 			case FieldType::Vec4: return 4 * 4;
+			case FieldType::ClassReference: return 4;
 		}
 		HEP_CORE_ASSERT(false, "Unknown field type!");
 		return 0;
 	}
 
-	PublicField::PublicField(const std::string& name, FieldType type)
-		: Name(name), Type(type)
+	PublicField::PublicField(const std::string& name, const std::string& typeName, FieldType type)
+		: Name(name), TypeName(typeName), Type(type)
 	{
 		m_StoredValueBuffer = AllocateBuffer(type);
 	}
@@ -712,6 +723,7 @@ namespace Hep
 	PublicField::PublicField(PublicField&& other)
 	{
 		Name = std::move(other.Name);
+		TypeName = std::move(other.TypeName);
 		Type = other.Type;
 		m_EntityInstance = other.m_EntityInstance;
 		m_MonoClassField = other.m_MonoClassField;
@@ -730,7 +742,20 @@ namespace Hep
 	void PublicField::CopyStoredValueToRuntime()
 	{
 		HEP_CORE_ASSERT(m_EntityInstance->GetInstance());
-		mono_field_set_value(m_EntityInstance->GetInstance(), m_MonoClassField, m_StoredValueBuffer);
+
+		if (Type == FieldType::ClassReference)
+		{
+			// Create Managed Object
+			void* params[] = {
+				&m_StoredValueBuffer
+			};
+			MonoObject* obj = ScriptEngine::Construct(TypeName + ":.ctor(intptr)", true, params);
+			mono_field_set_value(m_EntityInstance->GetInstance(), m_MonoClassField, obj);
+		}
+		else
+		{
+			mono_field_set_value(m_EntityInstance->GetInstance(), m_MonoClassField, m_StoredValueBuffer);
+		}
 	}
 
 	bool PublicField::IsRuntimeAvailable() const
@@ -740,8 +765,46 @@ namespace Hep
 
 	void PublicField::SetStoredValueRaw(void* src)
 	{
-		uint32_t size = GetFieldSize(Type);
-		memcpy(m_StoredValueBuffer, src, size);
+		if (Type == FieldType::ClassReference)
+		{
+			m_StoredValueBuffer = (uint8_t*)src;
+		}
+		else
+		{
+			uint32_t size = GetFieldSize(Type);
+			memcpy(m_StoredValueBuffer, src, size);
+		}
+	}
+
+	void PublicField::SetRuntimeValueRaw(void* src)
+	{
+		HEP_CORE_ASSERT(m_EntityInstance->GetInstance());
+		mono_field_set_value(m_EntityInstance->GetInstance(), m_MonoClassField, src);
+	}
+
+	void* PublicField::GetRuntimeValueRaw()
+	{
+		HEP_CORE_ASSERT(m_EntityInstance->GetInstance());
+
+		if (Type == FieldType::ClassReference)
+		{
+			MonoObject* instance;
+			mono_field_get_value(m_EntityInstance->GetInstance(), m_MonoClassField, &instance);
+
+			if (!instance)
+				return nullptr;
+
+			MonoClassField* field = mono_class_get_field_from_name(mono_object_get_class(instance), "m_UnmanagedInstance");
+			int* value;
+			mono_field_get_value(instance, field, &value);
+			return value;
+		}
+		else
+		{
+			uint8_t* outValue;
+			mono_field_get_value(m_EntityInstance->GetInstance(), m_MonoClassField, outValue);
+			return outValue;
+		}
 	}
 
 	uint8_t* PublicField::AllocateBuffer(FieldType type)
@@ -754,8 +817,15 @@ namespace Hep
 
 	void PublicField::SetStoredValue_Internal(void* value) const
 	{
-		uint32_t size = GetFieldSize(Type);
-		memcpy(m_StoredValueBuffer, value, size);
+		if (Type == FieldType::ClassReference)
+		{
+			//m_StoredValueBuffer = (uint8_t*)value;
+		}
+		else
+		{
+			uint32_t size = GetFieldSize(Type);
+			memcpy(m_StoredValueBuffer, value, size);
+		}
 	}
 
 	void PublicField::GetStoredValue_Internal(void* outValue) const

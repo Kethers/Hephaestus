@@ -31,7 +31,7 @@ namespace Hep
 		m_FolderRightTex = Texture2D::Create("assets/editor/folder_hierarchy.png");
 		m_SearchTex = Texture2D::Create("assets/editor/search.png");
 
-		m_BaseDirectoryHandle = 0;
+		m_BaseDirectoryHandle = AssetManager::GetAssetHandleFromFilePath("assets");
 		m_BaseDirectory = AssetManager::GetAsset<Directory>(m_BaseDirectoryHandle);
 		UpdateCurrentDirectory(m_BaseDirectoryHandle);
 
@@ -111,7 +111,7 @@ namespace Hep
 							{
 								UpdateCurrentDirectory(m_CurrentDirHandle);
 								auto createdDirectory = AssetManager::GetAsset<Directory>(
-									AssetManager::GetAssetIDForFile(m_CurrentDirectory->FilePath + "/New Folder"));
+									AssetManager::GetAssetHandleFromFilePath(m_CurrentDirectory->FilePath + "/New Folder"));
 								m_SelectedAssets.Select(createdDirectory->Handle);
 								memset(m_InputBuffer, 0, MAX_INPUT_BUFFER_LENGTH);
 								memcpy(m_InputBuffer, createdDirectory->FileName.c_str(), createdDirectory->FileName.size());
@@ -427,7 +427,6 @@ namespace Hep
 				currentHandle = dirInfo->ParentDirectory;
 			}
 
-			m_BreadCrumbData.push_back(m_BaseDirectory);
 			std::reverse(m_BreadCrumbData.begin(), m_BreadCrumbData.end());
 
 			m_UpdateBreadCrumbs = false;

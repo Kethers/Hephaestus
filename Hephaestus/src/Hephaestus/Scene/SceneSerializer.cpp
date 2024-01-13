@@ -574,7 +574,7 @@ namespace Hep
 			if (environment["AssetPath"])
 			{
 				std::string envPath = environment["AssetPath"].as<std::string>();
-				assetHandle = AssetManager::GetAssetIDForFile(envPath);
+				assetHandle = AssetManager::GetAssetHandleFromFilePath(envPath);
 			}
 			else
 			{
@@ -667,13 +667,14 @@ namespace Hep
 							for (auto field : storedFields)
 							{
 								std::string name = field["Name"].as<std::string>();
+								std::string typeName = field["TypeName"] ? field["TypeName"].as<std::string>() : "";
 								FieldType type = (FieldType)field["Type"].as<uint32_t>();
 								EntityInstanceData& data = ScriptEngine::GetEntityInstanceData(m_Scene->GetUUID(), uuid);
 								auto& moduleFieldMap = data.ModuleFieldMap;
 								auto& publicFields = moduleFieldMap[moduleName];
 								if (!publicFields.contains(name))
 								{
-									PublicField pf = { name, type };
+									PublicField pf = { name, typeName, type };
 									publicFields.emplace(name, std::move(pf));
 								}
 								auto dataNode = field["Data"];
@@ -727,7 +728,7 @@ namespace Hep
 					if (meshComponent["AssetPath"])
 					{
 						std::string filepath = meshComponent["AssetPath"].as<std::string>();
-						assetID = AssetManager::GetAssetIDForFile(filepath);
+						assetID = AssetManager::GetAssetHandleFromFilePath(filepath);
 					}
 					else
 					{
@@ -784,7 +785,7 @@ namespace Hep
 					if (skyLightComponent["EnvironmentAssetPath"])
 					{
 						std::string filepath = skyLightComponent["EnvironmentAssetPath"].as<std::string>();
-						assetHandle = AssetManager::GetAssetIDForFile(filepath);
+						assetHandle = AssetManager::GetAssetHandleFromFilePath(filepath);
 					}
 					else
 					{
@@ -918,7 +919,7 @@ namespace Hep
 						if (meshComponent["AssetPath"])
 						{
 							std::string filepath = meshComponent["AssetPath"].as<std::string>();
-							assetID = AssetManager::GetAssetIDForFile(filepath);
+							assetID = AssetManager::GetAssetHandleFromFilePath(filepath);
 						}
 						else
 						{
