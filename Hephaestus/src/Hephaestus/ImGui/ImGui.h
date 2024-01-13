@@ -306,7 +306,7 @@ namespace Hep::UI
 
 		if (ImGui::BeginDragDropTarget())
 		{
-			auto data = ImGui::AcceptDragDropPayload("scene_entity_assetsP");
+			auto data = ImGui::AcceptDragDropPayload("asset_payload");
 
 			if (data)
 			{

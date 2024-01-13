@@ -163,19 +163,15 @@ namespace Hep
 		out << YAML::Key << "Entity";
 		out << YAML::Value << uuid;
 
-		if (entity.HasComponent<ParentComponent>())
+		if (entity.HasComponent<RelationshipComponent>())
 		{
-			auto& parent = entity.GetComponent<ParentComponent>();
-			out << YAML::Key << "Parent" << YAML::Value << parent.ParentHandle;
-		}
+			auto& relationshipComponent = entity.GetComponent<RelationshipComponent>();
+			out << YAML::Key << "Parent" << YAML::Value << relationshipComponent.ParentHandle;
 
-		if (entity.HasComponent<ChildrenComponent>())
-		{
-			auto& childrenComponent = entity.GetComponent<ChildrenComponent>();
 			out << YAML::Key << "Children";
 			out << YAML::Value << YAML::BeginSeq;
 
-			for (auto child : childrenComponent.Children)
+			for (auto child : relationshipComponent.Children)
 			{
 				out << YAML::BeginMap;
 				out << YAML::Key << "Handle" << YAML::Value << child;
@@ -317,7 +313,7 @@ namespace Hep
 			out << YAML::BeginMap; // SkyLightComponent
 
 			auto& skyLightComponent = entity.GetComponent<SkyLightComponent>();
-			out << YAML::Key << "EnvironmentAssetPath" << YAML::Value << skyLightComponent.SceneEnvironment.FilePath;
+			out << YAML::Key << "EnvironmentMap" << YAML::Value << skyLightComponent.SceneEnvironment->Handle;
 			out << YAML::Key << "Intensity" << YAML::Value << skyLightComponent.Intensity;
 			out << YAML::Key << "Angle" << YAML::Value << skyLightComponent.Angle;
 
@@ -484,7 +480,7 @@ namespace Hep
 		out << YAML::Key << "Environment";
 		out << YAML::Value;
 		out << YAML::BeginMap; // Environment
-		out << YAML::Key << "AssetPath" << YAML::Value << scene->GetEnvironment().FilePath;
+		out << YAML::Key << "AssetHandle" << YAML::Value << scene->GetEnvironment()->Handle;
 		const auto& light = scene->GetLight();
 		out << YAML::Key << "Light" << YAML::Value;
 		out << YAML::BeginMap; // Light
@@ -605,8 +601,9 @@ namespace Hep
 
 				Entity deserializedEntity = m_Scene->CreateEntityWithID(uuid, name);
 
+				auto& relationshipComponent = deserializedEntity.GetComponent<RelationshipComponent>();
 				uint64_t parentHandle = entity["Parent"] ? entity["Parent"].as<uint64_t>() : 0;
-				deserializedEntity.GetComponent<ParentComponent>().ParentHandle = parentHandle;
+				relationshipComponent.ParentHandle = parentHandle;
 
 				auto children = entity["Children"];
 				if (children)
@@ -614,7 +611,7 @@ namespace Hep
 					for (auto child : children)
 					{
 						uint64_t childHandle = child["Handle"].as<uint64_t>();
-						deserializedEntity.GetComponent<ChildrenComponent>().Children.push_back(childHandle);
+						relationshipComponent.Children.push_back(childHandle);
 					}
 				}
 
@@ -774,18 +771,22 @@ namespace Hep
 				if (skyLightComponent)
 				{
 					auto& component = deserializedEntity.AddComponent<SkyLightComponent>();
-					std::string env = skyLightComponent["EnvironmentAssetPath"].as<std::string>();
-					if (!env.empty())
+					AssetHandle assetHandle;
+					if (skyLightComponent["EnvironmentAssetPath"])
 					{
-						if (!CheckPath(env))
-						{
-							missingPaths.emplace_back(env);
-						}
-						else
-						{
-							component.SceneEnvironment = Environment::Load(env);
-						}
+						std::string filepath = skyLightComponent["EnvironmentAssetPath"].as<std::string>();
+						assetHandle = AssetManager::GetAssetIDForFile(filepath);
 					}
+					else
+					{
+						assetHandle = skyLightComponent["EnvironmentMap"].as<uint64_t>();
+					}
+
+					if (AssetManager::IsAssetHandleValid(assetHandle))
+					{
+						component.SceneEnvironment = AssetManager::GetAsset<Environment>(assetHandle);
+					}
+
 					component.Intensity = skyLightComponent["Intensity"].as<float>();
 					component.Angle = skyLightComponent["Angle"].as<float>();
 				}

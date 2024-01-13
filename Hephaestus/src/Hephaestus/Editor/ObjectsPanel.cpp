@@ -23,7 +23,7 @@ namespace Hep
 
 			ImGui::Text(label);
 
-			ImGui::SetDragDropPayload("scene_entity_assetsP", &handle, sizeof(AssetHandle));
+			ImGui::SetDragDropPayload("asset_payload", &handle, sizeof(AssetHandle));
 			ImGui::EndDragDropSource();
 		}
 	}

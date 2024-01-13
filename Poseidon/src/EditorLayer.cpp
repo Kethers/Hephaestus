@@ -18,7 +18,6 @@
 
 #include "Hephaestus/Physics/Physics.h"
 #include "Hephaestus/Core/Math/Math.h"
-#include "Hephaestus/Utilities/DragDropData.h"
 #include "Hephaestus/Utilities/FileSystem.h"
 
 namespace Hep
@@ -685,27 +684,32 @@ namespace Hep
 
 		if (ImGui::BeginDragDropTarget())
 		{
-			auto data = ImGui::AcceptDragDropPayload("scene_entity_assetsP");
+			auto data = ImGui::AcceptDragDropPayload("asset_payload");
 			if (data)
 			{
-				AssetHandle assetHandle = *(AssetHandle*)data->Data;
-				Ref<Asset> asset = AssetManager::GetAsset<Asset>(assetHandle);
+				int count = data->DataSize / sizeof(AssetHandle);
 
-				if (asset->Type == AssetType::Scene)
+				for (int i = 0; i < count; i++)
 				{
-					OpenScene(asset->FilePath);
-				}
+					AssetHandle assetHandle = *(((AssetHandle*)data->Data) + i);
+					Ref<Asset> asset = AssetManager::GetAsset<Asset>(assetHandle);
 
-				if (asset->Type == AssetType::Mesh)
-				{
-					Entity entity = m_EditorScene->CreateEntity(asset->FileName);
-					entity.AddComponent<MeshComponent>(Ref<Mesh>(asset));
-					SelectEntity(entity);
+					// We can't really support dragging and dropping scenes when we're dropping multiple assets
+					if (count == 1 && asset->Type == AssetType::Scene)
+					{
+						OpenScene(asset->FilePath);
+					}
+
+					if (asset->Type == AssetType::Mesh)
+					{
+						Entity entity = m_EditorScene->CreateEntity(asset->FileName);
+						entity.AddComponent<MeshComponent>(Ref<Mesh>(asset));
+						SelectEntity(entity);
+					}
 				}
 			}
 			ImGui::EndDragDropTarget();
 		}
-
 
 		ImGui::End();
 		ImGui::PopStyleVar();

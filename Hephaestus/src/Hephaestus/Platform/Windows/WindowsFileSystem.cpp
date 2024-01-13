@@ -56,6 +56,25 @@ namespace Hep
 		return newFilePath;
 	}
 
+	bool FileSystem::DeleteFile(const std::string& filepath)
+	{
+		s_IgnoreNextChange = true;
+		std::string fp = filepath;
+		fp.append(1, '\0');
+		SHFILEOPSTRUCTA file_op;
+		file_op.hwnd = NULL;
+		file_op.wFunc = FO_DELETE;
+		file_op.pFrom = fp.c_str();
+		file_op.pTo = "";
+		file_op.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT;
+		file_op.fAnyOperationsAborted = false;
+		file_op.hNameMappings = 0;
+		file_op.lpszProgressTitle = "";
+		int result = SHFileOperationA(&file_op);
+		s_IgnoreNextChange = false;
+		return result == 0;
+	}
+
 	void FileSystem::StartWatching()
 	{
 		DWORD threadId;

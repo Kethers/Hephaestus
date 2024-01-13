@@ -165,6 +165,10 @@ namespace Hep
 
 		ImGuiTreeNodeFlags flags = (entity == m_SelectionContext ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+
+		if (entity.Children().empty())
+			flags |= ImGuiTreeNodeFlags_Leaf;
+
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, flags, name);
 		if (ImGui::IsItemClicked())
 		{
@@ -200,18 +204,7 @@ namespace Hep
 				UUID droppedHandle = *((UUID*)payload->Data);
 				Entity e = m_Context->FindEntityByUUID(droppedHandle);
 
-				// NOTE: We probably don't want to parent a parent to it's own children since this could cause a lot of edge-cases that will be difficult to handle
-				bool reparentToChild = false;
-				for (auto child : e.Children())
-				{
-					if (child == entity.GetUUID())
-					{
-						reparentToChild = true;
-						break;
-					}
-				}
-
-				if (!reparentToChild)
+				if (!entity.IsDescendantOf(e))
 				{
 					// Remove from previous parent
 					Entity previousParent = m_Context->FindEntityByUUID(e.GetParentUUID());
@@ -669,28 +662,8 @@ namespace Hep
 
 		DrawComponent<SkyLightComponent>("Sky Light", entity, [](SkyLightComponent& slc)
 		{
-			ImGui::Columns(3);
-			ImGui::SetColumnWidth(0, 100);
-			ImGui::SetColumnWidth(1, 300);
-			ImGui::SetColumnWidth(2, 40);
-			ImGui::Text("File Path");
-			ImGui::NextColumn();
-			ImGui::PushItemWidth(-1);
-			if (!slc.SceneEnvironment.FilePath.empty())
-				ImGui::InputText("##envfilepath", (char*)slc.SceneEnvironment.FilePath.c_str(), 256, ImGuiInputTextFlags_ReadOnly);
-			else
-				ImGui::InputText("##envfilepath", (char*)"Empty", 256, ImGuiInputTextFlags_ReadOnly);
-			ImGui::PopItemWidth();
-			ImGui::NextColumn();
-			if (ImGui::Button("...##openenv"))
-			{
-				std::string file = Application::Get().OpenFile("*.hdr");
-				if (!file.empty())
-					slc.SceneEnvironment = Environment::Load(file);
-			}
-			ImGui::Columns(1);
-
 			UI::BeginPropertyGrid();
+			UI::PropertyAssetReference("Environment Map", slc.SceneEnvironment, AssetType::EnvMap);
 			UI::Property("Intensity", slc.Intensity, 0.01f, 0.0f, 5.0f);
 			UI::EndPropertyGrid();
 		});

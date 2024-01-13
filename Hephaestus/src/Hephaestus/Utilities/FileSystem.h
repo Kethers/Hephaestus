@@ -24,6 +24,7 @@ namespace Hep
 		static bool CreateFolder(const std::string& filepath);
 		static bool Exists(const std::string& filepath);
 		static std::string Rename(const std::string& filepath, const std::string& newName);
+		static bool DeleteFile(const std::string& filepath);
 		// static bool MoveFile(const std::string& filepath, const std::string& dest);
 
 	public:

@@ -2,11 +2,21 @@
 
 #include "Hephaestus/Core/UUID.h"
 
+#include <entt/entt.hpp>
+
 namespace Hep
 {
 	enum class AssetType
 	{
-		Scene, Mesh, Texture, EnvMap, Audio, Script, PhysicsMat, Other
+		Scene,
+		Mesh,
+		Texture,
+		EnvMap,
+		Audio,
+		Script,
+		PhysicsMat,
+		Directory,
+		Other
 	};
 
 	using AssetHandle = UUID;
@@ -20,7 +30,8 @@ namespace Hep
 		std::string FilePath;
 		std::string FileName;
 		std::string Extension;
-		int ParentDirectory;
+		AssetHandle ParentDirectory;
+		bool IsDataLoaded = false;
 
 		virtual ~Asset() = default;
 	};
@@ -36,5 +47,14 @@ namespace Hep
 		PhysicsMaterial(float staticFriction, float dynamicFriction, float bounciness)
 			: StaticFriction(staticFriction), DynamicFriction(dynamicFriction), Bounciness(bounciness)
 		{}
+	};
+
+	// Treating directories as assets simplifies the asset manager window rendering by a lot
+	class Directory : public Asset
+	{
+	public:
+		std::vector<AssetHandle> ChildDirectories;
+
+		Directory() = default;
 	};
 }

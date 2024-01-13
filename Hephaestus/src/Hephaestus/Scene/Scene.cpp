@@ -256,14 +256,14 @@ namespace Hep
 
 		// TODO: only one sky light at the moment!
 		{
-			m_Environment = Environment();
+			m_Environment = Ref<Environment>::Create();
 			auto lights = m_Registry.group<SkyLightComponent>(entt::get<TransformComponent>);
 			for (auto entity : lights)
 			{
 				auto [transformComponent, skyLightComponent] = lights.get<TransformComponent, SkyLightComponent>(entity);
 				m_Environment = skyLightComponent.SceneEnvironment;
 				m_EnvironmentIntensity = skyLightComponent.Intensity;
-				SetSkybox(m_Environment.RadianceMap);
+				SetSkybox(m_Environment->RadianceMap);
 			}
 		}
 
@@ -331,14 +331,14 @@ namespace Hep
 
 		// TODO: only one sky light at the moment!
 		{
-			m_Environment = Environment();
+			m_Environment = Ref<Environment>::Create();
 			auto lights = m_Registry.group<SkyLightComponent>(entt::get<TransformComponent>);
 			for (auto entity : lights)
 			{
 				auto [transformComponent, skyLightComponent] = lights.get<TransformComponent, SkyLightComponent>(entity);
 				m_Environment = skyLightComponent.SceneEnvironment;
 				m_EnvironmentIntensity = skyLightComponent.Intensity;
-				SetSkybox(m_Environment.RadianceMap);
+				SetSkybox(m_Environment->RadianceMap);
 			}
 		}
 
@@ -595,8 +595,7 @@ namespace Hep
 		if (!name.empty())
 			entity.AddComponent<TagComponent>(name);
 
-		entity.AddComponent<ParentComponent>();
-		entity.AddComponent<ChildrenComponent>();
+		entity.AddComponent<RelationshipComponent>();
 
 		m_EntityIDMap[idComponent.ID] = entity;
 		return entity;
@@ -612,8 +611,7 @@ namespace Hep
 		if (!name.empty())
 			entity.AddComponent<TagComponent>(name);
 
-		entity.AddComponent<ParentComponent>();
-		entity.AddComponent<ChildrenComponent>();
+		entity.AddComponent<RelationshipComponent>();
 
 		HEP_CORE_ASSERT(m_EntityIDMap.find(uuid) == m_EntityIDMap.end());
 		m_EntityIDMap[uuid] = entity;
@@ -661,11 +659,7 @@ namespace Hep
 			newEntity = CreateEntity();
 
 		CopyComponentIfExists<TransformComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
-
-		// TODO: Should we maintain parent?
-		CopyComponentIfExists<ParentComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
-		CopyComponentIfExists<ChildrenComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
-
+		CopyComponentIfExists<RelationshipComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<MeshComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<DirectionalLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
 		CopyComponentIfExists<SkyLightComponent>(newEntity.m_EntityHandle, entity.m_EntityHandle, m_Registry);
@@ -743,8 +737,7 @@ namespace Hep
 
 		CopyComponent<TagComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<TransformComponent>(target->m_Registry, m_Registry, enttMap);
-		CopyComponent<ParentComponent>(target->m_Registry, m_Registry, enttMap);
-		CopyComponent<ChildrenComponent>(target->m_Registry, m_Registry, enttMap);
+		CopyComponent<RelationshipComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<MeshComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<DirectionalLightComponent>(target->m_Registry, m_Registry, enttMap);
 		CopyComponent<SkyLightComponent>(target->m_Registry, m_Registry, enttMap);
