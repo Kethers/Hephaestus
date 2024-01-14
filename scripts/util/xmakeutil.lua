@@ -17,6 +17,7 @@ end
 
 function BuildProject(config)
 	target(config.projectName)
+	set_encodings("utf-8")
 	afterBuildFunc = config.afterBuildFunc
 	if afterBuildFunc ~= nil then
 		after_build(afterBuildFunc)

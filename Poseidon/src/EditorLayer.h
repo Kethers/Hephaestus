@@ -14,6 +14,8 @@
 #include <string>
 
 #include "Hephaestus/Editor/SceneHierarchyPanel.h"
+#include "Hephaestus/Editor/AssetManagerPanel.h"
+#include "Hephaestus/Editor/ObjectsPanel.h"
 
 namespace Hep
 {
@@ -85,8 +87,10 @@ namespace Hep
 
 	private:
 		Scope<SceneHierarchyPanel> m_SceneHierarchyPanel;
+		Scope<AssetManagerPanel> m_AssetManagerPanel;
+		Scope<ObjectsPanel> m_ObjectsPanel;
 
-		Ref<Scene> m_RuntimeScene, m_EditorScene;
+		Ref<Scene> m_RuntimeScene, m_EditorScene, m_CurrentScene;
 		std::string m_SceneFilePath;
 		bool m_ReloadScriptOnPlay = true;
 

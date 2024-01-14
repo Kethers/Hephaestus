@@ -111,7 +111,7 @@ namespace Hep::Script
 					&sphereCollider.Radius
 				};
 
-				MonoObject* obj = ScriptEngine::Construct("Hep.SphereCollider:.ctor(ulong,bool,float)", true, data);
+				MonoObject* obj = ScriptEngine::Construct("Hep.SphereCollider:.ctor(ulong,bool,single)", true, data);
 				mono_array_set(array, MonoObject*, arrayIndex++, obj);
 			}
 
@@ -127,7 +127,7 @@ namespace Hep::Script
 					&capsuleCollider.Height
 				};
 
-				MonoObject* obj = ScriptEngine::Construct("Hep.CapsuleCollider:.ctor(ulong,bool,float,float)", true, data);
+				MonoObject* obj = ScriptEngine::Construct("Hep.CapsuleCollider:.ctor(ulong,bool,single,single)", true, data);
 				mono_array_set(array, MonoObject*, arrayIndex++, obj);
 			}
 

@@ -3,7 +3,9 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>
+
 #include "Hephaestus/Core/Application.h"
+#include "Hephaestus/Core/Math/Math.h"
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Physics/Physics.h"
@@ -11,6 +13,8 @@
 #include "Hephaestus/Physics/PhysicsLayer.h"
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
 #include "Hephaestus/Renderer/MeshFactory.h"
+
+#include "Hephaestus/Asset/AssetManager.h"
 
 #include <assimp/scene.h>
 
@@ -55,15 +59,46 @@ namespace Hep
 	void SceneHierarchyPanel::OnImGuiRender()
 	{
 		ImGui::Begin("Scene Hierarchy");
+		ImRect windowRect = { ImGui::GetWindowContentRegionMin(), ImGui::GetWindowContentRegionMax() };
+
 		if (m_Context)
 		{
 			uint32_t entityCount = 0, meshCount = 0;
 			m_Context->m_Registry.each([&](auto entity)
 			{
 				Entity e(entity, m_Context.Raw());
-				if (e.HasComponent<IDComponent>())
+				if (e.HasComponent<IDComponent>() && e.GetParentUUID() == 0)
 					DrawEntityNode(e);
 			});
+
+			if (ImGui::BeginDragDropTargetCustom(windowRect, ImGui::GetCurrentWindow()->ID))
+			{
+				const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("scene_entity_hierarchy",
+					ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+
+				if (payload)
+				{
+					UUID droppedHandle = *((UUID*)payload->Data);
+					Entity e = m_Context->FindEntityByUUID(droppedHandle);
+					Entity previousParent = m_Context->FindEntityByUUID(e.GetParentUUID());
+
+					if (previousParent)
+					{
+						auto& children = previousParent.Children();
+						children.erase(std::remove(children.begin(), children.end(), droppedHandle), children.end());
+
+						glm::mat4 parentTransform = m_Context->GetTransformRelativeToParent(previousParent);
+						glm::vec3 parentTranslation, parentRotation, parentScale;
+						Math::DecomposeTransform(parentTransform, parentTranslation, parentRotation, parentScale);
+
+						e.Transform().Translation = e.Transform().Translation + parentTranslation;
+					}
+
+					e.SetParentUUID(0);
+				}
+
+				ImGui::EndDragDropTarget();
+			}
 
 			if (ImGui::BeginPopupContextWindow(0, 1, false))
 			{
@@ -136,6 +171,10 @@ namespace Hep
 
 		ImGuiTreeNodeFlags flags = (entity == m_SelectionContext ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 		flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+
+		if (entity.Children().empty())
+			flags |= ImGuiTreeNodeFlags_Leaf;
+
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, flags, name);
 		if (ImGui::IsItemClicked())
 		{
@@ -152,9 +191,59 @@ namespace Hep
 
 			ImGui::EndPopup();
 		}
+
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+		{
+			UUID entityId = entity.GetUUID();
+			ImGui::Text(entity.GetComponent<TagComponent>().Tag.c_str());
+			ImGui::SetDragDropPayload("scene_entity_hierarchy", &entityId, sizeof(UUID));
+			ImGui::EndDragDropSource();
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			const ImGuiPayload* payload =
+				ImGui::AcceptDragDropPayload("scene_entity_hierarchy", ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+
+			if (payload)
+			{
+				UUID droppedHandle = *((UUID*)payload->Data);
+				Entity e = m_Context->FindEntityByUUID(droppedHandle);
+
+				if (!entity.IsDescendantOf(e))
+				{
+					// Remove from previous parent
+					Entity previousParent = m_Context->FindEntityByUUID(e.GetParentUUID());
+					if (previousParent)
+					{
+						auto& parentChildren = previousParent.Children();
+						parentChildren.erase(std::remove(parentChildren.begin(), parentChildren.end(), droppedHandle),
+							parentChildren.end());
+					}
+
+					glm::mat4 parentTransform = m_Context->GetTransformRelativeToParent(entity);
+					glm::vec3 parentTranslation, parentRotation, parentScale;
+					Math::DecomposeTransform(parentTransform, parentTranslation, parentRotation, parentScale);
+
+					e.Transform().Translation = e.Transform().Translation - parentTranslation;
+
+					e.SetParentUUID(entity.GetUUID());
+					entity.Children().push_back(droppedHandle);
+				}
+			}
+
+			ImGui::EndDragDropTarget();
+		}
+
 		if (opened)
 		{
-			// TODO: Children
+			for (auto child : entity.Children())
+			{
+				Entity e = m_Context->FindEntityByUUID(child);
+				if (e)
+					DrawEntityNode(e);
+			}
+
 			ImGui::TreePop();
 		}
 
@@ -452,14 +541,6 @@ namespace Hep
 					ImGui::CloseCurrentPopup();
 				}
 			}
-			if (!m_SelectionContext.HasComponent<PhysicsMaterialComponent>())
-			{
-				if (ImGui::Button("Physics Material"))
-				{
-					m_SelectionContext.AddComponent<PhysicsMaterialComponent>();
-					ImGui::CloseCurrentPopup();
-				}
-			}
 			if (!m_SelectionContext.HasComponent<BoxColliderComponent>())
 			{
 				if (ImGui::Button("Box Collider"))
@@ -511,26 +592,9 @@ namespace Hep
 
 		DrawComponent<MeshComponent>("Mesh", entity, [](MeshComponent& mc)
 		{
-			ImGui::Columns(3);
-			ImGui::SetColumnWidth(0, 100);
-			ImGui::SetColumnWidth(1, 300);
-			ImGui::SetColumnWidth(2, 40);
-			ImGui::Text("File Path");
-			ImGui::NextColumn();
-			ImGui::PushItemWidth(-1);
-			if (mc.Mesh)
-				ImGui::InputText("##meshfilepath", (char*)mc.Mesh->GetFilePath().c_str(), 256, ImGuiInputTextFlags_ReadOnly);
-			else
-				ImGui::InputText("##meshfilepath", (char*)"Null", 256, ImGuiInputTextFlags_ReadOnly);
-			ImGui::PopItemWidth();
-			ImGui::NextColumn();
-			if (ImGui::Button("...##openmesh"))
-			{
-				std::string file = Application::Get().OpenFile();
-				if (!file.empty())
-					mc.Mesh = Ref<Mesh>::Create(file);
-			}
-			ImGui::Columns(1);
+			UI::BeginPropertyGrid();
+			UI::PropertyAssetReference("Mesh", mc.Mesh, AssetType::Mesh);
+			UI::EndPropertyGrid();
 		});
 
 		DrawComponent<CameraComponent>("Camera", entity, [](CameraComponent& cc)
@@ -606,28 +670,8 @@ namespace Hep
 
 		DrawComponent<SkyLightComponent>("Sky Light", entity, [](SkyLightComponent& slc)
 		{
-			ImGui::Columns(3);
-			ImGui::SetColumnWidth(0, 100);
-			ImGui::SetColumnWidth(1, 300);
-			ImGui::SetColumnWidth(2, 40);
-			ImGui::Text("File Path");
-			ImGui::NextColumn();
-			ImGui::PushItemWidth(-1);
-			if (!slc.SceneEnvironment.FilePath.empty())
-				ImGui::InputText("##envfilepath", (char*)slc.SceneEnvironment.FilePath.c_str(), 256, ImGuiInputTextFlags_ReadOnly);
-			else
-				ImGui::InputText("##envfilepath", (char*)"Empty", 256, ImGuiInputTextFlags_ReadOnly);
-			ImGui::PopItemWidth();
-			ImGui::NextColumn();
-			if (ImGui::Button("...##openenv"))
-			{
-				std::string file = Application::Get().OpenFile("*.hdr");
-				if (!file.empty())
-					slc.SceneEnvironment = Environment::Load(file);
-			}
-			ImGui::Columns(1);
-
 			UI::BeginPropertyGrid();
+			UI::PropertyAssetReference("Environment Map", slc.SceneEnvironment, AssetType::EnvMap);
 			UI::Property("Intensity", slc.Intensity, 0.01f, 0.0f, 5.0f);
 			UI::EndPropertyGrid();
 		});
@@ -719,6 +763,23 @@ namespace Hep
 								}
 								break;
 							}
+							/*case FieldType::ClassReference:
+							{
+								Ref<Asset>* asset = (Ref<Asset>*)(isRuntime ? field.GetRuntimeValueRaw() : field.GetStoredValueRaw());
+								std::string label = field.Name + "(" + field.TypeName + ")";
+
+								if (!AssetManager::IsAssetHandleValid((*asset)->Handle))
+									break;
+
+								if (UI::PropertyAssetReference(label.c_str(), *asset))
+								{
+									if (isRuntime)
+										field.SetRuntimeValueRaw(asset);
+									else
+										field.SetStoredValueRaw(asset);
+								}
+								break;
+							}*/
 						}
 					}
 				}
@@ -862,17 +923,6 @@ namespace Hep
 			}
 		});
 
-		DrawComponent<PhysicsMaterialComponent>("Physics Material", entity, [](PhysicsMaterialComponent& pmc)
-		{
-			UI::BeginPropertyGrid();
-
-			UI::Property("Static Friction", pmc.StaticFriction);
-			UI::Property("Dynamic Friction", pmc.DynamicFriction);
-			UI::Property("Bounciness", pmc.Bounciness);
-
-			UI::EndPropertyGrid();
-		});
-
 		DrawComponent<BoxColliderComponent>("Box Collider", entity, [](BoxColliderComponent& bcc)
 		{
 			UI::BeginPropertyGrid();
@@ -884,6 +934,7 @@ namespace Hep
 
 			// UI::Property("Offset", bcc.Offset);
 			UI::Property("Is Trigger", bcc.IsTrigger);
+			UI::PropertyAssetReference("Material", bcc.Material, AssetType::PhysicsMat);
 
 			UI::EndPropertyGrid();
 		});
@@ -898,6 +949,7 @@ namespace Hep
 			}
 
 			UI::Property("Is Trigger", scc.IsTrigger);
+			UI::PropertyAssetReference("Material", scc.Material, AssetType::PhysicsMat);
 
 			UI::EndPropertyGrid();
 		});
@@ -915,6 +967,7 @@ namespace Hep
 				changed = true;
 
 			UI::Property("Is Trigger", ccc.IsTrigger);
+			UI::PropertyAssetReference("Material", ccc.Material, AssetType::PhysicsMat);
 
 			if (changed)
 			{
@@ -926,37 +979,19 @@ namespace Hep
 
 		DrawComponent<MeshColliderComponent>("Mesh Collider", entity, [&](MeshColliderComponent& mcc)
 		{
+			UI::BeginPropertyGrid();
+
 			if (mcc.OverrideMesh)
 			{
-				ImGui::Columns(3);
-				ImGui::SetColumnWidth(0, 100);
-				ImGui::SetColumnWidth(1, 300);
-				ImGui::SetColumnWidth(2, 40);
-				ImGui::Text("File Path");
-				ImGui::NextColumn();
-				ImGui::PushItemWidth(-1);
-				if (mcc.CollisionMesh)
-					ImGui::InputText("##meshfilepath", (char*)mcc.CollisionMesh->GetFilePath().c_str(), 256, ImGuiInputTextFlags_ReadOnly);
-				else
-					ImGui::InputText("##meshfilepath", (char*)"Null", 256, ImGuiInputTextFlags_ReadOnly);
-				ImGui::PopItemWidth();
-				ImGui::NextColumn();
-				if (ImGui::Button("...##openmesh"))
+				if (UI::PropertyAssetReference("Mesh", mcc.CollisionMesh, AssetType::Mesh))
 				{
-					std::string file = Application::Get().OpenFile();
-					if (!file.empty())
-					{
-						mcc.CollisionMesh = Ref<Mesh>::Create(file);
-						if (mcc.IsConvex)
-							PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
-						else
-							PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
-					}
+					if (mcc.IsConvex)
+						PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
+					else
+						PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
 				}
-				ImGui::Columns(1);
 			}
 
-			UI::BeginPropertyGrid();
 			if (UI::Property("Is Convex", mcc.IsConvex))
 			{
 				if (mcc.IsConvex)
@@ -964,7 +999,10 @@ namespace Hep
 				else
 					PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
 			}
+
 			UI::Property("Is Trigger", mcc.IsTrigger);
+			UI::PropertyAssetReference("Material", mcc.Material, AssetType::PhysicsMat);
+
 			if (UI::Property("Override Mesh", mcc.OverrideMesh))
 			{
 				if (!mcc.OverrideMesh && entity.HasComponent<MeshComponent>())

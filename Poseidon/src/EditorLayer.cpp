@@ -6,6 +6,7 @@
 #include "Hephaestus/Renderer/Renderer2D.h"
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Editor/PhysicsSettingsWindow.h"
+#include "Hephaestus/Editor/AssetEditorPanel.h"
 
 #include <filesystem>
 
@@ -17,6 +18,7 @@
 
 #include "Hephaestus/Physics/Physics.h"
 #include "Hephaestus/Core/Math/Math.h"
+#include "Hephaestus/Utilities/FileSystem.h"
 
 namespace Hep
 {
@@ -51,11 +53,20 @@ namespace Hep
 		m_SceneHierarchyPanel->SetSelectionChangedCallback(HEP_BIND_EVENT_FN(EditorLayer::SelectEntity));
 		m_SceneHierarchyPanel->SetEntityDeletedCallback(HEP_BIND_EVENT_FN(EditorLayer::OnEntityDeleted));
 
-		OpenScene("assets/scenes/Physics2DTest2.hsc");
+		m_AssetManagerPanel = CreateScope<AssetManagerPanel>();
+		m_ObjectsPanel = CreateScope<ObjectsPanel>();
+
+		//OpenScene("assets/scenes/FPSDemo.hsc");
+		NewScene();
+
+		AssetEditorPanel::RegisterDefaultEditors();
+		FileSystem::StartWatching();
 	}
 
 	void EditorLayer::OnDetach()
-	{}
+	{
+		FileSystem::StopWatching();
+	}
 
 	void EditorLayer::OnScenePlay()
 	{
@@ -71,6 +82,7 @@ namespace Hep
 
 		m_RuntimeScene->OnRuntimeStart();
 		m_SceneHierarchyPanel->SetContext(m_RuntimeScene);
+		m_CurrentScene = m_RuntimeScene;
 	}
 
 	void EditorLayer::OnSceneStop()
@@ -84,6 +96,7 @@ namespace Hep
 		m_SelectionContext.clear();
 		ScriptEngine::SetSceneContext(m_EditorScene);
 		m_SceneHierarchyPanel->SetContext(m_EditorScene);
+		m_CurrentScene = m_EditorScene;
 	}
 
 	void EditorLayer::UpdateWindowTitle(const std::string& sceneName)
@@ -338,6 +351,8 @@ namespace Hep
 		m_SelectionContext.push_back(selection);
 
 		m_EditorScene->SetSelectedEntity(entity);
+
+		m_CurrentScene = m_EditorScene;
 	}
 
 	void EditorLayer::NewScene()
@@ -374,6 +389,8 @@ namespace Hep
 
 		m_EditorScene->SetSelectedEntity({});
 		m_SelectionContext.clear();
+
+		m_CurrentScene = m_EditorScene;
 	}
 
 	void EditorLayer::SaveScene()
@@ -491,6 +508,10 @@ namespace Hep
 			ShowBoundingBoxes(m_UIShowBoundingBoxes, m_UIShowBoundingBoxesOnTop);
 		if (m_UIShowBoundingBoxes && Property("On Top", m_UIShowBoundingBoxesOnTop))
 			ShowBoundingBoxes(m_UIShowBoundingBoxes, m_UIShowBoundingBoxesOnTop);
+
+		m_AssetManagerPanel->OnImGuiRender();
+		m_ObjectsPanel->OnImGuiRender();
+		AssetEditorPanel::OnImGuiRender();
 
 		const char* label = m_SelectionMode == SelectionMode::Entity ? "Entity" : "Mesh";
 		if (ImGui::Button(label))
@@ -623,7 +644,7 @@ namespace Hep
 			bool snap = Input::IsKeyPressed(HEP_KEY_LEFT_CONTROL);
 
 			TransformComponent& entityTransform = selection.Entity.Transform();
-			glm::mat4 transform = entityTransform.GetTransform();
+			glm::mat4 transform = m_CurrentScene->GetTransformRelativeToParent(selection.Entity);
 			float snapValue = GetSnapValue();
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 
@@ -642,10 +663,25 @@ namespace Hep
 					glm::vec3 translation, rotation, scale;
 					Math::DecomposeTransform(transform, translation, rotation, scale);
 
-					glm::vec3 deltaRotation = rotation - entityTransform.Rotation;
-					entityTransform.Translation = translation;
-					entityTransform.Rotation += deltaRotation;
-					entityTransform.Scale = scale;
+					Entity parent = m_CurrentScene->FindEntityByUUID(selection.Entity.GetParentUUID());
+					if (parent)
+					{
+						glm::vec3 parentTranslation, parentRotation, parentScale;
+						Math::DecomposeTransform(m_CurrentScene->GetTransformRelativeToParent(parent), parentTranslation, parentRotation,
+							parentScale);
+
+						glm::vec3 deltaRotation = (rotation - parentRotation) - entityTransform.Rotation;
+						entityTransform.Translation = translation - parentTranslation;
+						entityTransform.Rotation += deltaRotation;
+						entityTransform.Scale = scale;
+					}
+					else
+					{
+						glm::vec3 deltaRotation = rotation - entityTransform.Rotation;
+						entityTransform.Translation = translation;
+						entityTransform.Rotation += deltaRotation;
+						entityTransform.Scale = scale;
+					}
 				}
 			}
 			else
@@ -661,6 +697,35 @@ namespace Hep
 
 				selection.Mesh->Transform = glm::inverse(transform) * transformBase;
 			}
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			auto data = ImGui::AcceptDragDropPayload("asset_payload");
+			if (data)
+			{
+				int count = data->DataSize / sizeof(AssetHandle);
+
+				for (int i = 0; i < count; i++)
+				{
+					AssetHandle assetHandle = *(((AssetHandle*)data->Data) + i);
+					Ref<Asset> asset = AssetManager::GetAsset<Asset>(assetHandle);
+
+					// We can't really support dragging and dropping scenes when we're dropping multiple assets
+					if (count == 1 && asset->Type == AssetType::Scene)
+					{
+						OpenScene(asset->FilePath);
+					}
+
+					if (asset->Type == AssetType::Mesh)
+					{
+						Entity entity = m_EditorScene->CreateEntity(asset->FileName);
+						entity.AddComponent<MeshComponent>(Ref<Mesh>(asset));
+						SelectEntity(entity);
+					}
+				}
+			}
+			ImGui::EndDragDropTarget();
 		}
 
 		ImGui::End();
@@ -959,6 +1024,15 @@ namespace Hep
 					case KeyCode::R:
 						m_GizmoType = ImGuizmo::OPERATION::SCALE;
 						break;
+					case KeyCode::F:
+					{
+						if (m_SelectionContext.size() == 0)
+							break;
+
+						Entity selectedEntity = m_SelectionContext[0].Entity;
+						m_EditorCamera.Focus(selectedEntity.Transform().Translation);
+						break;
+					}
 				}
 			}
 
@@ -1047,13 +1121,14 @@ namespace Hep
 						continue;
 
 					auto& submeshes = mesh->GetSubmeshes();
+					glm::mat4 transform = m_CurrentScene->GetTransformRelativeToParent(entity);
 					float lastT = std::numeric_limits<float>::max();
 					for (uint32_t i = 0; i < submeshes.size(); i++)
 					{
 						auto& submesh = submeshes[i];
 						Ray ray = {
-							glm::inverse(entity.Transform().GetTransform() * submesh.Transform) * glm::vec4(origin, 1.0f),
-							glm::inverse(glm::mat3(entity.Transform().GetTransform()) * glm::mat3(submesh.Transform)) * direction
+							glm::inverse(transform * submesh.Transform) * glm::vec4(origin, 1.0f),
+							glm::inverse(glm::mat3(transform) * glm::mat3(submesh.Transform)) * direction
 						};
 
 						float t;
@@ -1114,7 +1189,7 @@ namespace Hep
 
 	void EditorLayer::OnEntityDeleted(Entity e)
 	{
-		if (m_SelectionContext[0].Entity == e)
+		if (m_SelectionContext.size() > 0 && m_SelectionContext[0].Entity == e)
 		{
 			m_SelectionContext.clear();
 			m_EditorScene->SetSelectedEntity({});

@@ -10,6 +10,7 @@
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Renderer/SceneEnvironment.h"
 #include "Hephaestus/Scene/SceneCamera.h"
+#include "Hephaestus/Asset/Asset.h"
 
 namespace Hep
 {
@@ -31,11 +32,26 @@ namespace Hep
 		operator const std::string&() const { return Tag; }
 	};
 
+	struct RelationshipComponent
+	{
+		UUID ParentHandle = 0;
+		std::vector<UUID> Children;
+
+		RelationshipComponent() = default;
+		RelationshipComponent(const RelationshipComponent& other) = default;
+		RelationshipComponent(UUID parent)
+			: ParentHandle(parent) {}
+	};
+
 	struct TransformComponent
 	{
 		glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 Rotation = { 0.0f, 0.0f, 0.0f };
 		glm::vec3 Scale = { 1.0f, 1.0f, 1.0f };
+
+		glm::vec3 Up = { 0.0F, 1.0F, 0.0F };
+		glm::vec3 Right = { 1.0F, 0.0F, 0.0F };
+		glm::vec3 Forward = { 0.0F, 0.0F, -1.0F };
 
 		TransformComponent() = default;
 		TransformComponent(const TransformComponent& other) = default;
@@ -161,23 +177,12 @@ namespace Hep
 		RigidBodyComponent(const RigidBodyComponent& other) = default;
 	};
 
-	// TODO: This will eventually be a resource, but that requires object referencing through the editor
-	struct PhysicsMaterialComponent
-	{
-		float StaticFriction = 1.0f;
-		float DynamicFriction = 1.0f;
-		float Bounciness = 1.0f;
-
-		PhysicsMaterialComponent() = default;
-		PhysicsMaterialComponent(const PhysicsMaterialComponent& other) = default;
-	};
-
 	struct BoxColliderComponent
 	{
 		glm::vec3 Size = { 1.0f, 1.0f, 1.0f };
 		glm::vec3 Offset = { 0.0f, 0.0f, 0.0f };
-
 		bool IsTrigger = false;
+		Ref<PhysicsMaterial> Material;
 
 		// The mesh that will be drawn in the editor to show the collision bounds
 		Ref<Mesh> DebugMesh;
@@ -190,6 +195,7 @@ namespace Hep
 	{
 		float Radius = 0.5f;
 		bool IsTrigger = false;
+		Ref<PhysicsMaterial> Material;
 
 		// The mesh that will be drawn in the editor to show the collision bounds
 		Ref<Mesh> DebugMesh;
@@ -203,6 +209,7 @@ namespace Hep
 		float Radius = 0.5f;
 		float Height = 1.0f;
 		bool IsTrigger = false;
+		Ref<PhysicsMaterial> Material;
 
 		Ref<Mesh> DebugMesh;
 
@@ -217,6 +224,7 @@ namespace Hep
 		bool IsConvex = false;
 		bool IsTrigger = false;
 		bool OverrideMesh = false;
+		Ref<PhysicsMaterial> Material;
 
 		MeshColliderComponent() = default;
 		MeshColliderComponent(const MeshColliderComponent& other) = default;
@@ -245,7 +253,7 @@ namespace Hep
 
 	struct SkyLightComponent
 	{
-		Environment SceneEnvironment;
+		Ref<Environment> SceneEnvironment;
 		float Intensity = 1.0f;
 		float Angle = 0.0f;
 	};

@@ -62,6 +62,38 @@ namespace Hep
 		{
 			return !(*this == other);
 		}
+		void SetParentUUID(UUID parent) { GetComponent<RelationshipComponent>().ParentHandle = parent; }
+		UUID GetParentUUID() { return GetComponent<RelationshipComponent>().ParentHandle; }
+		std::vector<UUID>& Children() { return GetComponent<RelationshipComponent>().Children; }
+
+		bool HasParent() { return m_Scene->FindEntityByUUID(GetParentUUID()); }
+
+		bool IsAncestorOf(Entity entity)
+		{
+			const auto& children = Children();
+
+			if (children.size() == 0)
+				return false;
+
+			for (UUID child : children)
+			{
+				if (child == entity.GetUUID())
+					return true;
+			}
+
+			for (UUID child : children)
+			{
+				if (m_Scene->FindEntityByUUID(child).IsAncestorOf(entity))
+					return true;
+			}
+
+			return false;
+		}
+
+		bool IsDescendantOf(Entity entity)
+		{
+			return entity.IsAncestorOf(*this);
+		}
 
 		UUID GetUUID() { return GetComponent<IDComponent>().ID; }
 		UUID GetSceneUUID() { return m_Scene->GetUUID(); }

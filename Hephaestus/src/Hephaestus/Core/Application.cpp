@@ -10,6 +10,7 @@
 
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Physics/Physics.h"
+#include "Hephaestus/Asset/AssetManager.h"
 
 #include "Input.h"
 
@@ -40,6 +41,9 @@ namespace Hep
 
 		Renderer::Init();
 		Renderer::WaitAndRender();
+
+		AssetTypes::Init();
+		AssetManager::Init();
 	}
 
 	Application::~Application()
@@ -48,6 +52,8 @@ namespace Hep
 
 		Physics::Shutdown();
 		ScriptEngine::Shutdown();
+
+		AssetManager::Shutdown();
 	}
 
 	void Application::PushLayer(Layer* layer)

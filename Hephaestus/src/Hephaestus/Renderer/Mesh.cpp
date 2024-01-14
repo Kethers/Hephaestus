@@ -237,6 +237,10 @@ namespace Hep
 				auto aiMaterialName = aiMaterial->GetName();
 
 				auto mi = Ref<MaterialInstance>::Create(m_BaseMaterial, aiMaterialName.data);
+
+				// NOTE: This shouldn't be here. But right now everything is Two Sided otherwise
+				mi->SetFlag(MaterialFlag::TwoSided, false);
+
 				m_Materials[i] = mi;
 
 				HEP_MESH_LOG("  {0} (Index = {1})", aiMaterialName.data, i);
@@ -267,6 +271,8 @@ namespace Hep
 					std::string texturePath = parentPath.string();
 
 					HEP_MESH_LOG("    Albedo map path = {0}", texturePath);
+					if (texturePath.find_first_of(".tga") != std::string::npos)
+						continue;
 					auto texture = Texture2D::Create(texturePath, true);
 					if (texture->Loaded())
 					{

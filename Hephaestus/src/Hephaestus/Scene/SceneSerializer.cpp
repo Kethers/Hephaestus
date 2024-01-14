@@ -8,6 +8,8 @@
 #include "Hephaestus/Physics/PXPhysicsWrappers.h"
 #include "Hephaestus/Renderer/MeshFactory.h"
 
+#include "Hephaestus/Asset/AssetManager.h"
+
 #include "yaml-cpp/yaml.h"
 
 #include "Hephaestus/Core/Math/Mat4.h"
@@ -161,6 +163,23 @@ namespace Hep
 		out << YAML::Key << "Entity";
 		out << YAML::Value << uuid;
 
+		if (entity.HasComponent<RelationshipComponent>())
+		{
+			auto& relationshipComponent = entity.GetComponent<RelationshipComponent>();
+			out << YAML::Key << "Parent" << YAML::Value << relationshipComponent.ParentHandle;
+
+			out << YAML::Key << "Children";
+			out << YAML::Value << YAML::BeginSeq;
+
+			for (auto child : relationshipComponent.Children)
+			{
+				out << YAML::BeginMap;
+				out << YAML::Key << "Handle" << YAML::Value << child;
+				out << YAML::EndMap;
+			}
+			out << YAML::EndSeq;
+		}
+
 		if (entity.HasComponent<TagComponent>())
 		{
 			out << YAML::Key << "TagComponent";
@@ -244,7 +263,10 @@ namespace Hep
 			out << YAML::BeginMap; // MeshComponent
 
 			auto mesh = entity.GetComponent<MeshComponent>().Mesh;
-			out << YAML::Key << "AssetPath" << YAML::Value << mesh->GetFilePath();
+			if (mesh)
+				out << YAML::Key << "AssetID" << YAML::Value << mesh->Handle;
+			else
+				out << YAML::Key << "AssetID" << YAML::Value << 0;
 
 			out << YAML::EndMap; // MeshComponent
 		}
@@ -291,7 +313,7 @@ namespace Hep
 			out << YAML::BeginMap; // SkyLightComponent
 
 			auto& skyLightComponent = entity.GetComponent<SkyLightComponent>();
-			out << YAML::Key << "EnvironmentAssetPath" << YAML::Value << skyLightComponent.SceneEnvironment.FilePath;
+			out << YAML::Key << "EnvironmentMap" << YAML::Value << skyLightComponent.SceneEnvironment->Handle;
 			out << YAML::Key << "Intensity" << YAML::Value << skyLightComponent.Intensity;
 			out << YAML::Key << "Angle" << YAML::Value << skyLightComponent.Angle;
 
@@ -381,19 +403,6 @@ namespace Hep
 			out << YAML::EndMap; // RigidBodyComponent
 		}
 
-		if (entity.HasComponent<PhysicsMaterialComponent>())
-		{
-			out << YAML::Key << "PhysicsMaterialComponent";
-			out << YAML::BeginMap; // PhysicsMaterialComponent
-
-			auto& physicsMaterial = entity.GetComponent<PhysicsMaterialComponent>();
-			out << YAML::Key << "StaticFriction" << YAML::Value << physicsMaterial.StaticFriction;
-			out << YAML::Key << "DynamicFriction" << YAML::Value << physicsMaterial.DynamicFriction;
-			out << YAML::Key << "Bounciness" << YAML::Value << physicsMaterial.Bounciness;
-
-			out << YAML::EndMap;
-		}
-
 		if (entity.HasComponent<BoxColliderComponent>())
 		{
 			out << YAML::Key << "BoxColliderComponent";
@@ -403,6 +412,10 @@ namespace Hep
 			out << YAML::Key << "Offset" << YAML::Value << boxColliderComponent.Offset;
 			out << YAML::Key << "Size" << YAML::Value << boxColliderComponent.Size;
 			out << YAML::Key << "IsTrigger" << YAML::Value << boxColliderComponent.IsTrigger;
+			if (boxColliderComponent.Material)
+				out << YAML::Key << "Material" << YAML::Value << boxColliderComponent.Material->Handle;
+			else
+				out << YAML::Key << "Material" << YAML::Value << 0;
 
 			out << YAML::EndMap; // BoxColliderComponent
 		}
@@ -415,6 +428,10 @@ namespace Hep
 			auto& sphereColliderComponent = entity.GetComponent<SphereColliderComponent>();
 			out << YAML::Key << "Radius" << YAML::Value << sphereColliderComponent.Radius;
 			out << YAML::Key << "IsTrigger" << YAML::Value << sphereColliderComponent.IsTrigger;
+			if (sphereColliderComponent.Material)
+				out << YAML::Key << "Material" << YAML::Value << sphereColliderComponent.Material->Handle;
+			else
+				out << YAML::Key << "Material" << YAML::Value << 0;
 
 			out << YAML::EndMap; // SphereColliderComponent
 		}
@@ -428,6 +445,10 @@ namespace Hep
 			out << YAML::Key << "Radius" << YAML::Value << capsuleColliderComponent.Radius;
 			out << YAML::Key << "Height" << YAML::Value << capsuleColliderComponent.Height;
 			out << YAML::Key << "IsTrigger" << YAML::Value << capsuleColliderComponent.IsTrigger;
+			if (capsuleColliderComponent.Material)
+				out << YAML::Key << "Material" << YAML::Value << capsuleColliderComponent.Material->Handle;
+			else
+				out << YAML::Key << "Material" << YAML::Value << 0;
 
 			out << YAML::EndMap; // CapsuleColliderComponent
 		}
@@ -439,10 +460,14 @@ namespace Hep
 
 			auto& meshColliderComponent = entity.GetComponent<MeshColliderComponent>();
 			if (meshColliderComponent.OverrideMesh)
-				out << YAML::Key << "AssetPath" << YAML::Value << meshColliderComponent.CollisionMesh->GetFilePath();
+				out << YAML::Key << "AssetID" << YAML::Value << meshColliderComponent.CollisionMesh->Handle;
 			out << YAML::Key << "IsConvex" << YAML::Value << meshColliderComponent.IsConvex;
 			out << YAML::Key << "IsTrigger" << YAML::Value << meshColliderComponent.IsTrigger;
 			out << YAML::Key << "OverrideMesh" << YAML::Value << meshColliderComponent.OverrideMesh;
+			if (meshColliderComponent.Material)
+				out << YAML::Key << "Material" << YAML::Value << meshColliderComponent.Material->Handle;
+			else
+				out << YAML::Key << "Material" << YAML::Value << 0;
 
 			out << YAML::EndMap; // MeshColliderComponent
 		}
@@ -455,7 +480,7 @@ namespace Hep
 		out << YAML::Key << "Environment";
 		out << YAML::Value;
 		out << YAML::BeginMap; // Environment
-		out << YAML::Key << "AssetPath" << YAML::Value << scene->GetEnvironment().FilePath;
+		out << YAML::Key << "AssetHandle" << YAML::Value << scene->GetEnvironment()->Handle;
 		const auto& light = scene->GetLight();
 		out << YAML::Key << "Light" << YAML::Value;
 		out << YAML::BeginMap; // Light
@@ -542,11 +567,20 @@ namespace Hep
 		std::string sceneName = data["Scene"].as<std::string>();
 		HEP_CORE_INFO("Deserializing scene '{0}'", sceneName);
 
-		auto environment = data["Environment"];
+		/*auto environment = data["Environment"];
 		if (environment)
 		{
-			std::string envPath = environment["AssetPath"].as<std::string>();
-			// m_Scene->SetEnvironment(Environment::Load(envPath));
+			AssetHandle assetHandle;
+			if (environment["AssetPath"])
+			{
+				std::string envPath = environment["AssetPath"].as<std::string>();
+				assetHandle = AssetManager::GetAssetHandleFromFilePath(envPath);
+			}
+			else
+			{
+				assetHandle = environment["AssetHandle"].as<uint64_t>();
+			}
+			//m_Scene->SetEnvironment(Environment::Load(envPath));
 
 			auto lightNode = environment["Light"];
 			if (lightNode)
@@ -556,7 +590,7 @@ namespace Hep
 				light.Radiance = lightNode["Radiance"].as<glm::vec3>();
 				light.Multiplier = lightNode["Multiplier"].as<float>();
 			}
-		}
+		}*/
 
 		std::vector<std::string> missingPaths;
 
@@ -575,6 +609,20 @@ namespace Hep
 				HEP_CORE_INFO("Deserialized entity with ID = {0}, name = {1}", uuid, name);
 
 				Entity deserializedEntity = m_Scene->CreateEntityWithID(uuid, name);
+
+				auto& relationshipComponent = deserializedEntity.GetComponent<RelationshipComponent>();
+				uint64_t parentHandle = entity["Parent"] ? entity["Parent"].as<uint64_t>() : 0;
+				relationshipComponent.ParentHandle = parentHandle;
+
+				auto children = entity["Children"];
+				if (children)
+				{
+					for (auto child : children)
+					{
+						uint64_t childHandle = child["Handle"].as<uint64_t>();
+						relationshipComponent.Children.push_back(childHandle);
+					}
+				}
 
 				auto transformComponent = entity["TransformComponent"];
 				if (transformComponent)
@@ -619,13 +667,14 @@ namespace Hep
 							for (auto field : storedFields)
 							{
 								std::string name = field["Name"].as<std::string>();
+								std::string typeName = field["TypeName"] ? field["TypeName"].as<std::string>() : "";
 								FieldType type = (FieldType)field["Type"].as<uint32_t>();
 								EntityInstanceData& data = ScriptEngine::GetEntityInstanceData(m_Scene->GetUUID(), uuid);
 								auto& moduleFieldMap = data.ModuleFieldMap;
 								auto& publicFields = moduleFieldMap[moduleName];
 								if (!publicFields.contains(name))
 								{
-									PublicField pf = { name, type };
+									PublicField pf = { name, typeName, type };
 									publicFields.emplace(name, std::move(pf));
 								}
 								auto dataNode = field["Data"];
@@ -675,20 +724,21 @@ namespace Hep
 				auto meshComponent = entity["MeshComponent"];
 				if (meshComponent)
 				{
-					std::string meshPath = meshComponent["AssetPath"].as<std::string>();
-					// TEMP (because script creates mesh component...)
-					if (!deserializedEntity.HasComponent<MeshComponent>())
+					UUID assetID;
+					if (meshComponent["AssetPath"])
 					{
-						Ref<Mesh> mesh;
-						if (!CheckPath(meshPath))
-							missingPaths.emplace_back(meshPath);
-						else
-							mesh = Ref<Mesh>::Create(meshPath);
-
-						deserializedEntity.AddComponent<MeshComponent>(mesh);
+						std::string filepath = meshComponent["AssetPath"].as<std::string>();
+						assetID = AssetManager::GetAssetHandleFromFilePath(filepath);
+					}
+					else
+					{
+						assetID = meshComponent["AssetID"].as<uint64_t>();
 					}
 
-					HEP_CORE_INFO("  Mesh Asset Path: {0}", meshPath);
+					if (AssetManager::IsAssetHandleValid(assetID) && !deserializedEntity.HasComponent<MeshComponent>())
+					{
+						deserializedEntity.AddComponent<MeshComponent>(AssetManager::GetAsset<Mesh>(assetID));
+					}
 				}
 
 				auto cameraComponent = entity["CameraComponent"];
@@ -731,18 +781,22 @@ namespace Hep
 				if (skyLightComponent)
 				{
 					auto& component = deserializedEntity.AddComponent<SkyLightComponent>();
-					std::string env = skyLightComponent["EnvironmentAssetPath"].as<std::string>();
-					if (!env.empty())
+					AssetHandle assetHandle;
+					if (skyLightComponent["EnvironmentAssetPath"])
 					{
-						if (!CheckPath(env))
-						{
-							missingPaths.emplace_back(env);
-						}
-						else
-						{
-							component.SceneEnvironment = Environment::Load(env);
-						}
+						std::string filepath = skyLightComponent["EnvironmentAssetPath"].as<std::string>();
+						assetHandle = AssetManager::GetAssetHandleFromFilePath(filepath);
 					}
+					else
+					{
+						assetHandle = skyLightComponent["EnvironmentMap"].as<uint64_t>();
+					}
+
+					if (AssetManager::IsAssetHandleValid(assetHandle))
+					{
+						component.SceneEnvironment = AssetManager::GetAsset<Environment>(assetHandle);
+					}
+
 					component.Intensity = skyLightComponent["Intensity"].as<float>();
 					component.Angle = skyLightComponent["Angle"].as<float>();
 				}
@@ -791,8 +845,8 @@ namespace Hep
 					auto& component = deserializedEntity.AddComponent<RigidBodyComponent>();
 					component.BodyType = (RigidBodyComponent::Type)rigidBodyComponent["BodyType"].as<int>();
 					component.Mass = rigidBodyComponent["Mass"].as<float>();
-					component.LinearDrag = rigidBodyComponent["LinearDrag"] ? rigidBodyComponent["LinearDrag"].as<float>() : 0.0F;
-					component.AngularDrag = rigidBodyComponent["AngularDrag"] ? rigidBodyComponent["AngularDrag"].as<float>() : 0.05F;
+					component.LinearDrag = rigidBodyComponent["LinearDrag"] ? rigidBodyComponent["LinearDrag"].as<float>() : 0.0f;
+					component.AngularDrag = rigidBodyComponent["AngularDrag"] ? rigidBodyComponent["AngularDrag"].as<float>() : 0.05f;
 					component.DisableGravity = rigidBodyComponent["DisableGravity"]
 												   ? rigidBodyComponent["DisableGravity"].as<bool>()
 												   : false;
@@ -807,15 +861,6 @@ namespace Hep
 					component.LockRotationZ = rigidBodyComponent["Constraints"]["LockRotationZ"].as<bool>();
 				}
 
-				auto physicsMaterialComponent = entity["PhysicsMaterialComponent"];
-				if (physicsMaterialComponent)
-				{
-					auto& component = deserializedEntity.AddComponent<PhysicsMaterialComponent>();
-					component.StaticFriction = physicsMaterialComponent["StaticFriction"].as<float>();
-					component.DynamicFriction = physicsMaterialComponent["DynamicFriction"].as<float>();
-					component.Bounciness = physicsMaterialComponent["Bounciness"].as<float>();
-				}
-
 				auto boxColliderComponent = entity["BoxColliderComponent"];
 				if (boxColliderComponent)
 				{
@@ -823,6 +868,11 @@ namespace Hep
 					component.Offset = boxColliderComponent["Offset"].as<glm::vec3>();
 					component.Size = boxColliderComponent["Size"].as<glm::vec3>();
 					component.IsTrigger = boxColliderComponent["IsTrigger"] ? boxColliderComponent["IsTrigger"].as<bool>() : false;
+
+					auto material = boxColliderComponent["Material"];
+					if (material && AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
+						component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+
 					component.DebugMesh = MeshFactory::CreateBox(component.Size);
 				}
 
@@ -832,6 +882,11 @@ namespace Hep
 					auto& component = deserializedEntity.AddComponent<SphereColliderComponent>();
 					component.Radius = sphereColliderComponent["Radius"].as<float>();
 					component.IsTrigger = sphereColliderComponent["IsTrigger"] ? sphereColliderComponent["IsTrigger"].as<bool>() : false;
+
+					auto material = sphereColliderComponent["Material"];
+					if (material && AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
+						component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+
 					component.DebugMesh = MeshFactory::CreateSphere(component.Radius);
 				}
 
@@ -842,6 +897,11 @@ namespace Hep
 					component.Radius = capsuleColliderComponent["Radius"].as<float>();
 					component.Height = capsuleColliderComponent["Height"].as<float>();
 					component.IsTrigger = capsuleColliderComponent["IsTrigger"] ? capsuleColliderComponent["IsTrigger"].as<bool>() : false;
+
+					auto material = capsuleColliderComponent["Material"];
+					if (material && AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
+						component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+
 					component.DebugMesh = MeshFactory::CreateCapsule(component.Radius, component.Height);
 				}
 
@@ -855,15 +915,19 @@ namespace Hep
 
 					if (overrideMesh)
 					{
-						std::string meshPath = meshColliderComponent["AssetPath"].as<std::string>();
-						if (!CheckPath(meshPath))
+						UUID assetID;
+						if (meshComponent["AssetPath"])
 						{
-							missingPaths.emplace_back(meshPath);
+							std::string filepath = meshComponent["AssetPath"].as<std::string>();
+							assetID = AssetManager::GetAssetHandleFromFilePath(filepath);
 						}
 						else
 						{
-							collisionMesh = Ref<Mesh>::Create(meshPath);
+							assetID = meshComponent["AssetID"].as<uint64_t>();
 						}
+
+						if (AssetManager::IsAssetHandleValid(assetID))
+							collisionMesh = AssetManager::GetAsset<Mesh>(assetID);
 					}
 
 					if (collisionMesh)
@@ -873,15 +937,44 @@ namespace Hep
 						component.IsTrigger = meshColliderComponent["IsTrigger"] ? meshColliderComponent["IsTrigger"].as<bool>() : false;
 						component.OverrideMesh = overrideMesh;
 
-						if (component.IsConvex)
-							PXPhysicsWrappers::CreateConvexMesh(component, deserializedEntity.Transform().Scale);
-						else
-							PXPhysicsWrappers::CreateTriangleMesh(component, deserializedEntity.Transform().Scale);
+						auto material = meshColliderComponent["Material"];
+						if (material && AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
+						{
+							component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+
+							if (component.IsConvex)
+								PXPhysicsWrappers::CreateConvexMesh(component, deserializedEntity.Transform().Scale);
+							else
+								PXPhysicsWrappers::CreateTriangleMesh(component, deserializedEntity.Transform().Scale);
+						}
 					}
 				}
 				else
 				{
 					HEP_CORE_WARN("MeshColliderComponent in use without valid mesh!");
+				}
+
+				// NOTE: Compatibility fix for older scenes
+				auto physicsMaterialComponent = entity["PhysicsMaterialComponent"];
+				if (physicsMaterialComponent)
+				{
+					//auto& component = deserializedEntity.AddComponent<PhysicsMaterialComponent>();
+					Ref<PhysicsMaterial> material = Ref<PhysicsMaterial>::Create();
+					material->StaticFriction = physicsMaterialComponent["StaticFriction"].as<float>();
+					material->DynamicFriction = physicsMaterialComponent["DynamicFriction"].as<float>();
+					material->Bounciness = physicsMaterialComponent["Bounciness"].as<float>();
+
+					if (deserializedEntity.HasComponent<BoxColliderComponent>())
+						deserializedEntity.GetComponent<BoxColliderComponent>().Material = material;
+
+					if (deserializedEntity.HasComponent<SphereColliderComponent>())
+						deserializedEntity.GetComponent<SphereColliderComponent>().Material = material;
+
+					if (deserializedEntity.HasComponent<CapsuleColliderComponent>())
+						deserializedEntity.GetComponent<CapsuleColliderComponent>().Material = material;
+
+					if (deserializedEntity.HasComponent<MeshColliderComponent>())
+						deserializedEntity.GetComponent<MeshColliderComponent>().Material = material;
 				}
 			}
 		}
