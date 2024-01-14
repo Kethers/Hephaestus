@@ -351,6 +351,8 @@ namespace Hep
 		m_SelectionContext.push_back(selection);
 
 		m_EditorScene->SetSelectedEntity(entity);
+
+		m_CurrentScene = m_EditorScene;
 	}
 
 	void EditorLayer::NewScene()
@@ -1110,13 +1112,14 @@ namespace Hep
 						continue;
 
 					auto& submeshes = mesh->GetSubmeshes();
+					glm::mat4 transform = m_CurrentScene->GetTransformRelativeToParent(entity);
 					float lastT = std::numeric_limits<float>::max();
 					for (uint32_t i = 0; i < submeshes.size(); i++)
 					{
 						auto& submesh = submeshes[i];
 						Ray ray = {
-							glm::inverse(entity.Transform().GetTransform() * submesh.Transform) * glm::vec4(origin, 1.0f),
-							glm::inverse(glm::mat3(entity.Transform().GetTransform()) * glm::mat3(submesh.Transform)) * direction
+							glm::inverse(transform * submesh.Transform) * glm::vec4(origin, 1.0f),
+							glm::inverse(glm::mat3(transform) * glm::mat3(submesh.Transform)) * direction
 						};
 
 						float t;

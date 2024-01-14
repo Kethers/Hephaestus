@@ -212,9 +212,9 @@ namespace Hep
 				Math::DecomposeTransform(transform, translation, rotation, scale);
 
 				glm::quat rotationQuat = glm::quat(rotation);
-				transformComponent.Up = glm::normalize(glm::rotate(rotationQuat, glm::vec3(0.0F, 1.0F, 0.0F)));
-				transformComponent.Right = glm::normalize(glm::rotate(rotationQuat, glm::vec3(1.0F, 0.0F, 0.0F)));
-				transformComponent.Forward = glm::normalize(glm::rotate(rotationQuat, glm::vec3(0.0F, 0.0F, -1.0F)));
+				transformComponent.Up = glm::normalize(glm::rotate(rotationQuat, glm::vec3(0.0f, 1.0f, 0.0f)));
+				transformComponent.Right = glm::normalize(glm::rotate(rotationQuat, glm::vec3(1.0f, 0.0f, 0.0f)));
+				transformComponent.Forward = glm::normalize(glm::rotate(rotationQuat, glm::vec3(0.0f, 0.0f, -1.0f)));
 			}
 		}
 
@@ -263,7 +263,8 @@ namespace Hep
 				auto [transformComponent, skyLightComponent] = lights.get<TransformComponent, SkyLightComponent>(entity);
 				m_Environment = skyLightComponent.SceneEnvironment;
 				m_EnvironmentIntensity = skyLightComponent.Intensity;
-				SetSkybox(m_Environment->RadianceMap);
+				if (m_Environment)
+					SetSkybox(m_Environment->RadianceMap);
 			}
 		}
 
@@ -310,7 +311,6 @@ namespace Hep
 		// RENDER 3D SCENE
 		/////////////////////////////////////////////////////////////////////
 
-		// Process lights
 		{
 			m_LightEnvironment = LightEnvironment();
 			auto lights = m_Registry.group<DirectionalLightComponent>(entt::get<TransformComponent>);
@@ -329,7 +329,6 @@ namespace Hep
 			}
 		}
 
-		// TODO: only one sky light at the moment!
 		{
 			m_Environment = Ref<Environment>::Create();
 			auto lights = m_Registry.group<SkyLightComponent>(entt::get<TransformComponent>);
@@ -338,7 +337,8 @@ namespace Hep
 				auto [transformComponent, skyLightComponent] = lights.get<TransformComponent, SkyLightComponent>(entity);
 				m_Environment = skyLightComponent.SceneEnvironment;
 				m_EnvironmentIntensity = skyLightComponent.Intensity;
-				SetSkybox(m_Environment->RadianceMap);
+				if (m_Environment)
+					SetSkybox(m_Environment->RadianceMap);
 			}
 		}
 

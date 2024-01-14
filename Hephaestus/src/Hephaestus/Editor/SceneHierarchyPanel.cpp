@@ -3,7 +3,9 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>
+
 #include "Hephaestus/Core/Application.h"
+#include "Hephaestus/Core/Math/Math.h"
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Script/ScriptEngine.h"
 #include "Hephaestus/Physics/Physics.h"
@@ -84,11 +86,15 @@ namespace Hep
 					{
 						auto& children = previousParent.Children();
 						children.erase(std::remove(children.begin(), children.end(), droppedHandle), children.end());
+
+						glm::mat4 parentTransform = m_Context->GetTransformRelativeToParent(previousParent);
+						glm::vec3 parentTranslation, parentRotation, parentScale;
+						Math::DecomposeTransform(parentTransform, parentTranslation, parentRotation, parentScale);
+
+						e.Transform().Translation = e.Transform().Translation + parentTranslation;
 					}
 
 					e.SetParentUUID(0);
-
-					HEP_CORE_INFO("Unparented Entity!");
 				}
 
 				ImGui::EndDragDropTarget();
@@ -215,13 +221,15 @@ namespace Hep
 							parentChildren.end());
 					}
 
+					glm::mat4 parentTransform = m_Context->GetTransformRelativeToParent(entity);
+					glm::vec3 parentTranslation, parentRotation, parentScale;
+					Math::DecomposeTransform(parentTransform, parentTranslation, parentRotation, parentScale);
+
+					e.Transform().Translation = e.Transform().Translation - parentTranslation;
+
 					e.SetParentUUID(entity.GetUUID());
 					entity.Children().push_back(droppedHandle);
-
-					HEP_CORE_INFO("Dropping Entity {0} on {1}", droppedHandle, entity.GetUUID());
 				}
-
-				HEP_CORE_INFO("Dropping Entity {0} on {1}", droppedHandle, entity.GetUUID());
 			}
 
 			ImGui::EndDragDropTarget();
@@ -755,10 +763,14 @@ namespace Hep
 								}
 								break;
 							}
-							case FieldType::ClassReference:
+							/*case FieldType::ClassReference:
 							{
 								Ref<Asset>* asset = (Ref<Asset>*)(isRuntime ? field.GetRuntimeValueRaw() : field.GetStoredValueRaw());
 								std::string label = field.Name + "(" + field.TypeName + ")";
+
+								if (!AssetManager::IsAssetHandleValid((*asset)->Handle))
+									break;
+
 								if (UI::PropertyAssetReference(label.c_str(), *asset))
 								{
 									if (isRuntime)
@@ -767,7 +779,7 @@ namespace Hep
 										field.SetStoredValueRaw(asset);
 								}
 								break;
-							}
+							}*/
 						}
 					}
 				}

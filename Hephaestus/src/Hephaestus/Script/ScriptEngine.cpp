@@ -625,6 +625,9 @@ namespace Hep
 				// TODO: Attributes
 				MonoCustomAttrInfo* attr = mono_custom_attrs_from_field(scriptClass.Class, iter);
 
+				if (hepFieldType == FieldType::ClassReference)
+					continue;
+
 				char* typeName = mono_type_get_name(fieldType);
 
 				if (oldFields.find(name) != oldFields.end())
@@ -637,11 +640,12 @@ namespace Hep
 					field.m_EntityInstance = &entityInstance;
 					field.m_MonoClassField = iter;
 
-					if (field.Type == FieldType::ClassReference)
+					/*if (field.Type == FieldType::ClassReference)
 					{
-						Ref<Asset>* asset = new Ref<Asset>();
+						Asset* rawAsset = new Asset();
+						Ref<Asset>* asset = new Ref<Asset>(rawAsset);
 						field.SetStoredValueRaw(asset);
-					}
+					}*/
 
 					fieldMap.emplace(name, std::move(field));
 				}
