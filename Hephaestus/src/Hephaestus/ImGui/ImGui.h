@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "..\Asset\Assets.h"
+#include "Hephaestus/Asset/Asset.h"
 #include "Hephaestus/Asset/AssetManager.h"
 
 #include "imgui/imgui.h"
@@ -289,7 +289,7 @@ namespace Hep::UI
 	}
 
 	template <typename T>
-	static bool PropertyAssetReference(const char* label, Ref<T>& object, AssetType supportedType = AssetType::Any)
+	static bool PropertyAssetReference(const char* label, Ref<T>& object, AssetType supportedType)
 	{
 		bool modified = false;
 
@@ -311,7 +311,7 @@ namespace Hep::UI
 			if (data)
 			{
 				AssetHandle assetHandle = *(AssetHandle*)data->Data;
-				if (supportedType == AssetType::Any || AssetManager::IsAssetType(assetHandle, supportedType))
+				if (AssetManager::IsAssetType(assetHandle, supportedType))
 				{
 					object = AssetManager::GetAsset<T>(assetHandle);
 					modified = true;

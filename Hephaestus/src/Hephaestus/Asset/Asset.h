@@ -17,7 +17,7 @@ namespace Hep
 		PhysicsMat,
 		Directory,
 		Other,
-		Any,
+		None,
 	};
 
 	using AssetHandle = UUID;
@@ -26,7 +26,7 @@ namespace Hep
 	{
 	public:
 		AssetHandle Handle;
-		AssetType Type;
+		AssetType Type = AssetType::None;
 
 		std::string FilePath;
 		std::string FileName;

@@ -19,10 +19,10 @@ namespace Hep
 		Ref<PhysicsMaterial> m_Asset;
 	};
 
-	class TextureEditor : public AssetEditor
+	class TextureViewer : public AssetEditor
 	{
 	public:
-		TextureEditor();
+		TextureViewer();
 
 		void SetAsset(const Ref<Asset>& asset) override { m_Asset = (Ref<Texture>)asset; }
 

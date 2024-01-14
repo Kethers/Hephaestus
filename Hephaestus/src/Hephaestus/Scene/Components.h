@@ -10,7 +10,7 @@
 #include "Hephaestus/Renderer/Mesh.h"
 #include "Hephaestus/Renderer/SceneEnvironment.h"
 #include "Hephaestus/Scene/SceneCamera.h"
-#include "..\Asset\Assets.h"
+#include "Hephaestus/Asset/Asset.h"
 
 namespace Hep
 {

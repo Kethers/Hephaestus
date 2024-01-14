@@ -5,7 +5,7 @@
 
 #include "Hephaestus/Core/Timestep.h"
 
-#include "..\Asset\Assets.h"
+#include "Hephaestus/Asset/Asset.h"
 
 #include "Hephaestus/Renderer/Pipeline.h"
 #include "Hephaestus/Renderer/IndexBuffer.h"

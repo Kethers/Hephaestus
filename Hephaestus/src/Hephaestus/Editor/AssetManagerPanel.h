@@ -80,7 +80,7 @@ namespace Hep
 		void UpdateCurrentDirectory(AssetHandle directoryHandle);
 
 	private:
-		Ref<Texture2D> m_FolderTex;
+		Ref<Texture2D> m_FileTex;
 		Ref<Texture2D> m_BackbtnTex;
 		Ref<Texture2D> m_FwrdbtnTex;
 		Ref<Texture2D> m_FolderRightTex;
@@ -110,6 +110,6 @@ namespace Hep
 
 		bool m_RenamingSelected = false;
 
-		std::map<size_t, Ref<Texture2D>> m_AssetIconMap;
+		std::map<std::string, Ref<Texture2D>> m_AssetIconMap;
 	};
 }
