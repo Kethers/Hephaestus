@@ -126,17 +126,23 @@ namespace Hep
 
 	static void InitMono()
 	{
-		mono_set_assemblies_path("mono/lib");
-		// mono_jit_set_trace_options("--verbose");
-		auto domain = mono_jit_init("Hephaestus");
+		if (!s_MonoDomain)
+		{
+			mono_set_assemblies_path("mono/lib");
+			// mono_jit_set_trace_options("--verbose");
+			auto domain = mono_jit_init("Hephaestus");
 
-		char* name = (char*)"HephaestusRuntime";
-		s_MonoDomain = mono_domain_create_appdomain(name, nullptr);
+			char* name = (char*)"HephaestusRuntime";
+			s_MonoDomain = mono_domain_create_appdomain(name, nullptr);
+		}
 	}
 
 	static void ShutdownMono()
 	{
-		mono_jit_cleanup(s_MonoDomain);
+		// Apparently according to https://www.mono-project.com/docs/advanced/embedding/
+		// we can't do mono_jit_init in the same process after mono_jit_cleanup...
+		// so don't do this
+		// mono_jit_cleanup(s_MonoDomain);
 	}
 
 	static MonoAssembly* LoadAssembly(const std::string& path)
@@ -299,7 +305,7 @@ namespace Hep
 
 	void ScriptEngine::Shutdown()
 	{
-		// shutdown mono
+		ShutdownMono();
 		s_SceneContext = nullptr;
 		s_EntityInstanceMap.clear();
 	}

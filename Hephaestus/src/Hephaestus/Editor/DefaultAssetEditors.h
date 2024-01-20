@@ -13,6 +13,7 @@ namespace Hep
 		void SetAsset(const Ref<Asset>& asset) override { m_Asset = (Ref<PhysicsMaterial>)asset; }
 
 	private:
+		void OnClose() override;
 		void Render() override;
 
 	private:
@@ -27,6 +28,7 @@ namespace Hep
 		void SetAsset(const Ref<Asset>& asset) override { m_Asset = (Ref<Texture>)asset; }
 
 	private:
+		void OnClose() override;
 		void Render() override;
 
 	private:

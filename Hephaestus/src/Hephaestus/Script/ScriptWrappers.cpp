@@ -635,16 +635,17 @@ namespace Hep::Script
 	Ref<Material>* Hep_Mesh_GetMaterial(Ref<Mesh>* inMesh)
 	{
 		Ref<Mesh>& mesh = *(Ref<Mesh>*)inMesh;
-		return new Ref<Material>(mesh->GetMaterial());
+		const auto& materials = mesh->GetMaterials();
+		return new Ref<Material>(materials[0]);
 	}
 
-	Ref<MaterialInstance>* Hep_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index)
+	Ref<Material>* Hep_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index)
 	{
 		Ref<Mesh>& mesh = *(Ref<Mesh>*)inMesh;
 		const auto& materials = mesh->GetMaterials();
 
 		HEP_CORE_ASSERT(index < materials.size());
-		return new Ref<MaterialInstance>(materials[index]);
+		return new Ref<Material>(materials[index]);
 	}
 
 	int Hep_Mesh_GetMaterialCount(Ref<Mesh>* inMesh)
@@ -656,7 +657,7 @@ namespace Hep::Script
 
 	void* Hep_Texture2D_Constructor(uint32_t width, uint32_t height)
 	{
-		auto result = Texture2D::Create(TextureFormat::RGBA, width, height);
+		auto result = Texture2D::Create(ImageFormat::RGBA, width, height);
 		return new Ref<Texture2D>(result);
 	}
 
@@ -706,32 +707,32 @@ namespace Hep::Script
 		instance->Set(mono_string_to_utf8(uniform), *texture);
 	}
 
-	void Hep_MaterialInstance_Destructor(Ref<MaterialInstance>* _this)
+	void Hep_MaterialInstance_Destructor(Ref<Material>* _this)
 	{
 		delete _this;
 	}
 
-	void Hep_MaterialInstance_SetFloat(Ref<MaterialInstance>* _this, MonoString* uniform, float value)
+	void Hep_MaterialInstance_SetFloat(Ref<Material>* _this, MonoString* uniform, float value)
 	{
-		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
+		Ref<Material>& instance = *(Ref<Material>*)_this;
 		instance->Set(mono_string_to_utf8(uniform), value);
 	}
 
-	void Hep_MaterialInstance_SetVector3(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec3* value)
+	void Hep_MaterialInstance_SetVector3(Ref<Material>* _this, MonoString* uniform, glm::vec3* value)
 	{
-		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
+		Ref<Material>& instance = *(Ref<Material>*)_this;
 		instance->Set(mono_string_to_utf8(uniform), *value);
 	}
 
-	void Hep_MaterialInstance_SetVector4(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec4* value)
+	void Hep_MaterialInstance_SetVector4(Ref<Material>* _this, MonoString* uniform, glm::vec4* value)
 	{
-		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
+		Ref<Material>& instance = *(Ref<Material>*)_this;
 		instance->Set(mono_string_to_utf8(uniform), *value);
 	}
 
-	void Hep_MaterialInstance_SetTexture(Ref<MaterialInstance>* _this, MonoString* uniform, Ref<Texture2D>* texture)
+	void Hep_MaterialInstance_SetTexture(Ref<Material>* _this, MonoString* uniform, Ref<Texture2D>* texture)
 	{
-		Ref<MaterialInstance>& instance = *(Ref<MaterialInstance>*)_this;
+		Ref<Material>& instance = *(Ref<Material>*)_this;
 		instance->Set(mono_string_to_utf8(uniform), *texture);
 	}
 

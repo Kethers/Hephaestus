@@ -18,6 +18,10 @@
 #include <GLFW/glfw3native.h>
 #include <Windows.h>
 
+#include "Hephaestus/Platform/Vulkan/VulkanRenderer.h"
+
+extern bool g_ApplicationRunning;
+
 namespace Hep
 {
 	Application* Application::s_Instance = nullptr;
@@ -25,7 +29,6 @@ namespace Hep
 	Application::Application(const ApplicationProps& props)
 	{
 		s_Instance = this;
-		m_LayerStack = new LayerStack();
 
 		m_Window = std::unique_ptr<Window>(
 			Window::Create(WindowProps(props.Name, props.WindowWidth, props.WindowHeight)));
@@ -33,57 +36,63 @@ namespace Hep
 		m_Window->Maximize();
 		m_Window->SetVSync(true);
 
-		m_ImGuiLayer = new ImGuiLayer("ImGui");
+		// Init renderer and execute command queue to compile all shaders
+		Renderer::Init();
+		Renderer::WaitAndRender();
+
+		m_ImGuiLayer = ImGuiLayer::Create();
 		PushOverlay(m_ImGuiLayer);
 
 		ScriptEngine::Init("assets/scripts/ExampleApp.dll");
 		Physics::Init();
 
-		Renderer::Init();
-		Renderer::WaitAndRender();
-
-		AssetTypes::Init();
 		AssetManager::Init();
 	}
 
 	Application::~Application()
 	{
-		delete m_LayerStack;
+		for (Layer* layer : m_LayerStack)
+		{
+			layer->OnDetach();
+			delete layer;
+		}
+
+		FramebufferPool::GetGlobal()->GetAll().clear();
 
 		Physics::Shutdown();
 		ScriptEngine::Shutdown();
 
 		AssetManager::Shutdown();
+
+		Renderer::WaitAndRender();
+		Renderer::Shutdown();
 	}
 
 	void Application::PushLayer(Layer* layer)
 	{
-		m_LayerStack->PushLayer(layer);
+		m_LayerStack.PushLayer(layer);
 		layer->OnAttach();
 	}
 
 	void Application::PushOverlay(Layer* layer)
 	{
-		m_LayerStack->PushOverlay(layer);
+		m_LayerStack.PushOverlay(layer);
 		layer->OnAttach();
 	}
 
 	void Application::RenderImGui()
 	{
 		m_ImGuiLayer->Begin();
-
 		ImGui::Begin("Renderer");
-		auto& caps = RendererAPI::GetCapabilities();
+		auto& caps = Renderer::GetCapabilities();
 		ImGui::Text("Vendor: %s", caps.Vendor.c_str());
-		ImGui::Text("Renderer: %s", caps.Renderer.c_str());
+		ImGui::Text("Renderer: %s", caps.Device.c_str());
 		ImGui::Text("Version: %s", caps.Version.c_str());
 		ImGui::Text("Frame Time: %.2fms\n", m_TimeStep.GetMilliseconds());
 		ImGui::End();
 
-		for (Layer* layer : *m_LayerStack)
+		for (Layer* layer : m_LayerStack)
 			layer->OnImGuiRender();
-
-		m_ImGuiLayer->End();
 	}
 
 	void Application::Run()
@@ -91,24 +100,42 @@ namespace Hep
 		OnInit();
 		while (m_Running)
 		{
+			static uint64_t frameCounter = 0;
+			// HEP_CORE_INFO("-- BEGIN FRAME {0}", frameCounter);
+			m_Window->ProcessEvents();
+
 			if (!m_Minimized)
 			{
-				for (Layer* layer : *m_LayerStack)
+				Renderer::BeginFrame();
+				//VulkanRenderer::BeginFrame();
+				for (Layer* layer : m_LayerStack)
 					layer->OnUpdate(m_TimeStep);
 
 				// Render ImGui on render thread
 				Application* app = this;
 				Renderer::Submit([app]() { app->RenderImGui(); });
+				Renderer::Submit([=]() { m_ImGuiLayer->End(); });
+				Renderer::EndFrame();
 
+				// On Render thread
+				m_Window->GetRenderContext()->BeginFrame();
 				Renderer::WaitAndRender();
+				m_Window->SwapBuffers();
 			}
-			m_Window->OnUpdate();
 
 			float time = GetTime();
 			m_TimeStep = time - m_LastFrameTime;
 			m_LastFrameTime = time;
+
+			// HEP_CORE_INFO("-- END FRAME {0}", frameCounter);
+			frameCounter++;
 		}
 		OnShutdown();
+	}
+
+	void Application::Close()
+	{
+		m_Running = false;
 	}
 
 	void Application::OnEvent(Event& event)
@@ -117,7 +144,7 @@ namespace Hep
 		dispatcher.Dispatch<WindowResizeEvent>(HEP_BIND_EVENT_FN(Application::OnWindowResize));
 		dispatcher.Dispatch<WindowCloseEvent>(HEP_BIND_EVENT_FN(Application::OnWindowClose));
 
-		for (auto it = m_LayerStack->end(); it != m_LayerStack->begin();)
+		for (auto it = m_LayerStack.end(); it != m_LayerStack.begin();)
 		{
 			(*--it)->OnEvent(event);
 			if (event.Handled)
@@ -134,7 +161,9 @@ namespace Hep
 			return false;
 		}
 		m_Minimized = false;
-		Renderer::Submit([=]() { glViewport(0, 0, width, height); });
+
+		m_Window->GetRenderContext()->OnResize(width, height);
+
 		auto& fbs = FramebufferPool::GetGlobal()->GetAll();
 		for (auto& fb : fbs)
 		{
@@ -147,6 +176,7 @@ namespace Hep
 	bool Application::OnWindowClose(WindowCloseEvent& e)
 	{
 		m_Running = false;
+		g_ApplicationRunning = false; // Request close
 		return true;
 	}
 

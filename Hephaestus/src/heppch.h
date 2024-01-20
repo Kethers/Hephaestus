@@ -1,7 +1,9 @@
 #pragma once
 
 #ifdef HEP_PLATFORM_WINDOWS
-	#define NOMINMAX
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 	#include <Windows.h>
 #endif
 
@@ -19,6 +21,7 @@
 #include <vector>
 #include <sstream>
 
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include <Hephaestus/Core/Application.h>
 #include <Hephaestus/Core/Assert.h>

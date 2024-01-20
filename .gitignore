@@ -3,6 +3,8 @@
 !external/mono/bin
 !external/assimp/bin
 **bin-int/
+cache/
+logs/
 
 # xmake
 .xmake/

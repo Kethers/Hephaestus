@@ -1,5 +1,6 @@
 ﻿#include "heppch.h"
 #include "PhysicsUtil.h"
+#include "Hephaestus/Utilities/FileSystem.h"
 
 #include <filesystem>
 
@@ -97,39 +98,22 @@ namespace Hep
 
 	void PhysicsMeshSerializer::DeleteIfSerialized(const std::string& filepath)
 	{
-		std::filesystem::path p = filepath;
-		std::filesystem::path path = p.parent_path() / (p.filename().string() + ".pxm");
-
-		size_t firstDot = path.filename().string().find_first_of('.');
-		firstDot = firstDot == std::string::npos ? path.filename().string().length() - 1 : firstDot;
-		std::string dirName = p.filename().string().substr(0, firstDot);
-
+		std::filesystem::path path = filepath;
+		std::string cachePath = "DataCache/Colliders/" + path.filename().string() + ".pxm";
 		if (IsSerialized(filepath))
-			std::filesystem::remove_all(p.parent_path() / dirName);
+			FileSystem::DeleteFile(cachePath);
 	}
 
-	void PhysicsMeshSerializer::SerializeMesh(const std::string& filepath, const physx::PxDefaultMemoryOutputStream& data,
-		const std::string& submeshName)
+	void PhysicsMeshSerializer::SerializeMesh(const std::string& filepath, const Buffer& data)
 	{
-		std::filesystem::path p = filepath;
-		std::filesystem::path path = p.parent_path() / (p.filename().string() + ".pxm");
-		size_t firstDot = path.filename().string().find_first_of('.');
-		firstDot = firstDot == std::string::npos ? path.filename().string().length() - 1 : firstDot;
-		std::string dirName = p.filename().string().substr(0, firstDot);
+		std::filesystem::path path = filepath;
+		std::string cachePath = "DataCache/Colliders/" + path.filename().string() + ".pxm";
 
-		if (submeshName.length() > 0)
-			path = p.parent_path() / dirName / (submeshName + ".pxm");
-
-		std::filesystem::create_directory(p.parent_path() / dirName);
-		std::string cachedFilepath = path.string();
-
-		HEP_CORE_INFO("Serializing {0}", submeshName);
-
-		std::ofstream out(cachedFilepath, std::ios::out | std::ios::binary);
+		std::ofstream out(cachePath, std::ios::out | std::ios::binary);
 		if (out)
 		{
 			HEP_CORE_INFO("File Created");
-			out.write((const char*)data.getData(), data.getSize() / sizeof(char));
+			out.write((const char*)data.Data, data.Size / sizeof(char));
 			out.close();
 		}
 		else
@@ -140,43 +124,31 @@ namespace Hep
 
 	bool PhysicsMeshSerializer::IsSerialized(const std::string& filepath)
 	{
-		std::filesystem::path p = filepath;
-		size_t firstDot = p.filename().string().find_first_of(".");
-		firstDot = firstDot == std::string::npos ? p.filename().string().length() - 1 : firstDot;
-		std::string dirName = p.filename().string().substr(0, firstDot);
-		auto path = p.parent_path() / dirName;
-		return std::filesystem::is_directory(path);
+		std::filesystem::path path = filepath;
+		std::string cachePath = "DataCache/Colliders/" + path.filename().string() + ".pxm";
+		return FileSystem::Exists(cachePath);
 	}
 
-	static physx::PxU8* s_MeshDataBuffer;
-
-	physx::PxDefaultMemoryInputData PhysicsMeshSerializer::DeserializeMesh(const std::string& filepath, const std::string& submeshName)
+	Buffer PhysicsMeshSerializer::DeserializeMesh(const std::string& filepath)
 	{
-		std::filesystem::path p = filepath;
-		size_t lastDot = p.filename().string().find_first_of(".");
-		lastDot = lastDot == std::string::npos ? p.filename().string().length() - 1 : lastDot;
-		std::string dirName = p.filename().string().substr(0, lastDot);
-		auto path = p.parent_path() / dirName;
-		if (submeshName.length() > 0)
-			path = p.parent_path() / dirName / (submeshName + ".pxm");
-
-		std::ifstream in(path.string(), std::ios::in | std::ios::binary);
-
+		std::filesystem::path path = filepath;
+		std::string cachePath = "DataCache/Colliders/" + path.filename().string() + ".pxm";
+		std::ifstream in(cachePath, std::ios::in | std::ios::binary);
 		uint32_t size = 0;
+
+		Buffer buffer;
+
 		if (in)
 		{
 			in.seekg(0, std::ios::end);
 			size = in.tellg();
 			in.seekg(0, std::ios::beg);
 
-			if (s_MeshDataBuffer)
-				delete[] s_MeshDataBuffer;
-
-			s_MeshDataBuffer = new physx::PxU8[size / sizeof(physx::PxU8)];
-			in.read((char*)s_MeshDataBuffer, size / sizeof(char));
+			buffer.Allocate(size);
+			in.read((char*)buffer.Data, size / sizeof(char));
 			in.close();
 		}
 
-		return physx::PxDefaultMemoryInputData(s_MeshDataBuffer, size);
+		return buffer;
 	}
 }

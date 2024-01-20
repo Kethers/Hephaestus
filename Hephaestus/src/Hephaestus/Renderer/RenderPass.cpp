@@ -4,6 +4,9 @@
 #include "Renderer.h"
 
 #include "Hephaestus/Platform/OpenGL/OpenGLRenderPass.h"
+#include "Hephaestus/Platform/Vulkan/VulkanRenderPass.h"
+
+#include "Hephaestus/Renderer/RendererAPI.h"
 
 namespace Hep
 {
@@ -13,6 +16,7 @@ namespace Hep
 		{
 			case RendererAPIType::None: HEP_CORE_ASSERT(false, "RendererAPI::None is currently not supported!");
 				return nullptr;
+			case RendererAPIType::Vulkan: return Ref<VulkanRenderPass>::Create(spec);
 			case RendererAPIType::OpenGL: return Ref<OpenGLRenderPass>::Create(spec);
 		}
 

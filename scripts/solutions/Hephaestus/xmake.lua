@@ -1,5 +1,6 @@
 set_project("Hephaestus")
 
+includes("../../util/dependencies.lua")
 includes("../../../external/Glad")
 includes("../../../external/GLFW")
 includes("../../../external/imgui")
@@ -13,32 +14,6 @@ add_requires("glfw")
 -- else
 -- 	add_requires("assimp >= 5.2.4", {configs = {debug = false, vs_runtime = "MT"}} )
 -- end
-
-IncludeDir = {}
-IncludeDir["GLFW"] 		= "$(projectdir)/external/GLFW/include"
-IncludeDir["Glad"] 		= "$(projectdir)/external/Glad/include"
-IncludeDir["ImGui"] 	= "$(projectdir)/external/imgui"
-IncludeDir["glm"] 		= "$(projectdir)/external/glm"
-IncludeDir["assimp"] 	= "$(projectdir)/external/assimp/include"
-IncludeDir['stb'] 		= "$(projectdir)/external/stb"
-IncludeDir["entt"] 		= "$(projectdir)/external/entt/include"
-IncludeDir["FastNoise"] = "$(projectdir)/external/FastNoise"
-IncludeDir["mono"] 		= "$(projectdir)/external/mono/include"
-IncludeDir["yaml-cpp"] 	= "$(projectdir)/external/yaml-cpp/include"
-IncludeDir["Box2D"] 	= "$(projectdir)/external/Box2D/include"
-IncludeDir["PhysX"]		= "$(projectdir)/external/PhysX/include"
-
-LibraryDir = {}
-LibraryDir["mono"] 							= "$(projectdir)/external/mono/lib/Debug/mono-2.0-sgen.lib"
-
-LibraryDir["PhysX"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysX_static_64.lib"
-LibraryDir["PhysXCharacterKinematic"] 		= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCharacterKinematic_static_64.lib"
-LibraryDir["PhysXCommon"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCommon_static_64.lib"
-LibraryDir["PhysXCooking"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCooking_static_64.lib"
-LibraryDir["PhysXExtensions"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXExtensions_static_64.lib"
-LibraryDir["PhysXFoundation"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXFoundation_static_64.lib"
-LibraryDir["PhysXPvd"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXPvdSDK_static_64.lib"
-
 
 BuildProject({
 	projectName = "Hephaestus",
@@ -72,24 +47,27 @@ BuildProject({
 		IncludeDir["yaml-cpp"],
 		IncludeDir.Box2D,
 		IncludeDir.PhysX,
+		IncludeDir.VulkanSDK,
 	},
 	packages = {"glfw"},
-	debugLink = {},
-	releaseLink = {},
+	debugLink = { Library.ShaderC_Debug, Library.SPIRV_Cross_Debug, Library.SPIRV_Cross_GLSL_Debug },
+	releaseLink = { Library.ShaderC_Release, Library.SPIRV_Cross_Release, Library.SPIRV_Cross_GLSL_Release },
 	link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", 
-		LibraryDir.mono,
-		LibraryDir.PhysX,
-		LibraryDir.PhysXCharacterKinematic,
-		LibraryDir.PhysXCommon,
-		LibraryDir.PhysXCooking,
-		LibraryDir.PhysXExtensions,
-		LibraryDir.PhysXFoundation,
-		LibraryDir.PhysXPvd,
+		Library.mono,
+		Library.PhysX,
+		Library.PhysXCharacterKinematic,
+		Library.PhysXCommon,
+		Library.PhysXCooking,
+		Library.PhysXExtensions,
+		Library.PhysXFoundation,
+		Library.PhysXPvd,
+		Library.Vulkan,
+		-- Library.VulkanUtils,
 	},
 	cxflags = {},
 	afterBuildFunc = nil,
 	enableException = true,
-	staticruntime = true,
+	staticruntime = false,
 	group = "Core",
 })
 
@@ -129,6 +107,9 @@ BuildProject({
 		"$(projectdir)/Poseidon/src",
 		IncludeDir.glm,
 		IncludeDir.entt,
+		IncludeDir.ImGui,
+		IncludeDir.VulkanSDK,
+		IncludeDir.Glad,
 	},
 	rundir = "$(projectdir)/Poseidon",
 	packages = {--[["assimp"]]},
@@ -147,7 +128,33 @@ BuildProject({
 		end
 	end,
 	enableException = true,
-	staticruntime = true,
+	staticruntime = false,
 	startproject = true,
 	group = "Tools",
 })
+
+
+--[[BuildProject({
+	projectName = "Sandbox",
+	projectType = "binary",
+	macros = {},
+	languages = {"clatest", "cxx20"},
+	depends = {"Hephaestus"},
+	files = {"Sandbox/src/**.cpp"},
+	headerfiles = {"Sandbox/src/**.hpp", "Sandbox/src/**.h"},
+	pchHeader = nil,
+	includePaths = {"external", "Hephaestus/src", "Sandbox/src",
+		IncludeDir.glm,
+		IncludeDir.entt,
+		IncludeDir.VulkanSDK,
+	},
+	rundir = "$(projectdir)/Sandbox",
+	packages = {"assimp"},
+	debugLink = {},
+	releaseLink = {},
+	link = {"kernel32", "User32", "Gdi32", "Shell32"},
+	afterBuildFunc = nil,
+	enableException = true,
+	staticruntime = true,
+	startproject = false,
+})--]]

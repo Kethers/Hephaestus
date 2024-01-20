@@ -126,8 +126,7 @@ namespace Hep
 		uint32_t IndexCount;
 		uint32_t VertexCount;
 
-		glm::mat4 Transform;
-		glm::mat4 LocalTransform;
+		glm::mat4 Transform{ 1.0f };
 		AABB BoundingBox;
 
 		std::string NodeName, MeshName;
@@ -150,14 +149,16 @@ namespace Hep
 		const std::vector<Index>& GetIndices() const { return m_Indices; }
 
 		Ref<Shader> GetMeshShader() { return m_MeshShader; }
-		Ref<Material> GetMaterial() { return m_BaseMaterial; }
-		std::vector<Ref<MaterialInstance>>& GetMaterials() { return m_Materials; }
+		std::vector<Ref<Material>>& GetMaterials() { return m_Materials; }
+		const std::vector<Ref<Material>>& GetMaterials() const { return m_Materials; }
 		const std::vector<Ref<Texture2D>>& GetTextures() const { return m_Textures; }
 		const std::string& GetFilePath() const { return m_FilePath; }
 
-		bool IsAnimated() const { return m_IsAnimated; }
-
 		const std::vector<Triangle>& GetTriangleCache(uint32_t index) const { return m_TriangleCache.at(index); }
+
+		Ref<VertexBuffer> GetVertexBuffer() { return m_VertexBuffer; }
+		Ref<IndexBuffer> GetIndexBuffer() { return m_IndexBuffer; }
+		const VertexBufferLayout& GetVertexBufferLayout() const { return m_VertexBufferLayout; }
 
 	private:
 		void BoneTransform(float time);
@@ -182,9 +183,9 @@ namespace Hep
 		uint32_t m_BoneCount = 0;
 		std::vector<BoneInfo> m_BoneInfo;
 
-		Ref<Pipeline> m_Pipeline;
 		Ref<VertexBuffer> m_VertexBuffer;
 		Ref<IndexBuffer> m_IndexBuffer;
+		VertexBufferLayout m_VertexBufferLayout;
 
 		std::vector<Vertex> m_StaticVertices;
 		std::vector<AnimatedVertex> m_AnimatedVertices;
@@ -197,10 +198,9 @@ namespace Hep
 
 		// Materials
 		Ref<Shader> m_MeshShader;
-		Ref<Material> m_BaseMaterial;
 		std::vector<Ref<Texture2D>> m_Textures;
 		std::vector<Ref<Texture2D>> m_NormalMaps;
-		std::vector<Ref<MaterialInstance>> m_Materials;
+		std::vector<Ref<Material>> m_Materials;
 
 		// Animation
 		bool m_IsAnimated = false;
@@ -212,6 +212,8 @@ namespace Hep
 		std::string m_FilePath;
 
 		friend class Renderer;
+		friend class VulkanRenderer;
+		friend class OpenGLRenderer;
 		friend class SceneHierarchyPanel;
 	};
 }

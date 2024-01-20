@@ -4,13 +4,17 @@
 
 #include "Hephaestus/Renderer/VertexBuffer.h"
 #include "Hephaestus/Renderer/Shader.h"
+#include "Hephaestus/Renderer/RenderPass.h"
 
 namespace Hep
 {
 	struct PipelineSpecification
 	{
-		Ref<Hep::Shader> Shader;
+		Ref<Shader> Shader;
 		VertexBufferLayout Layout;
+		Ref<RenderPass> RenderPass;
+
+		std::string DebugName;
 	};
 
 	class Pipeline : public RefCounted

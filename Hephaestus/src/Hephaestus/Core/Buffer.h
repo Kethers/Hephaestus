@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Hephaestus/Core/Base.h"
+#include "Hephaestus/Core/Log.h"
 
 namespace Hep
 {
@@ -13,11 +14,11 @@ namespace Hep
 			: Data(nullptr), Size(0)
 		{}
 
-		Buffer(byte* data, uint32_t size)
-			: Data(data), Size(size)
+		Buffer(void* data, uint32_t size)
+			: Data((byte*)data), Size(size)
 		{}
 
-		static Buffer Copy(void* data, uint32_t size)
+		static Buffer Copy(const void* data, uint32_t size)
 		{
 			Buffer buffer;
 			buffer.Allocate(size);
@@ -37,6 +38,13 @@ namespace Hep
 			Size = size;
 		}
 
+		void Release()
+		{
+			delete[] Data;
+			Data = nullptr;
+			Size = 0;
+		}
+
 		void ZeroInitialize()
 		{
 			if (Data)
@@ -47,6 +55,14 @@ namespace Hep
 		T& Read(uint32_t offset = 0)
 		{
 			return *(T*)(Data + offset);
+		}
+
+		byte* ReadBytes(uint32_t size, uint32_t offset)
+		{
+			HEP_CORE_ASSERT(offset + size <= Size, "Buffer overflow!");
+			byte* buffer = new byte[size];
+			memcpy(buffer, Data + offset, size);
+			return buffer;
 		}
 
 		void Write(void* data, uint32_t size, uint32_t offset = 0)

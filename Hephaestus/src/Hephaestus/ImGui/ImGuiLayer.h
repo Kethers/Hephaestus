@@ -7,22 +7,11 @@ namespace Hep
 	class ImGuiLayer : public Layer
 	{
 	public:
-		ImGuiLayer();
-		ImGuiLayer(const std::string& name);
-		~ImGuiLayer() override = default;
-
-		void OnEvent(Event& e) override;
-
-		void Begin();
-		void End();
-
-		void OnAttach() override;
-		void OnDetach() override;
-		void OnImGuiRender() override;
+		virtual void Begin() = 0;
+		virtual void End() = 0;
 
 		void SetDarkThemeColors();
 
-	private:
-		float m_Time = 0.0f;
+		static ImGuiLayer* Create();
 	};
 }

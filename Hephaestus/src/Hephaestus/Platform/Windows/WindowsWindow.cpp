@@ -6,7 +6,7 @@
 #include "Hephaestus/Core/Events/MouseEvent.h"
 #include "Hephaestus/Core/Events/KeyEvent.h"
 
-#include "Hephaestus/Platform/OpenGL/OpenGLContext.h"
+#include "Hephaestus/Renderer/RendererAPI.h"
 
 namespace Hep
 {
@@ -49,11 +49,15 @@ namespace Hep
 			s_GLFWInitialized = true;
 		}
 
+		if (RendererAPI::Current() == RendererAPIType::Vulkan)
+			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 
-		m_Context = new OpenGLContext(m_Window);
-		m_Context->Init();
+		// Create Renderer Context
+		m_RendererContext = RendererContext::Create(m_Window);
+		m_RendererContext->Create();
 
+		// glfwMaximizeWindow(m_Window);
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 
 		// Set GLFW callbacks
@@ -166,7 +170,8 @@ namespace Hep
 
 	void WindowsWindow::Shutdown()
 	{
-		glfwDestroyWindow(m_Window);
+		glfwTerminate();
+		s_GLFWInitialized = false;
 	}
 
 	std::pair<float, float> WindowsWindow::GetWindowPos() const
@@ -176,26 +181,30 @@ namespace Hep
 		return { x, y };
 	}
 
-	void WindowsWindow::OnUpdate()
+	void WindowsWindow::ProcessEvents()
 	{
 		glfwPollEvents();
-		m_Context->SwapBuffers();
 
-		ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
-		glfwSetCursor(m_Window,
-			m_ImGuiMouseCursors[imgui_cursor] ? m_ImGuiMouseCursors[imgui_cursor] : m_ImGuiMouseCursors[ImGuiMouseCursor_Arrow]);
+		// ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
+		// glfwSetCursor(m_Window,
+		// 	m_ImGuiMouseCursors[imgui_cursor] ? m_ImGuiMouseCursors[imgui_cursor] : m_ImGuiMouseCursors[ImGuiMouseCursor_Arrow]);
+		glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
 
-		float time = glfwGetTime();
-		float delta = time - m_LastFrameTime;
-		m_LastFrameTime = time;
+	void WindowsWindow::SwapBuffers()
+	{
+		m_RendererContext->SwapBuffers();
 	}
 
 	void WindowsWindow::SetVSync(bool enabled)
 	{
-		if (enabled)
-			glfwSwapInterval(1);
-		else
-			glfwSwapInterval(0);
+		if (RendererAPI::Current() == RendererAPIType::OpenGL)
+		{
+			if (enabled)
+				glfwSwapInterval(1);
+			else
+				glfwSwapInterval(0);
+		}
 
 		m_Data.VSync = enabled;
 	}

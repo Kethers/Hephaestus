@@ -3,6 +3,8 @@
 
 #include "EditorLayer.h"
 
+#include "Hephaestus/Renderer/RendererAPI.h"
+
 class PoseidonApplication : public Hep::Application
 {
 public:
@@ -16,7 +18,8 @@ public:
 	}
 };
 
-Hep::Application* Hep::CreateApplication()
+Hep::Application* Hep::CreateApplication(int argc, char** argv)
 {
+	RendererAPI::SetAPI(RendererAPIType::Vulkan);
 	return new PoseidonApplication({ "Poseidon", 1600, 900 });
 }

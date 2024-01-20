@@ -69,6 +69,7 @@ namespace Hep
 		Entity GetMainCameraEntity();
 
 		float& GetSkyboxLod() { return m_SkyboxLod; }
+		float GetSkyboxLod() const { return m_SkyboxLod; }
 
 		Entity CreateEntity(const std::string& name = "");
 		Entity CreateEntityWithID(UUID uuid, const std::string& name = "", bool runtimeMap = false);
@@ -118,7 +119,7 @@ namespace Hep
 		Ref<Environment> m_Environment;
 		float m_EnvironmentIntensity = 1.0f;
 		Ref<TextureCube> m_SkyboxTexture;
-		Ref<MaterialInstance> m_SkyboxMaterial;
+		Ref<Material> m_SkyboxMaterial;
 
 		entt::entity m_SelectedEntity;
 

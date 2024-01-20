@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Hephaestus//Renderer/RendererAPI.h"
+#include "Hephaestus//Renderer/RendererTypes.h"
 #include "Hephaestus/Renderer/Texture.h"
 
 namespace Hep
@@ -8,13 +8,15 @@ namespace Hep
 	class OpenGLTexture2D : public Texture2D
 	{
 	public:
-		OpenGLTexture2D(TextureFormat format, uint32_t width, uint32_t height, TextureWrap wrap);
+		OpenGLTexture2D(ImageFormat format, uint32_t width, uint32_t height, const void* data);
 		OpenGLTexture2D(const std::string& path, bool srgb);
 		~OpenGLTexture2D() override;
 
 		void Bind(uint32_t slot = 0) const override;
 
-		TextureFormat GetFormat() const override { return m_Format; }
+		Ref<Image2D> GetImage() const override { return m_Image; }
+
+		ImageFormat GetFormat() const override { return m_Image->GetFormat(); }
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }
 		// This function currently returns the expected number of mips based on image size,
@@ -24,27 +26,19 @@ namespace Hep
 		void Lock() override;
 		void Unlock() override;
 
-		void Resize(uint32_t width, uint32_t height) override;
 		Buffer GetWriteableBuffer() override;
 
 		const std::string& GetPath() const override { return m_FilePath; }
 
 		bool Loaded() const override { return m_Loaded; }
 
-		RendererID GetRendererID() const override { return m_RendererID; }
-
-		bool operator==(const Texture& other) const override
-		{
-			return m_RendererID == ((OpenGLTexture2D&)other).m_RendererID;
-		}
+		uint64_t GetHash() const override { return m_Image->GetHash(); }
 
 	private:
-		RendererID m_RendererID;
-		TextureFormat m_Format;
+		Ref<Image2D> m_Image;
 		TextureWrap m_Wrap = TextureWrap::Clamp;
 		uint32_t m_Width, m_Height;
 
-		Buffer m_ImageData;
 		bool m_IsHDR = false;
 
 		bool m_Locked = false;
@@ -56,13 +50,13 @@ namespace Hep
 	class OpenGLTextureCube : public TextureCube
 	{
 	public:
-		OpenGLTextureCube(TextureFormat format, uint32_t width, uint32_t height);
+		OpenGLTextureCube(ImageFormat format, uint32_t width, uint32_t height, const void* data = nullptr);
 		OpenGLTextureCube(const std::string& path);
 		~OpenGLTextureCube() override;
 
 		void Bind(uint32_t slot = 0) const override;
 
-		TextureFormat GetFormat() const override { return m_Format; }
+		ImageFormat GetFormat() const override { return m_Format; }
 		uint32_t GetWidth() const override { return m_Width; }
 		uint32_t GetHeight() const override { return m_Height; }
 		// This function currently returns the expected number of mips based on image size,
@@ -71,19 +65,16 @@ namespace Hep
 
 		const std::string& GetPath() const override { return m_FilePath; }
 
-		RendererID GetRendererID() const override { return m_RendererID; }
+		RendererID GetRendererID() const { return m_RendererID; }
 
-		bool operator==(const Texture& other) const override
-		{
-			return m_RendererID == ((OpenGLTextureCube&)other).m_RendererID;
-		}
+		uint64_t GetHash() const override { return (uint64_t)m_RendererID; }
 
 	private:
 		RendererID m_RendererID;
-		TextureFormat m_Format;
+		ImageFormat m_Format;
 		uint32_t m_Width, m_Height;
 
-		unsigned char* m_ImageData;
+		Buffer m_LocalStorage;
 
 		std::string m_FilePath;
 	};

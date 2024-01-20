@@ -37,6 +37,6 @@ BuildProject({
 	link = {},
 	afterBuildFunc = nil,
 	enableException = true,
-	staticruntime = true,
+	staticruntime = false,
 	group = "Dependencies",
 })

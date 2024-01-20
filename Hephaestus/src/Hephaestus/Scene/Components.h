@@ -114,7 +114,7 @@ namespace Hep
 	{
 		enum class Type { Static, Dynamic, Kinematic };
 
-		Type BodyType;
+		Type BodyType = Type::Static;
 		bool FixedRotation = false;
 
 		// Storage for runtime
