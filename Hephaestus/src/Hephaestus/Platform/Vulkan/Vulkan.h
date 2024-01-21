@@ -63,7 +63,9 @@ namespace Hep::Utils
 			HEP_CORE_ERROR("VkResult is '{0}' in {1}:{2}", ::Hep::Utils::VKResultToString(result), __FILE__, __LINE__);
 			if (result == VK_ERROR_DEVICE_LOST)
 			{
-				::Hep::Utils::RetrieveDiagnosticCheckpoints();
+				using namespace std::chrono_literals;
+				std::this_thread::sleep_for(3s);
+				// ::Hep::Utils::RetrieveDiagnosticCheckpoints();
 				::Hep::Utils::DumpGPUInfo();
 			}
 			HEP_CORE_ASSERT(result == VK_SUCCESS);

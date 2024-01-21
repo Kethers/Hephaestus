@@ -44,7 +44,6 @@ namespace Hep
 		VkDebugReportCallbackEXT m_DebugReportCallback = VK_NULL_HANDLE;
 		VkPipelineCache m_PipelineCache = nullptr;
 
-		VulkanAllocator m_Allocator;
 		VulkanSwapChain m_SwapChain;
 	};
 }

@@ -130,25 +130,18 @@ namespace Hep
 		VulkanAllocator allocator("Texture2D");
 
 		// Create staging buffer
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingMemory;
 		VkBufferCreateInfo bufferCreateInfo{};
 		bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		bufferCreateInfo.size = size;
 		bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		VK_CHECK_RESULT(vkCreateBuffer(vulkanDevice, &bufferCreateInfo, nullptr, &stagingBuffer));
-
-		VkMemoryRequirements memoryRequirements = {};
-		vkGetBufferMemoryRequirements(vulkanDevice, stagingBuffer, &memoryRequirements);
-		allocator.Allocate(memoryRequirements, &stagingMemory, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		VK_CHECK_RESULT(vkBindBufferMemory(vulkanDevice, stagingBuffer, stagingMemory, 0));
+		VkBuffer stagingBuffer;
+		VmaAllocation stagingBufferAllocation = allocator.AllocateBuffer(bufferCreateInfo, VMA_MEMORY_USAGE_CPU_TO_GPU, stagingBuffer);
 
 		// Copy data to staging buffer
-		uint8_t* destData;
-		VK_CHECK_RESULT(vkMapMemory(vulkanDevice, stagingMemory, 0, memoryRequirements.size, 0, (void**)&destData));
+		uint8_t* destData = allocator.MapMemory<uint8_t>(stagingBufferAllocation);
 		memcpy(destData, m_ImageData.Data, size);
-		vkUnmapMemory(vulkanDevice, stagingMemory);
+		allocator.UnmapMemory(stagingBufferAllocation);
 
 		VkImageCreateInfo imageCreateInfo{};
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -162,11 +155,7 @@ namespace Hep
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageCreateInfo.extent = { m_Width, m_Height, 1 };
 		imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-		VK_CHECK_RESULT(vkCreateImage(vulkanDevice, &imageCreateInfo, nullptr, &info.Image));
-
-		vkGetImageMemoryRequirements(vulkanDevice, info.Image, &memoryRequirements);
-		allocator.Allocate(memoryRequirements, &info.Memory, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		VK_CHECK_RESULT(vkBindImageMemory(vulkanDevice, info.Image, info.Memory, 0));
+		info.MemoryAlloc = allocator.AllocateImage(imageCreateInfo, VMA_MEMORY_USAGE_GPU_ONLY, info.Image);
 
 		VkCommandBuffer copyCmd = device->GetCommandBuffer(true);
 
@@ -254,8 +243,7 @@ namespace Hep
 		device->FlushCommandBuffer(copyCmd);
 
 		// Clean up staging resources
-		vkFreeMemory(vulkanDevice, stagingMemory, nullptr);
-		vkDestroyBuffer(vulkanDevice, stagingBuffer, nullptr);
+		allocator.DestroyBuffer(stagingBuffer, stagingBufferAllocation);
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// CREATE TEXTURE SAMPLER
@@ -544,14 +532,20 @@ namespace Hep
 
 	VulkanTextureCube::~VulkanTextureCube()
 	{
-		// Renderer::Submit([]()
-		// {
-		auto vulkanDevice = VulkanContext::GetCurrentDevice()->GetVulkanDevice();
-		vkDestroyImageView(vulkanDevice, m_DescriptorImageInfo.imageView, nullptr);
-		vkDestroyImage(vulkanDevice, m_Image, nullptr);
-		vkDestroySampler(vulkanDevice, m_DescriptorImageInfo.sampler, nullptr);
-		vkFreeMemory(vulkanDevice, m_DeviceMemory, nullptr);
-		// });
+		VkImageView imageView = m_DescriptorImageInfo.imageView;
+		VkSampler sampler = m_DescriptorImageInfo.sampler;
+		VkImage image = m_Image;
+		VmaAllocation allocation = m_MemoryAlloc;
+		Renderer::Submit([imageView, sampler, image, allocation]()
+		{
+			HEP_CORE_TRACE("Destroying VulkanTextureCube");
+			auto vulkanDevice = VulkanContext::GetCurrentDevice()->GetVulkanDevice();
+			vkDestroyImageView(vulkanDevice, imageView, nullptr);
+			vkDestroySampler(vulkanDevice, sampler, nullptr);
+
+			VulkanAllocator allocator("TextureCube");
+			allocator.DestroyImage(image, allocation);
+		});
 	}
 
 	static void SetImageLayout(
@@ -723,12 +717,7 @@ namespace Hep
 		imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
 			VK_IMAGE_USAGE_STORAGE_BIT;
 		imageCreateInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-		VK_CHECK_RESULT(vkCreateImage(vulkanDevice, &imageCreateInfo, nullptr, &m_Image));
-
-		VkMemoryRequirements memoryRequirements = {};
-		vkGetImageMemoryRequirements(vulkanDevice, m_Image, &memoryRequirements);
-		allocator.Allocate(memoryRequirements, &m_DeviceMemory, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		VK_CHECK_RESULT(vkBindImageMemory(vulkanDevice, m_Image, m_DeviceMemory, 0));
+		m_MemoryAlloc = allocator.AllocateImage(imageCreateInfo, VMA_MEMORY_USAGE_GPU_ONLY, m_Image);
 
 		m_DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
@@ -736,26 +725,18 @@ namespace Hep
 		if (m_LocalStorage)
 		{
 			// Create staging buffer
-			VkBuffer stagingBuffer;
-			VkDeviceMemory stagingMemory;
 			VkBufferCreateInfo bufferCreateInfo{};
 			bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 			bufferCreateInfo.size = m_LocalStorage.Size;
 			bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 			bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			VK_CHECK_RESULT(vkCreateBuffer(vulkanDevice, &bufferCreateInfo, nullptr, &stagingBuffer));
-
-			VkMemoryRequirements memoryRequirements = {};
-			vkGetBufferMemoryRequirements(vulkanDevice, stagingBuffer, &memoryRequirements);
-			allocator.Allocate(memoryRequirements, &stagingMemory,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			VK_CHECK_RESULT(vkBindBufferMemory(vulkanDevice, stagingBuffer, stagingMemory, 0));
+			VkBuffer stagingBuffer;
+			VmaAllocation stagingBufferAllocation = allocator.AllocateBuffer(bufferCreateInfo, VMA_MEMORY_USAGE_CPU_TO_GPU, stagingBuffer);
 
 			// Copy data to staging buffer
-			uint8_t* destData;
-			VK_CHECK_RESULT(vkMapMemory(vulkanDevice, stagingMemory, 0, memoryRequirements.size, 0, (void**)&destData));
+			uint8_t* destData = allocator.MapMemory<uint8_t>(stagingBufferAllocation);
 			memcpy(destData, m_LocalStorage.Data, m_LocalStorage.Size);
-			vkUnmapMemory(vulkanDevice, stagingMemory);
+			allocator.UnmapMemory(stagingBufferAllocation);
 
 			VkCommandBuffer copyCmd = device->GetCommandBuffer(true);
 
@@ -821,9 +802,7 @@ namespace Hep
 
 			device->FlushCommandBuffer(copyCmd);
 
-			// Clean up staging resources
-			vkFreeMemory(vulkanDevice, stagingMemory, nullptr);
-			vkDestroyBuffer(vulkanDevice, stagingBuffer, nullptr);
+			allocator.DestroyBuffer(stagingBuffer, stagingBufferAllocation);
 		}
 
 		VkCommandBuffer layoutCmd = device->GetCommandBuffer(true);

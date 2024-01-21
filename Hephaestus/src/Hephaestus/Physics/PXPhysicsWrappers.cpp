@@ -743,14 +743,20 @@ namespace Hep
 
 	void PXPhysicsWrappers::Shutdown()
 	{
-		s_CPUDispatcher->release();
-		s_CookingFactory->release();
+		if (s_CPUDispatcher)
+			s_CPUDispatcher->release();
+		s_CPUDispatcher = nullptr;
+
+		if (s_CookingFactory)
+			s_CookingFactory->release();
 		s_CookingFactory = nullptr;
 
-		s_Physics->release();
+		if (s_Foundation)
+			s_Physics->release();
 		s_Physics = nullptr;
 
-		s_Foundation->release();
+		if (s_Foundation)
+			s_Foundation->release();
 		s_Foundation = nullptr;
 	}
 

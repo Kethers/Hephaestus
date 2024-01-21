@@ -3,6 +3,7 @@
 #include "Hephaestus/Renderer/Shader.h"
 
 #include "Vulkan.h"
+#include "VulkanMemoryAllocator/vk_mem_alloc.h"
 
 namespace Hep
 {
@@ -11,7 +12,7 @@ namespace Hep
 	public:
 		struct UniformBuffer
 		{
-			VkDeviceMemory Memory = nullptr;
+			VmaAllocation MemoryAlloc = nullptr;
 			VkBuffer Buffer;
 			VkDescriptorBufferInfo Descriptor;
 			uint32_t Size = 0;

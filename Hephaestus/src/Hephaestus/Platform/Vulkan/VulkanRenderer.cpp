@@ -25,6 +25,9 @@
 
 #include <glm/glm.hpp>
 
+#include "GFSDK_Aftermath.h"
+#include "GFSDK_Aftermath_GpuCrashDump.h"
+
 namespace Hep
 {
 	struct VulkanRendererData
@@ -55,6 +58,33 @@ namespace Hep
 			}
 			return "Unknown";
 		}
+
+		// Static wrapper for the GPU crash dump handler. See the 'Handling GPU crash dump Callbacks' section for details.
+		static void GpuCrashDumpCallback(const void* pGpuCrashDump, const uint32_t gpuCrashDumpSize, void* pUserData)
+		{
+			HEP_CORE_ERROR("GpuCrashDumpCallback");
+			HEP_DEBUG_BREAK;
+			// GpuCrashTracker* pGpuCrashTracker = reinterpret_cast<GpuCrashTracker*>(pUserData);
+			// pGpuCrashTracker->OnCrashDump(pGpuCrashDump, gpuCrashDumpSize);
+		}
+
+		// Static wrapper for the shader debug information handler. See the 'Handling Shader Debug Information callbacks' section for details.
+		static void ShaderDebugInfoCallback(const void* pShaderDebugInfo, const uint32_t shaderDebugInfoSize, void* pUserData)
+		{
+			HEP_CORE_ERROR("ShaderDebugInfoCallback");
+			HEP_DEBUG_BREAK;
+			// GpuCrashTracker* pGpuCrashTracker = reinterpret_cast<GpuCrashTracker*>(pUserData);
+			// pGpuCrashTracker->OnShaderDebugInfo(pShaderDebugInfo, shaderDebugInfoSize);
+		}
+
+		// Static wrapper for the GPU crash dump description handler. See the 'Handling GPU Crash Dump Description Callbacks' section for details.
+		static void CrashDumpDescriptionCallback(PFN_GFSDK_Aftermath_AddGpuCrashDumpDescription addDescription, void* pUserData)
+		{
+			HEP_CORE_ERROR("CrashDumpDescriptionCallback");
+			HEP_DEBUG_BREAK;
+			// GpuCrashTracker* pGpuCrashTracker = reinterpret_cast<GpuCrashTracker*>(pUserData);
+			// pGpuCrashTracker->OnDescription(addDescription);
+		}
 	}
 
 	void VulkanRenderer::Init()
@@ -68,6 +98,13 @@ namespace Hep
 		caps.Version = std::to_string(properties.driverVersion);
 
 		Utils::DumpGPUInfo();
+
+		#if 0
+		GFSDK_Aftermath_Result result = GFSDK_Aftermath_EnableGpuCrashDumps(GFSDK_Aftermath_Version_API, GFSDK_Aftermath_GpuCrashDumpWatchedApiFlags_Vulkan,
+			GFSDK_Aftermath_GpuCrashDumpFeatureFlags_Default,
+			Utils::GpuCrashDumpCallback, Utils::ShaderDebugInfoCallback, Utils::CrashDumpDescriptionCallback,
+			nullptr);
+#endif
 
 		// Create fullscreen quad
 		float x = -1;

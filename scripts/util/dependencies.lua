@@ -22,12 +22,14 @@ IncludeDir["yaml-cpp"] 	= "$(projectdir)/external/yaml-cpp/include"
 IncludeDir["Box2D"] 	= "$(projectdir)/external/Box2D/include"
 IncludeDir["PhysX"]		= "$(projectdir)/external/PhysX/include"
 IncludeDir["VulkanSDK"] = path.join(VULKAN_SDK, "Include")
+IncludeDir["NvidiaAftermath"] = "$(projectdir)/external/NvidiaAftermath/include"
 
 
 LibraryDir = {}
 
 LibraryDir["PhysX"] = "$(projectdir)/external/PhysX/lib/$(mode)"
 LibraryDir["VulkanSDK"] = path.join(VULKAN_SDK, "Lib")
+LibraryDir["NvidiaAftermath"] = "$(projectdir)/external/NvidiaAftermath/lib/x64"
 
 
 Library = {}
@@ -43,6 +45,7 @@ Library["PhysXPvd"] 				= path.join(LibraryDir.PhysX, "PhysXPvdSDK_static_64.lib
 Library["Vulkan"] 					= path.join(LibraryDir.VulkanSDK, "vulkan-1.lib")
 -- TODO: this has been separated into individual lib and not attached in Vulkan SDK
 -- Library["VulkanUtils"] 				= path.join(LibraryDir.VulkanSDK, "VkLayer_utils.lib")
+Library["NvidiaAftermath"] 			= path.join(LibraryDir.NvidiaAftermath, "GFSDK_Aftermath_Lib.x64.lib")
 
 Library["ShaderC_Debug"] 			= path.join(LibraryDir.VulkanSDK, "shaderc_sharedd.lib")
 Library["SPIRV_Cross_Debug"] 		= path.join(LibraryDir.VulkanSDK, "spirv-cross-cored.lib")

@@ -27,8 +27,7 @@ namespace Hep
 
 	VulkanContext::VulkanContext(GLFWwindow* windowHandle)
 		: m_WindowHandle(windowHandle)
-	{
-	}
+	{}
 
 	VulkanContext::~VulkanContext()
 	{
@@ -131,8 +130,7 @@ namespace Hep
 		enabledFeatures.robustBufferAccess = true;
 		m_Device = Ref<VulkanDevice>::Create(m_PhysicalDevice, enabledFeatures);
 
-		// Why is this here?
-		m_Allocator = VulkanAllocator(m_Device, "Default");
+		VulkanAllocator::Init(m_Device);
 
 		m_SwapChain.Init(s_VulkanInstance, m_Device);
 		m_SwapChain.InitSurface(m_WindowHandle);

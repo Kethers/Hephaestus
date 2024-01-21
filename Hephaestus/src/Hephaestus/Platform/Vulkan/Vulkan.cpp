@@ -49,6 +49,6 @@ namespace Hep::Utils
 				HEP_CORE_ERROR("Checkpoint: {0} (stage: {1})", checkpoint->Data, StageToString(data[i].stage));
 			}
 		}
-		HEP_DEBUG_BREAK;
+		// HEP_DEBUG_BREAK;
 	}
 }

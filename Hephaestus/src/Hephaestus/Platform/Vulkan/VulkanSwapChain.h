@@ -64,7 +64,6 @@ namespace Hep
 	private:
 		VkInstance m_Instance;
 		Ref<VulkanDevice> m_Device;
-		VulkanAllocator m_Allocator;
 
 		VkFormat m_ColorFormat;
 		VkColorSpaceKHR m_ColorSpace;
@@ -84,7 +83,7 @@ namespace Hep
 		struct
 		{
 			VkImage Image;
-			VkDeviceMemory DeviceMemory;
+			VmaAllocation MemoryAlloc;
 			VkImageView ImageView;
 		} m_DepthStencil;
 

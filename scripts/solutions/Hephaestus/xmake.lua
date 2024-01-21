@@ -24,12 +24,14 @@ BuildProject({
 	files = {
 		"$(projectdir)/Hephaestus/src/**.cpp", 
 		"$(projectdir)/external/stb/**.cpp", 
-		"$(projectdir)/external/FastNoise/**.cpp"
+		"$(projectdir)/external/FastNoise/**.cpp",
+		"$(projectdir)/external/VulkanMemoryAllocator/**.cpp", 
 	},
 	headerfiles = {
 		"$(projectdir)/Hephaestus/src/**.h", 
 		"$(projectdir)/Hephaestus/src/**.hpp",
 		"$(projectdir)/external/stb/**.h",
+		"$(projectdir)/external/VulkanMemoryAllocator/**.h", 
 	},
 	pchHeader = "$(projectdir)/Hephaestus/src/heppch.h",
 	includePaths = {
@@ -48,6 +50,7 @@ BuildProject({
 		IncludeDir.Box2D,
 		IncludeDir.PhysX,
 		IncludeDir.VulkanSDK,
+		IncludeDir.NvidiaAftermath,
 	},
 	packages = {"glfw"},
 	debugLink = {
@@ -72,6 +75,7 @@ BuildProject({
 		Library.PhysXPvd,
 		Library.Vulkan,
 		-- Library.VulkanUtils,
+		Library.NvidiaAftermath,
 	},
 	cxflags = {},
 	afterBuildFunc = nil,
@@ -127,7 +131,10 @@ BuildProject({
 	link = {"kernel32", "User32", "Gdi32", "Shell32"},
 	afterBuildFunc = function (target)
 		if is_plat("windows") then
+			os.cp("$(projectdir)/external/NvidiaAftermath/lib/x64/GFSDK_Aftermath_Lib.x64.dll", target:targetdir())
 			if (is_mode("debug")) then
+				-- TODO: Temp, try other way
+				os.cp(path.join(os.getenv("VULKAN_SDK"), "Bin", "shaderc_sharedd.dll"), target:targetdir())
 				os.cp("$(projectdir)/external/assimp/bin/Debug/assimp-vc141-mtd.dll", target:targetdir())
 				os.cp("$(projectdir)/external/mono/bin/Debug/mono-2.0-sgen.dll", target:targetdir())
 			else
