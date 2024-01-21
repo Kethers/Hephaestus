@@ -249,9 +249,6 @@ namespace Hep
 	VulkanDevice::VulkanDevice(const Ref<VulkanPhysicalDevice>& physicalDevice, VkPhysicalDeviceFeatures enabledFeatures)
 		: m_PhysicalDevice(physicalDevice), m_EnableFeatures(enabledFeatures)
 	{
-		GpuCrashTracker* gpuCrashTracker = new GpuCrashTracker;
-		gpuCrashTracker->Initialize();
-
 		// Do we need to enable any other extensions (eg. NV_RAYTRACING?
 		std::vector<const char*> deviceExtensions;
 		// If the device will be used for presenting to a display via a swapchain we need to request the swapchain extension
@@ -263,18 +260,28 @@ namespace Hep
 		if (m_PhysicalDevice->IsExtensionSupported(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME))
 			deviceExtensions.push_back(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME);
 
-		auto aftermathFlags = (VkDeviceDiagnosticsConfigFlagBitsNV)(
-			VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_RESOURCE_TRACKING_BIT_NV |
-			VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_AUTOMATIC_CHECKPOINTS_BIT_NV |
-			VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV);
-
 		VkDeviceDiagnosticsConfigCreateInfoNV aftermathInfo = {};
-		aftermathInfo.sType = VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV;
-		aftermathInfo.flags = aftermathFlags;
+		bool canEnableAftermath = m_PhysicalDevice->IsExtensionSupported(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME) &&
+			m_PhysicalDevice->IsExtensionSupported(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME);
+		if (canEnableAftermath)
+		{
+			// Must be initialized ~before~ device has been created
+			GpuCrashTracker* gpuCrashTracker = new GpuCrashTracker();
+			gpuCrashTracker->Initialize();
+
+			auto aftermathFlags = (VkDeviceDiagnosticsConfigFlagBitsNV)(
+				VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_RESOURCE_TRACKING_BIT_NV |
+				VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_AUTOMATIC_CHECKPOINTS_BIT_NV |
+				VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV);
+
+			aftermathInfo.sType = VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV;
+			aftermathInfo.flags = aftermathFlags;
+		}
 
 		VkDeviceCreateInfo deviceCreateInfo{};
 		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		deviceCreateInfo.pNext = &aftermathInfo;
+		if (canEnableAftermath)
+			deviceCreateInfo.pNext = &aftermathInfo;
 		deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(physicalDevice->m_QueueCreateInfos.size());;
 		deviceCreateInfo.pQueueCreateInfos = physicalDevice->m_QueueCreateInfos.data();
 		deviceCreateInfo.pEnabledFeatures = &enabledFeatures;
