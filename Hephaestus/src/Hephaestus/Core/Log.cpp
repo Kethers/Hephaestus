@@ -16,8 +16,6 @@ namespace Hep
 		if (!std::filesystem::exists(logsDirectory))
 			std::filesystem::create_directories(logsDirectory);
 
-		spdlog::set_pattern("%^[%T] %n: %v%$");
-
 		std::vector<spdlog::sink_ptr> hepSinks =
 		{
 			std::make_shared<spdlog::sinks::stdout_color_sink_mt>(),

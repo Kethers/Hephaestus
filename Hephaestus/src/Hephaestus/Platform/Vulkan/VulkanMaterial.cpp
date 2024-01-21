@@ -43,30 +43,36 @@ namespace Hep
 		Renderer::Submit([instance]() mutable
 		{
 			auto shader = instance->GetShader().As<VulkanShader>();
-			instance->m_DescriptorSet = shader->CreateDescriptorSets();
+			const auto& shaderDescriptorSets = shader->GetShaderDescriptorSets();
+			if (!shaderDescriptorSets.empty())
+				instance->m_DescriptorSet = shader->CreateDescriptorSets();
 		});
 	}
 
 	void VulkanMaterial::Invalidate()
 	{
 		auto shader = m_Shader.As<VulkanShader>();
-		m_DescriptorSet = shader->CreateDescriptorSets();
-
-		Ref<VulkanShader> vulkanShader = m_Shader.As<VulkanShader>();
-		for (uint32_t i = 0; i < vulkanShader->GetUniformBufferCount(); i++)
+		const auto& shaderDescriptorSets = shader->GetShaderDescriptorSets();
+		if (!shaderDescriptorSets.empty())
 		{
-			auto& uniformBuffer = vulkanShader->GetUniformBuffer(i);
-			VkWriteDescriptorSet writeDescriptorSet = {};
-			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSet.descriptorCount = 1;
-			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			writeDescriptorSet.pBufferInfo = &uniformBuffer.Descriptor;
-			writeDescriptorSet.dstBinding = uniformBuffer.BindingPoint;
-			m_WriteDescriptors.push_back(writeDescriptorSet);
-		}
+			m_DescriptorSet = shader->CreateDescriptorSets();
 
-		for (auto& descriptor : m_ResidentDescriptors)
-			m_PendingDescriptors.push_back(descriptor);
+			Ref<VulkanShader> vulkanShader = m_Shader.As<VulkanShader>();
+			for (uint32_t i = 0; i < vulkanShader->GetUniformBufferCount(); i++)
+			{
+				auto& uniformBuffer = vulkanShader->GetUniformBuffer(i);
+				VkWriteDescriptorSet writeDescriptorSet = {};
+				writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSet.descriptorCount = 1;
+				writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				writeDescriptorSet.pBufferInfo = &uniformBuffer.Descriptor;
+				writeDescriptorSet.dstBinding = uniformBuffer.BindingPoint;
+				m_WriteDescriptors.push_back(writeDescriptorSet);
+			}
+
+			for (auto&& [binding, descriptor] : m_ResidentDescriptors)
+				m_PendingDescriptors.push_back(descriptor);
+		}
 	}
 
 	void VulkanMaterial::AllocateStorage()
@@ -123,21 +129,21 @@ namespace Hep
 		const ShaderResourceDeclaration* resource = FindResourceDeclaration(name);
 		HEP_CORE_ASSERT(resource);
 
+		uint32_t binding = resource->GetRegister();
 		// Texture is already set
-		if (resource->GetRegister() < m_Textures.size() && m_Textures[resource->GetRegister()]
-			&& texture->GetHash() == m_Textures[resource->GetRegister()]->GetHash())
+		if (binding < m_Textures.size() && m_Textures[binding] && texture->GetHash() == m_Textures[binding]->GetHash())
 			return;
 
-		if (resource->GetRegister() >= m_Textures.size())
-			m_Textures.resize(resource->GetRegister() + 1);
-		m_Textures[resource->GetRegister()] = texture;
+		if (binding >= m_Textures.size())
+			m_Textures.resize(binding + 1);
+		m_Textures[binding] = texture;
 
 		const VkWriteDescriptorSet* wds = m_Shader.As<VulkanShader>()->GetDescriptorSet(name);
 		HEP_CORE_ASSERT(wds);
-		m_ResidentDescriptors.push_back(std::make_shared<PendingDescriptor>(PendingDescriptor{
+		m_ResidentDescriptors[binding] = std::make_shared<PendingDescriptor>(PendingDescriptor{
 			PendingDescriptorType::Texture2D, *wds, {}, texture.As<Texture>(), nullptr
-		}));
-		m_PendingDescriptors.push_back(m_ResidentDescriptors.back());
+		});
+		m_PendingDescriptors.push_back(m_ResidentDescriptors.at(binding));
 	}
 
 	void VulkanMaterial::SetVulkanDescriptor(const std::string& name, const Ref<TextureCube>& texture)
@@ -145,21 +151,21 @@ namespace Hep
 		const ShaderResourceDeclaration* resource = FindResourceDeclaration(name);
 		HEP_CORE_ASSERT(resource);
 
+		uint32_t binding = resource->GetRegister();
 		// Texture is already set
-		if (resource->GetRegister() < m_Textures.size() && m_Textures[resource->GetRegister()] && texture->GetHash() == m_Textures[resource
-			->GetRegister()]->GetHash())
+		if (binding < m_Textures.size() && m_Textures[binding] && texture->GetHash() == m_Textures[binding]->GetHash())
 			return;
 
-		if (resource->GetRegister() >= m_Textures.size())
-			m_Textures.resize(resource->GetRegister() + 1);
-		m_Textures[resource->GetRegister()] = texture;
+		if (binding >= m_Textures.size())
+			m_Textures.resize(binding + 1);
+		m_Textures[binding] = texture;
 
 		const VkWriteDescriptorSet* wds = m_Shader.As<VulkanShader>()->GetDescriptorSet(name);
 		HEP_CORE_ASSERT(wds);
-		m_ResidentDescriptors.push_back(std::make_shared<PendingDescriptor>(PendingDescriptor{
+		m_ResidentDescriptors[binding] = std::make_shared<PendingDescriptor>(PendingDescriptor{
 			PendingDescriptorType::TextureCube, *wds, {}, texture.As<Texture>(), nullptr
-		}));
-		m_PendingDescriptors.push_back(m_ResidentDescriptors.back());
+		});
+		m_PendingDescriptors.push_back(m_ResidentDescriptors.at(binding));
 	}
 
 	void VulkanMaterial::SetVulkanDescriptor(const std::string& name, const VkDescriptorImageInfo& imageInfo)
@@ -185,22 +191,22 @@ namespace Hep
 		const ShaderResourceDeclaration* resource = FindResourceDeclaration(name);
 		HEP_CORE_ASSERT(resource);
 
+		uint32_t binding = resource->GetRegister();
 		// TODO: replace with set/map
-		if (resource->GetRegister() < m_Images.size() && m_Images[resource->GetRegister()]
-			&& m_ImageHashes.at(resource->GetRegister()) == image->GetHash())
+		if (binding < m_Images.size() && m_Images[binding] && m_ImageHashes.at(binding) == image->GetHash())
 			return;
 
-		if (resource->GetRegister() >= m_Images.size())
-			m_Images.resize(resource->GetRegister() + 1);
-		m_Images[resource->GetRegister()] = image;
-		m_ImageHashes[resource->GetRegister()] = image->GetHash();
+		if (binding >= m_Images.size())
+			m_Images.resize(binding + 1);
+		m_Images[binding] = image;
+		m_ImageHashes[binding] = image->GetHash();
 
 		const VkWriteDescriptorSet* wds = m_Shader.As<VulkanShader>()->GetDescriptorSet(name);
 		HEP_CORE_ASSERT(wds);
-		m_ResidentDescriptors.push_back(std::make_shared<PendingDescriptor>(PendingDescriptor{
+		m_ResidentDescriptors[binding] = std::make_shared<PendingDescriptor>(PendingDescriptor{
 			PendingDescriptorType::Image2D, *wds, {}, nullptr, image.As<Image>()
-		}));
-		m_PendingDescriptors.push_back(m_ResidentDescriptors.back());
+		});
+		m_PendingDescriptors.push_back(m_ResidentDescriptors.at(binding));
 	}
 
 	void VulkanMaterial::Set(const std::string& name, float value)
@@ -394,7 +400,7 @@ namespace Hep
 		{
 			auto vulkanDevice = VulkanContext::GetCurrentDevice()->GetVulkanDevice();
 
-			for (auto& descriptor : instance->m_ResidentDescriptors)
+			for (auto&& [binding, descriptor] : instance->m_ResidentDescriptors)
 			{
 				if (descriptor->Type == PendingDescriptorType::Image2D)
 				{

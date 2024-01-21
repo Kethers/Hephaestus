@@ -4,6 +4,7 @@
 !external/assimp/bin
 **bin-int/
 cache/
+
 logs/
 
 # xmake

@@ -543,7 +543,16 @@ namespace Hep
 	{}
 
 	VulkanTextureCube::~VulkanTextureCube()
-	{}
+	{
+		// Renderer::Submit([]()
+		// {
+		auto vulkanDevice = VulkanContext::GetCurrentDevice()->GetVulkanDevice();
+		vkDestroyImageView(vulkanDevice, m_DescriptorImageInfo.imageView, nullptr);
+		vkDestroyImage(vulkanDevice, m_Image, nullptr);
+		vkDestroySampler(vulkanDevice, m_DescriptorImageInfo.sampler, nullptr);
+		vkFreeMemory(vulkanDevice, m_DeviceMemory, nullptr);
+		// });
+	}
 
 	static void SetImageLayout(
 		VkCommandBuffer cmdbuffer,

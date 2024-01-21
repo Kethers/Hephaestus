@@ -96,6 +96,7 @@ namespace Hep
 		Renderer::GetShaderLibrary()->Load("assets/shaders/EnvironmentMipFilter.glsl");
 		Renderer::GetShaderLibrary()->Load("assets/shaders/EquirectangularToCubeMap.glsl");
 		Renderer::GetShaderLibrary()->Load("assets/shaders/EnvironmentIrradiance.glsl");
+		Renderer::GetShaderLibrary()->Load("assets/shaders/PreethamSky.glsl");
 
 		Renderer::GetShaderLibrary()->Load("assets/shaders/Grid.glsl");
 		Renderer::GetShaderLibrary()->Load("assets/shaders/SceneComposite.glsl");
@@ -175,6 +176,11 @@ namespace Hep
 	std::pair<Ref<TextureCube>, Ref<TextureCube>> Renderer::CreateEnvironmentMap(const std::string& filepath)
 	{
 		return s_RendererAPI->CreateEnvironmentMap(filepath);
+	}
+
+	Ref<TextureCube> Renderer::CreatePreethamSky(float turbidity, float azimuth, float inclination)
+	{
+		return s_RendererAPI->CreatePreethamSky(turbidity, azimuth, inclination);
 	}
 
 	void Renderer::RenderMesh(Ref<Pipeline> pipeline, Ref<Mesh> mesh, const glm::mat4& transform)

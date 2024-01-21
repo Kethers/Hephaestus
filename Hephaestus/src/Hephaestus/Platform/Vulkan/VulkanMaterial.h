@@ -144,8 +144,8 @@ namespace Hep
 			VkDescriptorImageInfo SubmittedImageInfo{};
 		};
 
-		std::vector<std::shared_ptr<PendingDescriptor>> m_ResidentDescriptors; // TODO: should this be a map (binding point)?
-		std::vector<std::shared_ptr<PendingDescriptor>> m_PendingDescriptors;  // TODO: weak ref
+		std::unordered_map<uint32_t, std::shared_ptr<PendingDescriptor>> m_ResidentDescriptors;
+		std::vector<std::shared_ptr<PendingDescriptor>> m_PendingDescriptors; // TODO: weak ref
 
 		uint32_t m_MaterialFlags = 0;
 

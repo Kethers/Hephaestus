@@ -21,6 +21,11 @@ namespace Hep
 
 		void SetSceneEnvironment(Ref<Environment> environment, Ref<Image2D> shadow) override;
 		std::pair<Ref<TextureCube>, Ref<TextureCube>> CreateEnvironmentMap(const std::string& filepath) override;
+		Ref<TextureCube> CreatePreethamSky(float turbidity, float azimuth, float inclination) override
+		{
+			HEP_CORE_ASSERT(false);
+			return nullptr;
+		}
 
 		void RenderMesh(Ref<Pipeline> pipeline, Ref<Mesh> mesh, const glm::mat4& transform) override;
 		void RenderMeshWithoutMaterial(Ref<Pipeline> pipeline, Ref<Mesh> mesh, const glm::mat4& transform) override;
