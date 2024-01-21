@@ -259,6 +259,9 @@ namespace Hep
 
 	void EditorLayer::NewScene()
 	{
+		// Clear
+		m_SelectionContext = {};
+
 		m_EditorScene = Ref<Scene>::Create("Empty Scene", true);
 		m_SceneHierarchyPanel->SetContext(m_EditorScene);
 		ScriptEngine::SetSceneContext(m_EditorScene);
@@ -743,7 +746,9 @@ namespace Hep
 										std::string filename = Application::Get().OpenFile("");
 										if (!filename.empty())
 										{
-											albedoMap = Texture2D::Create(filename, true/*m_AlbedoInput.SRGB*/);
+											TextureProperties props;
+											props.SRGB = true;
+											albedoMap = Texture2D::Create(filename, props);
 											materialInstance->Set("u_AlbedoTexture", albedoMap);
 										}
 									}

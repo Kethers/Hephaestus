@@ -264,10 +264,10 @@ namespace Hep
 
 	void AssetManager::LoadAssetRegistry()
 	{
-		if (!FileSystem::Exists("DataCache/AssetRegistryCache.hzr"))
+		if (!FileSystem::Exists("assets/cache/AssetRegistryCache.hzr"))
 			return;
 
-		std::ifstream stream("DataCache/AssetRegistryCache.hzr");
+		std::ifstream stream("assets/cache/AssetRegistryCache.hzr");
 		HEP_CORE_ASSERT(stream);
 		std::stringstream strStream;
 		strStream << stream.rdbuf();
@@ -442,7 +442,7 @@ namespace Hep
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 
-		std::ofstream fout("DataCache/AssetRegistryCache.hzr");
+		std::ofstream fout("assets/cache/AssetRegistryCache.hzr");
 		fout << out.c_str();
 	}
 

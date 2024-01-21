@@ -6,6 +6,21 @@
 
 namespace Hep
 {
+	namespace Utils
+	{
+		static const char* GetCacheDirectory()
+		{
+			return "assets/cache/colliders/";
+		}
+
+		static void CreateCacheDirectoryIfNeeded()
+		{
+			std::string cacheDirectory = GetCacheDirectory();
+			if (!std::filesystem::exists(cacheDirectory))
+				std::filesystem::create_directories(cacheDirectory);
+		}
+	}
+
 	physx::PxTransform ToPhysXTransform(const TransformComponent& transform)
 	{
 		physx::PxQuat r = ToPhysXQuat(glm::normalize(glm::quat(transform.Rotation)));
@@ -98,16 +113,22 @@ namespace Hep
 
 	void PhysicsMeshSerializer::DeleteIfSerialized(const std::string& filepath)
 	{
+		if (!FileSystem::Exists(Utils::GetCacheDirectory()))
+			FileSystem::CreateFolder(Utils::GetCacheDirectory());
+
 		std::filesystem::path path = filepath;
-		std::string cachePath = "DataCache/Colliders/" + path.filename().string() + ".pxm";
+		std::string cachePath = Utils::GetCacheDirectory() + path.filename().string() + ".pxm";
 		if (IsSerialized(filepath))
 			FileSystem::DeleteFile(cachePath);
 	}
 
 	void PhysicsMeshSerializer::SerializeMesh(const std::string& filepath, const Buffer& data)
 	{
+		if (!FileSystem::Exists(Utils::GetCacheDirectory()))
+			FileSystem::CreateFolder(Utils::GetCacheDirectory());
+
 		std::filesystem::path path = filepath;
-		std::string cachePath = "DataCache/Colliders/" + path.filename().string() + ".pxm";
+		std::string cachePath = Utils::GetCacheDirectory() + path.filename().string() + ".pxm";
 
 		std::ofstream out(cachePath, std::ios::out | std::ios::binary);
 		if (out)
@@ -124,15 +145,21 @@ namespace Hep
 
 	bool PhysicsMeshSerializer::IsSerialized(const std::string& filepath)
 	{
+		if (!FileSystem::Exists(Utils::GetCacheDirectory()))
+			FileSystem::CreateFolder(Utils::GetCacheDirectory());
+
 		std::filesystem::path path = filepath;
-		std::string cachePath = "DataCache/Colliders/" + path.filename().string() + ".pxm";
+		std::string cachePath = Utils::GetCacheDirectory() + path.filename().string() + ".pxm";
 		return FileSystem::Exists(cachePath);
 	}
 
 	Buffer PhysicsMeshSerializer::DeserializeMesh(const std::string& filepath)
 	{
+		if (!FileSystem::Exists(Utils::GetCacheDirectory()))
+			FileSystem::CreateFolder(Utils::GetCacheDirectory());
+
 		std::filesystem::path path = filepath;
-		std::string cachePath = "DataCache/Colliders/" + path.filename().string() + ".pxm";
+		std::string cachePath = Utils::GetCacheDirectory() + path.filename().string() + ".pxm";
 		std::ifstream in(cachePath, std::ios::in | std::ios::binary);
 		uint32_t size = 0;
 

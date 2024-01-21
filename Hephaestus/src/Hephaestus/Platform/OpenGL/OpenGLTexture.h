@@ -8,8 +8,8 @@ namespace Hep
 	class OpenGLTexture2D : public Texture2D
 	{
 	public:
-		OpenGLTexture2D(ImageFormat format, uint32_t width, uint32_t height, const void* data);
-		OpenGLTexture2D(const std::string& path, bool srgb);
+		OpenGLTexture2D(ImageFormat format, uint32_t width, uint32_t height, const void* data, TextureProperties properties);
+		OpenGLTexture2D(const std::string& path, TextureProperties properties);
 		~OpenGLTexture2D() override;
 
 		void Bind(uint32_t slot = 0) const override;
@@ -36,7 +36,7 @@ namespace Hep
 
 	private:
 		Ref<Image2D> m_Image;
-		TextureWrap m_Wrap = TextureWrap::Clamp;
+		TextureProperties m_Properties;
 		uint32_t m_Width, m_Height;
 
 		bool m_IsHDR = false;
@@ -50,8 +50,8 @@ namespace Hep
 	class OpenGLTextureCube : public TextureCube
 	{
 	public:
-		OpenGLTextureCube(ImageFormat format, uint32_t width, uint32_t height, const void* data = nullptr);
-		OpenGLTextureCube(const std::string& path);
+		OpenGLTextureCube(ImageFormat format, uint32_t width, uint32_t height, const void* data, TextureProperties properties);
+		OpenGLTextureCube(const std::string& path, TextureProperties properties);
 		~OpenGLTextureCube() override;
 
 		void Bind(uint32_t slot = 0) const override;
@@ -73,6 +73,8 @@ namespace Hep
 		RendererID m_RendererID;
 		ImageFormat m_Format;
 		uint32_t m_Width, m_Height;
+
+		TextureProperties m_Properties;
 
 		Buffer m_LocalStorage;
 

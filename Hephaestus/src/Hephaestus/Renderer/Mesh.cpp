@@ -273,7 +273,9 @@ namespace Hep
 					std::string texturePath = parentPath.string();
 
 					HEP_MESH_LOG("    Albedo map path = {0}", texturePath);
-					auto texture = Texture2D::Create(texturePath, true);
+					TextureProperties props;
+					props.SRGB = true;
+					auto texture = Texture2D::Create(texturePath, props);
 					if (texture->Loaded())
 					{
 						m_Textures[i] = texture;

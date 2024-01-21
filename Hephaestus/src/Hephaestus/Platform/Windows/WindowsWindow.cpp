@@ -188,7 +188,7 @@ namespace Hep
 		// ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
 		// glfwSetCursor(m_Window,
 		// 	m_ImGuiMouseCursors[imgui_cursor] ? m_ImGuiMouseCursors[imgui_cursor] : m_ImGuiMouseCursors[ImGuiMouseCursor_Arrow]);
-		glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		// glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 
 	void WindowsWindow::SwapBuffers()
