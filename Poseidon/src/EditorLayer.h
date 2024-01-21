@@ -154,6 +154,7 @@ namespace Hep
 		bool m_ShowWelcomePopup = true;
 
 		bool m_ShowPhysicsSettings = false;
+		bool m_ShowAboutPopup = false;
 
 		enum class SceneState
 		{

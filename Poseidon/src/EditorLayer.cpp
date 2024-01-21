@@ -649,6 +649,12 @@ namespace Hep
 
 				ImGui::EndMenu();
 			}
+			if (ImGui::BeginMenu("Help"))
+			{
+				if (ImGui::MenuItem("About"))
+					m_ShowAboutPopup = true;
+				ImGui::EndMenu();
+			}
 
 			ImGui::EndMenuBar();
 		}
@@ -992,6 +998,34 @@ namespace Hep
 
 			if (ImGui::Button("OK"))
 				ImGui::CloseCurrentPopup();
+			ImGui::EndPopup();
+		}
+
+		if (m_ShowAboutPopup)
+		{
+			ImGui::OpenPopup("About##AboutPopup");
+			m_ShowAboutPopup = false;
+		}
+
+		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+		ImGui::SetNextWindowSize(ImVec2{ 600, 0 });
+		if (ImGui::BeginPopupModal("About##AboutPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			auto boldFont = io.Fonts->Fonts[0];
+			auto largeFont = io.Fonts->Fonts[1];
+
+			ImGui::PushFont(largeFont);
+			ImGui::Text("Hephaestus Engine");
+			ImGui::PopFont();
+
+			ImGui::Separator();
+			ImGui::TextWrapped(
+				"Hephaestus is a personal learning-purpose game engine that highly reference Hazel Engine by StudioCherno");
+			ImGui::Separator();
+
+			if (ImGui::Button("OK"))
+				ImGui::CloseCurrentPopup();
+
 			ImGui::EndPopup();
 		}
 	}
