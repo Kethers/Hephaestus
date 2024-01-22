@@ -271,7 +271,7 @@ namespace Hep
 		if (!Renderer::GetConfig().ComputeEnvironmentMaps)
 			return { Renderer::GetBlackCubeTexture(), Renderer::GetBlackCubeTexture() };
 
-		const uint32_t cubemapSize = 2048;
+		const uint32_t cubemapSize = Renderer::GetConfig().EnvironmentMapResolution;
 		const uint32_t irradianceMapSize = 32;
 
 		Ref<OpenGLTextureCube> envUnfiltered = TextureCube::Create(ImageFormat::RGBA32F, cubemapSize, cubemapSize).As<OpenGLTextureCube>();
@@ -309,6 +309,7 @@ namespace Hep
 			for (int level = 1, size = cubemapSize / 2; level < envFiltered->GetMipLevelCount(); level++, size /= 2) // <= ?
 			{
 				glBindImageTexture(0, envFiltered->GetRendererID(), level, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
 				GLint roughnessUniformLocation = glGetUniformLocation(envFilteringShader->GetRendererID(), "u_Uniforms.Roughness");
 				HEP_CORE_ASSERT(roughnessUniformLocation != -1);
 				glUniform1f(roughnessUniformLocation, (float)level * deltaRoughness);
@@ -325,9 +326,15 @@ namespace Hep
 			OpenGLTextureCube>();
 		envIrradianceShader->Bind();
 		envFiltered->Bind(1);
-		Renderer::Submit([irradianceMap]()
+		Renderer::Submit([irradianceMap, envIrradianceShader]()
 		{
 			glBindImageTexture(0, irradianceMap->GetRendererID(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+			GLint samplesUniformLocation = glGetUniformLocation(envIrradianceShader->GetRendererID(), "u_Uniforms.Samples");
+			HEP_CORE_ASSERT(samplesUniformLocation != -1);
+			uint32_t samples = Renderer::GetConfig().IrradianceMapComputeSamples;
+			glUniform1ui(samplesUniformLocation, samples);
+
 			glDispatchCompute(irradianceMap->GetWidth() / 32, irradianceMap->GetHeight() / 32, 6);
 			glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 			glGenerateTextureMipmap(irradianceMap->GetRendererID());

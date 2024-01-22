@@ -335,6 +335,11 @@ namespace Hep
 		static ImGuiDockNodeFlags opt_flags = ImGuiDockNodeFlags_None;
 		bool opt_fullscreen = opt_fullscreen_persistant;
 
+		ImGuiIO& io = ImGui::GetIO();
+		ImGuiStyle& style = ImGui::GetStyle();
+		auto boldFont = io.Fonts->Fonts[0];
+		auto largeFont = io.Fonts->Fonts[1];
+
 		// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
 		// because it would be confusing to have two docking targets within each others.
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
@@ -363,8 +368,6 @@ namespace Hep
 			ImGui::PopStyleVar(2);
 
 		// Dockspace
-		ImGuiIO& io = ImGui::GetIO();
-		ImGuiStyle& style = ImGui::GetStyle();
 		float minWinSizeX = style.WindowMinSize.x;
 		style.WindowMinSize.x = 370.0f;
 		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
@@ -376,22 +379,16 @@ namespace Hep
 		style.WindowMinSize.x = minWinSizeX;
 
 		// Editor Panel ------------------------------------------------------------------------------
-		ImGui::Begin("Environment");
+		ImGui::Begin("Settings");
 		{
-			//ImGui::SliderFloat("Skybox LOD", &m_EditorScene->GetSkyboxLod(), 0.0f, 11.0f);
-			UI::PropertySlider("Skybox LOD", m_EditorScene->GetSkyboxLod(), 0.0f, 11.0f);
+			auto& rendererConfig = Renderer::GetConfig();
 
 			UI::BeginPropertyGrid();
 			ImGui::AlignTextToFramePadding();
 
-			auto& light = m_EditorScene->GetLight();
-			UI::PropertySlider("Light Direction", light.Direction, -1.0f, 1.0f);
-			UI::PropertyColor("Light Radiance", light.Radiance);
-			UI::PropertySlider("Light Multiplier", light.Multiplier, 0.0f, 5.0f);
-
+			UI::PropertySlider("Skybox LOD", m_EditorScene->GetSkyboxLod(), 0.0f,
+				Utils::CalculateMipCount(rendererConfig.EnvironmentMapResolution, rendererConfig.EnvironmentMapResolution));
 			UI::PropertySlider("Exposure", m_EditorCamera.GetExposure(), 0.0f, 5.0f);
-
-			UI::Property("Radiance Prefiltering", m_RadiancePrefilter);
 			UI::PropertySlider("Env Map Rotation", m_EnvMapRotation, -360.0f, 360.0f);
 
 			if (m_SceneState == SceneState::Edit)
@@ -422,6 +419,32 @@ namespace Hep
 				m_SelectionMode = m_SelectionMode == SelectionMode::Entity ? SelectionMode::SubMesh : SelectionMode::Entity;
 			}
 
+			UI::EndPropertyGrid();
+
+			ImGui::Separator();
+			ImGui::PushFont(boldFont);
+			ImGui::Text("Renderer Settings");
+			ImGui::PopFont();
+			UI::BeginPropertyGrid();
+			UI::Property("Enable HDR environment maps", rendererConfig.ComputeEnvironmentMaps);
+
+			{
+				const char* environmentMapSizes[] = { "128", "256", "512", "1024", "2048", "4096" };
+				int currentSize = (int)glm::log2((float)rendererConfig.EnvironmentMapResolution) - 7;
+				if (UI::PropertyDropdown("Environment Map Size", environmentMapSizes, 6, &currentSize))
+				{
+					rendererConfig.EnvironmentMapResolution = glm::pow(2, currentSize + 7);
+				}
+			}
+
+			{
+				const char* irradianceComputeSamples[] = { "128", "256", "512", "1024", "2048", "4096" };
+				int currentSamples = (int)glm::log2((float)rendererConfig.IrradianceMapComputeSamples) - 7;
+				if (UI::PropertyDropdown("Irradiance Map Compute Samples", irradianceComputeSamples, 6, &currentSamples))
+				{
+					rendererConfig.IrradianceMapComputeSamples = glm::pow(2, currentSamples + 7);
+				}
+			}
 			UI::EndPropertyGrid();
 		}
 
@@ -1011,9 +1034,6 @@ namespace Hep
 		ImGui::SetNextWindowSize(ImVec2{ 600, 0 });
 		if (ImGui::BeginPopupModal("About##AboutPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			auto boldFont = io.Fonts->Fonts[0];
-			auto largeFont = io.Fonts->Fonts[1];
-
 			ImGui::PushFont(largeFont);
 			ImGui::Text("Hephaestus Engine");
 			ImGui::PopFont();

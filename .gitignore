@@ -3,9 +3,9 @@
 !external/mono/bin
 !external/assimp/bin
 **bin-int/
-cache/
+**/cache/**
 
-logs/
+**logs/
 
 # xmake
 .xmake/
@@ -36,3 +36,10 @@ hooks/
 
 # Meta Files
 **.meta
+
+# PhysX Debug Files
+**.pxd2
+**.pvd
+
+# File Exceptions
+!AssetRegistryCache.hzr
