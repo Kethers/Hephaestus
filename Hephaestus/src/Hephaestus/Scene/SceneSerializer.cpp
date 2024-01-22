@@ -725,20 +725,24 @@ namespace Hep
 
 					component.Camera = SceneCamera();
 					auto& camera = component.Camera;
-					if (cameraNode["ProjectionType"])
-						camera.SetProjectionType((SceneCamera::ProjectionType)cameraNode["ProjectionType"].as<int>());
-					if (cameraNode["PerspectiveFOV"])
-						camera.SetPerspectiveVerticalFOV(cameraNode["PerspectiveFOV"].as<float>());
-					if (cameraNode["PerspectiveNear"])
-						camera.SetPerspectiveNearClip(cameraNode["PerspectiveNear"].as<float>());
-					if (cameraNode["PerspectiveFar"])
-						camera.SetPerspectiveFarClip(cameraNode["PerspectiveFar"].as<float>());
-					if (cameraNode["OrthographicSize"])
-						camera.SetOrthographicSize(cameraNode["OrthographicSize"].as<float>());
-					if (cameraNode["OrthographicNear"])
-						camera.SetOrthographicNearClip(cameraNode["OrthographicNear"].as<float>());
-					if (cameraNode["OrthographicFar"])
-						camera.SetOrthographicFarClip(cameraNode["OrthographicFar"].as<float>());
+
+					if (cameraNode.IsMap())
+					{
+						if (cameraNode["ProjectionType"])
+							camera.SetProjectionType((SceneCamera::ProjectionType)cameraNode["ProjectionType"].as<int>());
+						if (cameraNode["PerspectiveFOV"])
+							camera.SetPerspectiveVerticalFOV(cameraNode["PerspectiveFOV"].as<float>());
+						if (cameraNode["PerspectiveNear"])
+							camera.SetPerspectiveNearClip(cameraNode["PerspectiveNear"].as<float>());
+						if (cameraNode["PerspectiveFar"])
+							camera.SetPerspectiveFarClip(cameraNode["PerspectiveFar"].as<float>());
+						if (cameraNode["OrthographicSize"])
+							camera.SetOrthographicSize(cameraNode["OrthographicSize"].as<float>());
+						if (cameraNode["OrthographicNear"])
+							camera.SetOrthographicNearClip(cameraNode["OrthographicNear"].as<float>());
+						if (cameraNode["OrthographicFar"])
+							camera.SetOrthographicFarClip(cameraNode["OrthographicFar"].as<float>());
+					}
 
 					component.Primary = cameraComponent["Primary"].as<bool>();
 				}

@@ -50,6 +50,8 @@ namespace Hep
 
 	void AssetManager::Shutdown()
 	{
+		UpdateRegistryCache();
+
 		s_AssetRegistry.clear();
 		s_LoadedAssets.clear();
 	}

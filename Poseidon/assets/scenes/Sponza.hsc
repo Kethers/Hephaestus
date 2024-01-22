@@ -23,9 +23,9 @@ Entities:
     TransformComponent:
       Position: [0, 0, 0]
       Rotation: [0, 0, 0]
-      Scale: [0.100000001, 0.100000001, 0.100000001]
+      Scale: [1, 1, 1]
     MeshComponent:
-      AssetPath: assets\meshes\sponza\sponza.obj
+      AssetID: 559563177808896002
   - Entity: 17359415144565549859
     TagComponent:
       Tag: Directional Light

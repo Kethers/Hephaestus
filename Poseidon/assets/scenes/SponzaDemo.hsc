@@ -6,26 +6,67 @@ Environment:
     Radiance: [0, 0, 0]
     Multiplier: 1
 Entities:
-  - Entity: 12392346523579991874
-    Parent: 5561134054991576534
+  - Entity: 13882838760121718506
+    Parent: 0
     Children:
       []
     TagComponent:
-      Tag: Camera
+      Tag: Directional Light
     TransformComponent:
-      Position: [0, 0.5, 0]
+      Position: [0, 0, 0]
+      Rotation: [2.35444903, 0, -0.441568285]
+      Scale: [1, 1, 1]
+    DirectionalLightComponent:
+      Radiance: [1, 1, 1]
+      CastShadows: true
+      SoftShadows: true
+      LightSize: 0.5
+  - Entity: 2143608321399101581
+    Parent: 0
+    Children:
+      []
+    TagComponent:
+      Tag: Sky Light
+    TransformComponent:
+      Position: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    CameraComponent:
-      Camera:
-        ProjectionType: 0
-        PerspectiveFOV: 45
-        PerspectiveNear: 0.100000001
-        PerspectiveFar: 1000
-        OrthographicSize: 10
-        OrthographicNear: -1
-        OrthographicFar: 1
-      Primary: true
+    SkyLightComponent:
+      EnvironmentMap: 8010150279863591497
+      Intensity: 1
+      Angle: 0
+  - Entity: 5471747392929574277
+    Parent: 0
+    Children:
+      []
+    TagComponent:
+      Tag: Sponza
+    TransformComponent:
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [0.00999999978, 0.00999999978, 0.00999999978]
+    MeshComponent:
+      AssetID: 14197803176428527557
+    RigidBodyComponent:
+      BodyType: 0
+      Mass: 1
+      LinearDrag: 0
+      AngularDrag: 0.0500000007
+      DisableGravity: false
+      IsKinematic: false
+      Layer: 0
+      Constraints:
+        LockPositionX: false
+        LockPositionY: false
+        LockPositionZ: false
+        LockRotationX: false
+        LockRotationY: false
+        LockRotationZ: false
+    MeshColliderComponent:
+      IsConvex: false
+      IsTrigger: false
+      OverrideMesh: false
+      Material: 0
   - Entity: 5561134054991576534
     Parent: 0
     Children:
@@ -73,66 +114,25 @@ Entities:
       IsTrigger: false
       OverrideMesh: false
       Material: 0
-  - Entity: 5471747392929574277
-    Parent: 0
+  - Entity: 12392346523579991874
+    Parent: 5561134054991576534
     Children:
       []
     TagComponent:
-      Tag: Sponza
+      Tag: Camera
     TransformComponent:
-      Position: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [0.00999999978, 0.00999999978, 0.00999999978]
-    MeshComponent:
-      AssetID: 14197803176428527557
-    RigidBodyComponent:
-      BodyType: 0
-      Mass: 1
-      LinearDrag: 0
-      AngularDrag: 0.0500000007
-      DisableGravity: false
-      IsKinematic: false
-      Layer: 0
-      Constraints:
-        LockPositionX: false
-        LockPositionY: false
-        LockPositionZ: false
-        LockRotationX: false
-        LockRotationY: false
-        LockRotationZ: false
-    MeshColliderComponent:
-      IsConvex: false
-      IsTrigger: false
-      OverrideMesh: false
-      Material: 0
-  - Entity: 2143608321399101581
-    Parent: 0
-    Children:
-      []
-    TagComponent:
-      Tag: Sky Light
-    TransformComponent:
-      Position: [0, 0, 0]
+      Position: [0, 0.5, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    SkyLightComponent:
-      EnvironmentMap: 8010150279863591497
-      Intensity: 1
-      Angle: 0
-  - Entity: 13882838760121718506
-    Parent: 0
-    Children:
-      []
-    TagComponent:
-      Tag: Directional Light
-    TransformComponent:
-      Position: [0, 0, 0]
-      Rotation: [2.35444903, 0, -0.441568285]
-      Scale: [1, 1, 1]
-    DirectionalLightComponent:
-      Radiance: [1, 1, 1]
-      CastShadows: true
-      SoftShadows: true
-      LightSize: 0.5
+    CameraComponent:
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 45
+        PerspectiveNear: 0.100000001
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 1
+      Primary: true
 PhysicsLayers:
   []
