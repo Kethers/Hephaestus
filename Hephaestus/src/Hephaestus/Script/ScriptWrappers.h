@@ -46,6 +46,7 @@ namespace Hep::Script
 	void Hep_TransformComponent_SetRotation(uint64_t entityID, glm::vec3* inRotation);
 	void Hep_TransformComponent_GetScale(uint64_t entityID, glm::vec3* outScale);
 	void Hep_TransformComponent_SetScale(uint64_t entityID, glm::vec3* inScale);
+	void Hep_TransformComponent_GetWorldTranslation(uint64_t entityID, glm::vec3* outTranslation);
 
 	void* Hep_MeshComponent_GetMesh(uint64_t entityID);
 	void Hep_MeshComponent_SetMesh(uint64_t entityID, Ref<Mesh>* inMesh);

@@ -380,6 +380,17 @@ namespace Hep::Script
 		entity.GetComponent<TransformComponent>().Scale = *inScale;
 	}
 
+	void Hep_TransformComponent_GetWorldTranslation(uint64_t entityID, glm::vec3* outTranslation)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		*outTranslation = entity.GetComponent<TransformComponent>().WorldTranslation;
+	}
+
 	void* Hep_MeshComponent_GetMesh(uint64_t entityID)
 	{
 		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();

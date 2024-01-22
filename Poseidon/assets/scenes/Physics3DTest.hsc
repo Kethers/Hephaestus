@@ -1,167 +1,93 @@
 Scene: Scene Name
 Environment:
-  AssetPath: assets\env\pink_sunrise_4k.hdr
+  AssetHandle: 13035730986323357486
   Light:
-    Direction: [-0.787, -0.73299998, 1]
-    Radiance: [1, 1, 1]
-    Multiplier: 0.514999986
+    Direction: [0, 0, 0]
+    Radiance: [0, 0, 0]
+    Multiplier: 1
 Entities:
-  - Entity: 18306113171518048249
-    TagComponent:
-      Tag: Box
-    TransformComponent:
-      Position: [0, 0, 0]
-      Rotation: [0, 0, 0]
-      Scale: [50, 1, 50]
-    MeshComponent:
-      AssetPath: assets\meshes\Cube1m.fbx
-    RigidBodyComponent:
-      BodyType: 0
-      Mass: 1
-      IsKinematic: false
-      Constraints:
-        LockPositionX: false
-        LockPositionY: false
-        LockPositionZ: false
-        LockRotationX: false
-        LockRotationY: false
-        LockRotationZ: false
-    PhysicsMaterialComponent:
-      StaticFriction: 1
-      DynamicFriction: 1
-      Bounciness: 0
-    MeshColliderComponent:
-      AssetPath: assets\meshes\Cube1m.fbx
-      IsTrigger: false
-  - Entity: 5178862374589434728
+  - Entity: 6489933840917275624
+    Parent: 0
+    Children:
+      []
     TagComponent:
       Tag: Camera
     TransformComponent:
-      Position: [2.80800009, 2.25, 0]
+      Position: [0, 0.519619703, 2.75712252]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     CameraComponent:
-      Camera: some camera data...
+      Camera:
+        ProjectionType: 0
+        PerspectiveFOV: 45
+        PerspectiveNear: 0.100000001
+        PerspectiveFar: 1000
+        OrthographicSize: 10
+        OrthographicNear: -1
+        OrthographicFar: 1
       Primary: true
-  - Entity: 14057422478420564497
+  - Entity: 1940990787655137593
+    Parent: 0
+    Children:
+      []
     TagComponent:
-      Tag: Sphere
+      Tag: Cube
     TransformComponent:
-      Position: [-3.98769951, 1, -1.96695328e-06]
+      Position: [0, 1.47050154, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      AssetPath: assets\meshes\Sphere1m.fbx
-    RigidBodyComponent:
-      BodyType: 0
-      Mass: 1
-      IsKinematic: false
-      Constraints:
-        LockPositionX: false
-        LockPositionY: false
-        LockPositionZ: false
-        LockRotationX: true
-        LockRotationY: true
-        LockRotationZ: true
-    PhysicsMaterialComponent:
-      StaticFriction: 0.100000001
-      DynamicFriction: 0.100000001
-      Bounciness: 0.100000001
-    SphereColliderComponent:
-      Radius: 0.5
-      IsTrigger: false
-  - Entity: 10169503531257462571
-    TagComponent:
-      Tag: Box
-    TransformComponent:
-      Position: [0, 1.5, 0]
-      Rotation: [0, 0, 0]
-      Scale: [2, 2, 2]
-    MeshComponent:
-      AssetPath: assets\meshes\Cube1m.fbx
-    RigidBodyComponent:
-      BodyType: 1
-      Mass: 0.5
-      IsKinematic: false
-      Constraints:
-        LockPositionX: false
-        LockPositionY: false
-        LockPositionZ: false
-        LockRotationX: false
-        LockRotationY: false
-        LockRotationZ: false
-    PhysicsMaterialComponent:
-      StaticFriction: 1
-      DynamicFriction: 1
-      Bounciness: 0
+      AssetID: 4568227205014283612
     BoxColliderComponent:
       Offset: [0, 0, 0]
       Size: [1, 1, 1]
       IsTrigger: false
-  - Entity: 11149966982516343187
+      Material: 0
+  - Entity: 5734031356498487331
+    Parent: 0
+    Children:
+      []
     TagComponent:
-      Tag: Mesh Collider
+      Tag: Cube
     TransformComponent:
-      Position: [22.9622288, 1, -0.00171399117]
+      Position: [0, 0, 0]
+      Rotation: [0, 0, 0]
+      Scale: [5.89313078, 0.173302025, 4.62981272]
+    MeshComponent:
+      AssetID: 4568227205014283612
+    BoxColliderComponent:
+      Offset: [0, 0, 0]
+      Size: [1, 1, 1]
+      IsTrigger: false
+      Material: 0
+  - Entity: 812265612594448879
+    Parent: 0
+    Children:
+      []
+    TagComponent:
+      Tag: Sky Light
+    TransformComponent:
+      Position: [0, 0, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
-    MeshComponent:
-      AssetPath: assets\meshes\Sphere1m.fbx
-    RigidBodyComponent:
-      BodyType: 1
-      Mass: 0.100000001
-      IsKinematic: false
-      Constraints:
-        LockPositionX: false
-        LockPositionY: false
-        LockPositionZ: false
-        LockRotationX: false
-        LockRotationY: false
-        LockRotationZ: false
-    PhysicsMaterialComponent:
-      StaticFriction: 1
-      DynamicFriction: 1
-      Bounciness: 0.100000001
-    MeshColliderComponent:
-      AssetPath: assets\meshes\Sphere1m.fbx
-      IsTrigger: false
-  - Entity: 3247025703490125974
+    SkyLightComponent:
+      EnvironmentMap: 13035730986323357486
+      Intensity: 1
+      Angle: 0
+  - Entity: 5952868880431505965
+    Parent: 0
+    Children:
+      []
     TagComponent:
-      Tag: Player
+      Tag: Directional Light
     TransformComponent:
-      Position: [2.80803752, 4.51659966, 0]
-      Rotation: [0, 0, 0]
-      Scale: [2, 2, 2]
-    ScriptComponent:
-      ModuleName: FPSExample.FPSPlayer
-      StoredFields:
-        - Name: WalkingSpeed
-          Type: 1
-          Data: 10
-        - Name: RunSpeed
-          Type: 1
-          Data: 20
-        - Name: JumpForce
-          Type: 1
-          Data: 50
-    MeshComponent:
-      AssetPath: assets\meshes\Capsule.fbx
-    RigidBodyComponent:
-      BodyType: 1
-      Mass: 1
-      IsKinematic: false
-      Constraints:
-        LockPositionX: false
-        LockPositionY: false
-        LockPositionZ: false
-        LockRotationX: true
-        LockRotationY: true
-        LockRotationZ: true
-    PhysicsMaterialComponent:
-      StaticFriction: 1
-      DynamicFriction: 1
-      Bounciness: 0.100000001
-    CapsuleColliderComponent:
-      Radius: 1
-      Height: 1
-      IsTrigger: false
+      Position: [0, 0, 0]
+      Rotation: [1.39626336, 0.17453292, 0]
+      Scale: [1, 1, 1]
+    DirectionalLightComponent:
+      Radiance: [1, 1, 1]
+      CastShadows: true
+      SoftShadows: true
+      LightSize: 0.5
+PhysicsLayers:
+  []

@@ -10,6 +10,8 @@
 
 namespace Hep
 {
+	static const char* s_AssetRegistryPath = "assets/AssetRegistry.hzr";
+
 	void AssetTypes::Init()
 	{
 		s_Types["hsc"] = AssetType::Scene;
@@ -264,10 +266,10 @@ namespace Hep
 
 	void AssetManager::LoadAssetRegistry()
 	{
-		if (!FileSystem::Exists("assets/cache/AssetRegistryCache.hzr"))
+		if (!FileSystem::Exists(s_AssetRegistryPath))
 			return;
 
-		std::ifstream stream("assets/cache/AssetRegistryCache.hzr");
+		std::ifstream stream(s_AssetRegistryPath);
 		HEP_CORE_ASSERT(stream);
 		std::stringstream strStream;
 		strStream << stream.rdbuf();
@@ -442,7 +444,7 @@ namespace Hep
 		out << YAML::EndSeq;
 		out << YAML::EndMap;
 
-		std::ofstream fout("assets/cache/AssetRegistryCache.hzr");
+		std::ofstream fout(s_AssetRegistryPath);
 		fout << out.c_str();
 	}
 

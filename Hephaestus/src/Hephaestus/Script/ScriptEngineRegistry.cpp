@@ -70,6 +70,8 @@ namespace Hep
 		mono_add_internal_call("Hep.TransformComponent::SetRotation_Native", Hep::Script::Hep_TransformComponent_SetRotation);
 		mono_add_internal_call("Hep.TransformComponent::GetScale_Native", Hep::Script::Hep_TransformComponent_GetScale);
 		mono_add_internal_call("Hep.TransformComponent::SetScale_Native", Hep::Script::Hep_TransformComponent_SetScale);
+		mono_add_internal_call("Hep.TransformComponent::GetWorldTranslation_Native",
+			Hep::Script::Hep_TransformComponent_GetWorldTranslation);
 
 		mono_add_internal_call("Hep.MeshComponent::GetMesh_Native", Hep::Script::Hep_MeshComponent_GetMesh);
 		mono_add_internal_call("Hep.MeshComponent::SetMesh_Native", Hep::Script::Hep_MeshComponent_SetMesh);

@@ -1,6 +1,6 @@
 Scene: Scene Name
 Environment:
-  AssetHandle: 6323043749067612265
+  AssetHandle: 8010150279863591497
   Light:
     Direction: [0, 0, 0]
     Radiance: [0, 0, 0]
@@ -13,7 +13,7 @@ Entities:
     TagComponent:
       Tag: Camera
     TransformComponent:
-      Position: [0, -5.25212717, -4.11461163]
+      Position: [0, 0.5, 0]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     CameraComponent:
@@ -52,7 +52,7 @@ Entities:
           Type: 1
           Data: 2
     MeshComponent:
-      AssetID: 17520533498056549991
+      AssetID: 7548752751504126902
     RigidBodyComponent:
       BodyType: 1
       Mass: 1
@@ -72,7 +72,7 @@ Entities:
       IsConvex: true
       IsTrigger: false
       OverrideMesh: false
-      Material: 1609627856876029936
+      Material: 0
   - Entity: 5471747392929574277
     Parent: 0
     Children:
@@ -84,7 +84,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [0.00999999978, 0.00999999978, 0.00999999978]
     MeshComponent:
-      AssetID: 13423979752956760632
+      AssetID: 14197803176428527557
     RigidBodyComponent:
       BodyType: 0
       Mass: 1
@@ -104,7 +104,7 @@ Entities:
       IsConvex: false
       IsTrigger: false
       OverrideMesh: false
-      Material: 14007657995324562006
+      Material: 0
   - Entity: 2143608321399101581
     Parent: 0
     Children:
@@ -116,7 +116,7 @@ Entities:
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     SkyLightComponent:
-      EnvironmentMap: 6323043749067612265
+      EnvironmentMap: 8010150279863591497
       Intensity: 1
       Angle: 0
   - Entity: 13882838760121718506

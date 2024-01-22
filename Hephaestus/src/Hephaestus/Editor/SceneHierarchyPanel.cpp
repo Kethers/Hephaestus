@@ -310,7 +310,10 @@ namespace Hep
 					glm::vec3 parentTranslation, parentRotation, parentScale;
 					Math::DecomposeTransform(parentTransform, parentTranslation, parentRotation, parentScale);
 
-					e.Transform().Translation = e.Transform().Translation - parentTranslation;
+					auto& entityTransform = e.Transform();
+					entityTransform.Translation = entityTransform.Translation - parentTranslation;
+					entityTransform.Rotation = entityTransform.Rotation - parentRotation;
+
 					e.SetParentUUID(entity.GetUUID());
 					entity.Children().push_back(droppedHandle);
 				}

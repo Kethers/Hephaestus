@@ -213,7 +213,6 @@ namespace Hep
 			collider.Material = Ref<PhysicsMaterial>::Create(0.6f, 0.6f, 0.0f);
 
 		glm::vec3 actorScale = actor.m_Entity.Transform().Scale;
-		// We effectively do the same thing as Unitys SphereColliders here, where the radius is multiplied with the biggest scale value
 		float largestComponent = glm::max(actorScale.x, glm::max(actorScale.y, actorScale.z));
 
 		physx::PxSphereGeometry sphereGeometry = physx::PxSphereGeometry(largestComponent * collider.Radius);
@@ -234,7 +233,6 @@ namespace Hep
 			collider.Material = Ref<PhysicsMaterial>::Create(0.6f, 0.6f, 0.0f);
 
 		glm::vec3 size = actor.m_Entity.Transform().Scale;
-		// NOTE: CapsuleGeometry expects half height
 		float radiusScale = glm::max(size.x, size.z);
 		physx::PxCapsuleGeometry capsuleGeometry = physx::PxCapsuleGeometry(radiusScale * collider.Radius,
 			size.y * (collider.Height / 2.0f));

@@ -936,7 +936,7 @@ namespace Hep
 							overrideMesh = false;
 					}
 
-					if (component.CollisionMesh)
+					if (component.CollisionMesh && component.CollisionMesh->Type == AssetType::Mesh)
 					{
 						component.OverrideMesh = overrideMesh;
 
@@ -949,7 +949,7 @@ namespace Hep
 					{
 						HEP_CORE_WARN("MeshColliderComponent in use without valid mesh!");
 					}
-					
+
 					auto material = meshColliderComponent["Material"];
 					if (material)
 					{

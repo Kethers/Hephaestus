@@ -541,6 +541,7 @@ namespace Hep
 
 			TransformComponent& entityTransform = selection.Entity.Transform();
 			glm::mat4 transform = m_CurrentScene->GetTransformRelativeToParent(selection.Entity);
+			// glm::mat4 transform = entityTransform.GetTransform();
 			float snapValue = GetSnapValue();
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 
@@ -556,23 +557,25 @@ namespace Hep
 
 				if (ImGuizmo::IsUsing())
 				{
-					glm::vec3 translation, rotation, scale;
-					Math::DecomposeTransform(transform, translation, rotation, scale);
-
 					Entity parent = m_CurrentScene->FindEntityByUUID(selection.Entity.GetParentUUID());
 					if (parent)
 					{
-						glm::vec3 parentTranslation, parentRotation, parentScale;
-						Math::DecomposeTransform(m_CurrentScene->GetTransformRelativeToParent(parent), parentTranslation, parentRotation,
-							parentScale);
+						glm::mat4 parentMatrix = m_CurrentScene->GetTransformRelativeToParent(parent);
+						transform = glm::inverse(parentMatrix) * transform;
 
-						glm::vec3 deltaRotation = (rotation - parentRotation) - entityTransform.Rotation;
-						entityTransform.Translation = translation - parentTranslation;
+						glm::vec3 translation, rotation, scale;
+						Math::DecomposeTransform(transform, translation, rotation, scale);
+
+						glm::vec3 deltaRotation = rotation - entityTransform.Rotation;
+						entityTransform.Translation = translation;
 						entityTransform.Rotation += deltaRotation;
 						entityTransform.Scale = scale;
 					}
 					else
 					{
+						glm::vec3 translation, rotation, scale;
+						Math::DecomposeTransform(transform, translation, rotation, scale);
+
 						glm::vec3 deltaRotation = rotation - entityTransform.Rotation;
 						entityTransform.Translation = translation;
 						entityTransform.Rotation += deltaRotation;
