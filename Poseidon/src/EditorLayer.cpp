@@ -127,6 +127,15 @@ namespace Hep
 		return 0.0f;
 	}
 
+	void EditorLayer::DeleteEntity(Entity entity)
+	{
+		for (auto childId : entity.Children())
+			DeleteEntity(m_EditorScene->FindEntityByUUID(childId));
+
+		m_EditorScene->UnparentEntity(entity);
+		m_EditorScene->DestroyEntity(entity);
+	}
+
 	void EditorLayer::OnUpdate(Timestep ts)
 	{
 		auto [x, y] = GetMouseViewportSpace();
@@ -541,7 +550,6 @@ namespace Hep
 
 			TransformComponent& entityTransform = selection.Entity.Transform();
 			glm::mat4 transform = m_CurrentScene->GetTransformRelativeToParent(selection.Entity);
-			// glm::mat4 transform = entityTransform.GetTransform();
 			float snapValue = GetSnapValue();
 			float snapValues[3] = { snapValue, snapValue, snapValue };
 
@@ -558,10 +566,11 @@ namespace Hep
 				if (ImGuizmo::IsUsing())
 				{
 					Entity parent = m_CurrentScene->FindEntityByUUID(selection.Entity.GetParentUUID());
+
 					if (parent)
 					{
-						glm::mat4 parentMatrix = m_CurrentScene->GetTransformRelativeToParent(parent);
-						transform = glm::inverse(parentMatrix) * transform;
+						glm::mat4 parentTransform = m_CurrentScene->GetTransformRelativeToParent(parent);
+						transform = glm::inverse(parentTransform) * transform;
 
 						glm::vec3 translation, rotation, scale;
 						Math::DecomposeTransform(transform, translation, rotation, scale);
@@ -1117,8 +1126,7 @@ namespace Hep
 				case KeyCode::Delete: // TODO: this should be in the scene hierarchy panel
 					if (!m_SelectionContext.empty())
 					{
-						Entity selectedEntity = m_SelectionContext[0].Entity;
-						m_EditorScene->DestroyEntity(selectedEntity);
+						DeleteEntity(m_SelectionContext[0].Entity);
 						m_SelectionContext.clear();
 						m_EditorScene->SetSelectedEntity({});
 						m_SceneHierarchyPanel->SetSelected({});

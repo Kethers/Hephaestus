@@ -38,6 +38,8 @@ namespace Hep
 		DirectionalLight DirectionalLights[4];
 	};
 
+	struct TransformComponent;
+
 	class Entity;
 	using EntityMap = std::unordered_map<UUID, Entity>;
 
@@ -86,7 +88,14 @@ namespace Hep
 		Entity FindEntityByTag(const std::string& tag);
 		Entity FindEntityByUUID(UUID id);
 
+		void ConvertToLocalSpace(Entity entity);
+		void ConvertToWorldSpace(Entity entity);
 		glm::mat4 GetTransformRelativeToParent(Entity entity);
+		glm::mat4 GetWorldSpaceTransformMatrix(Entity entity);
+		TransformComponent GetWorldSpaceTransform(Entity entity);
+
+		void ParentEntity(Entity entity, Entity parent);
+		void UnparentEntity(Entity entity);
 
 		const EntityMap& GetEntityMap() const { return m_EntityIDMap; }
 		void CopyTo(Ref<Scene>& target);

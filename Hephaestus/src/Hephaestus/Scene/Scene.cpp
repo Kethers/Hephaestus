@@ -121,8 +121,11 @@ namespace Hep
 
 		Scene* scene = s_ActiveScenes[sceneID];
 
-		auto entityID = registry.get<IDComponent>(entity).ID;
-		ScriptEngine::OnScriptComponentDestroyed(sceneID, entityID);
+		if (registry.has<IDComponent>(entity))
+		{
+			auto entityID = registry.get<IDComponent>(entity).ID;
+			ScriptEngine::OnScriptComponentDestroyed(sceneID, entityID);
+		}
 	}
 
 	Scene::Scene(const std::string& debugName, bool isEditorScene)
@@ -217,19 +220,6 @@ namespace Hep
 				transformComponent.Up = glm::normalize(glm::rotate(rotationQuat, glm::vec3(0.0f, 1.0f, 0.0f)));
 				transformComponent.Right = glm::normalize(glm::rotate(rotationQuat, glm::vec3(1.0f, 0.0f, 0.0f)));
 				transformComponent.Forward = glm::normalize(glm::rotate(rotationQuat, glm::vec3(0.0f, 0.0f, -1.0f)));
-
-				Entity parent = FindEntityByUUID(e.GetParentUUID());
-				if (parent)
-				{
-					glm::vec3 parentTranslation, parentRotation, parentScale;
-					Math::DecomposeTransform(GetTransformRelativeToParent(parent), parentTranslation, parentRotation, parentScale);
-
-					transformComponent.WorldTranslation = parentTranslation + transformComponent.Translation;
-				}
-				else
-				{
-					transformComponent.WorldTranslation = transformComponent.Translation;
-				}
 			}
 		}
 
@@ -740,15 +730,112 @@ namespace Hep
 		return Entity{};
 	}
 
+	void Scene::ConvertToLocalSpace(Entity entity)
+	{
+		Entity parent = FindEntityByUUID(entity.GetParentUUID());
+
+		if (!parent)
+			return;
+
+		auto& transform = entity.Transform();
+		glm::mat4 parentTransform = GetWorldSpaceTransformMatrix(parent);
+
+		glm::mat4 localTransform = glm::inverse(parentTransform) * transform.GetTransform();
+		Math::DecomposeTransform(localTransform, transform.Translation, transform.Rotation, transform.Scale);
+	}
+
+	void Scene::ConvertToWorldSpace(Entity entity)
+	{
+		Entity parent = FindEntityByUUID(entity.GetParentUUID());
+
+		if (!parent)
+			return;
+
+		glm::mat4 transform = GetTransformRelativeToParent(entity);
+		auto& entityTransform = entity.Transform();
+		Math::DecomposeTransform(transform, entityTransform.Translation, entityTransform.Rotation, entityTransform.Scale);
+	}
+
 	glm::mat4 Scene::GetTransformRelativeToParent(Entity entity)
 	{
-		glm::mat4 transform(1.0F);
+		glm::mat4 transform(1.0f);
 
 		Entity parent = FindEntityByUUID(entity.GetParentUUID());
 		if (parent)
 			transform = GetTransformRelativeToParent(parent);
 
 		return transform * entity.Transform().GetTransform();
+	}
+
+	glm::mat4 Scene::GetWorldSpaceTransformMatrix(Entity entity)
+	{
+		glm::mat4 transform = entity.Transform().GetTransform();
+
+		while (Entity parent = FindEntityByUUID(entity.GetParentUUID()))
+		{
+			transform = parent.Transform().GetTransform() * transform;
+			entity = parent;
+		}
+
+		return transform;
+	}
+
+	// TODO: Definitely cache this at some point
+	TransformComponent Scene::GetWorldSpaceTransform(Entity entity)
+	{
+		glm::mat4 transform = GetWorldSpaceTransformMatrix(entity);
+		TransformComponent transformComponent;
+
+		Math::DecomposeTransform(transform, transformComponent.Translation, transformComponent.Rotation, transformComponent.Scale);
+
+		glm::quat rotationQuat = glm::quat(transformComponent.Rotation);
+		transformComponent.Up = glm::normalize(glm::rotate(rotationQuat, glm::vec3(0.0f, 1.0f, 0.0f)));
+		transformComponent.Right = glm::normalize(glm::rotate(rotationQuat, glm::vec3(1.0f, 0.0f, 0.0f)));
+		transformComponent.Forward = glm::normalize(glm::rotate(rotationQuat, glm::vec3(0.0f, 0.0f, -1.0f)));
+
+		return transformComponent;
+	}
+
+	void Scene::ParentEntity(Entity entity, Entity parent)
+	{
+		if (parent.IsDescendantOf(entity))
+		{
+			UnparentEntity(parent);
+
+			Entity newParent = FindEntityByUUID(entity.GetParentUUID());
+			if (newParent)
+			{
+				UnparentEntity(entity);
+				ParentEntity(parent, newParent);
+			}
+		}
+		else
+		{
+			Entity previousParent = FindEntityByUUID(entity.GetParentUUID());
+
+			if (previousParent)
+				UnparentEntity(entity);
+		}
+
+		entity.SetParentUUID(parent.GetUUID());
+		parent.Children().push_back(entity.GetUUID());
+
+		ConvertToLocalSpace(entity);
+	}
+
+	void Scene::UnparentEntity(Entity entity)
+	{
+		Entity parent = FindEntityByUUID(entity.GetParentUUID());
+
+		if (!parent)
+			return;
+
+		auto& parentChildren = parent.Children();
+		parentChildren.erase(std::remove(parentChildren.begin(), parentChildren.end(), entity.GetUUID()), parentChildren.end());
+
+		ConvertToWorldSpace(entity);
+
+		entity.SetParentUUID(0);
 	}
 
 	// Copy to runtime

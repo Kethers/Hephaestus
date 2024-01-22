@@ -84,21 +84,7 @@ namespace Hep
 				{
 					UUID droppedHandle = *((UUID*)payload->Data);
 					Entity e = m_Context->FindEntityByUUID(droppedHandle);
-					Entity previousParent = m_Context->FindEntityByUUID(e.GetParentUUID());
-
-					if (previousParent)
-					{
-						auto& children = previousParent.Children();
-						children.erase(std::remove(children.begin(), children.end(), droppedHandle), children.end());
-
-						glm::mat4 parentTransform = m_Context->GetTransformRelativeToParent(previousParent);
-						glm::vec3 parentTranslation, parentRotation, parentScale;
-						Math::DecomposeTransform(parentTransform, parentTranslation, parentRotation, parentScale);
-
-						e.Transform().Translation = e.Transform().Translation + parentTranslation;
-					}
-
-					e.SetParentUUID(0);
+					m_Context->UnparentEntity(e);
 				}
 
 				ImGui::EndDragDropTarget();
@@ -294,29 +280,7 @@ namespace Hep
 			{
 				UUID droppedHandle = *((UUID*)payload->Data);
 				Entity e = m_Context->FindEntityByUUID(droppedHandle);
-
-				if (!entity.IsDescendantOf(e))
-				{
-					// Remove from previous parent
-					Entity previousParent = m_Context->FindEntityByUUID(e.GetParentUUID());
-					if (previousParent)
-					{
-						auto& parentChildren = previousParent.Children();
-						parentChildren.erase(std::remove(parentChildren.begin(), parentChildren.end(), droppedHandle),
-							parentChildren.end());
-					}
-
-					glm::mat4 parentTransform = m_Context->GetTransformRelativeToParent(entity);
-					glm::vec3 parentTranslation, parentRotation, parentScale;
-					Math::DecomposeTransform(parentTransform, parentTranslation, parentRotation, parentScale);
-
-					auto& entityTransform = e.Transform();
-					entityTransform.Translation = entityTransform.Translation - parentTranslation;
-					entityTransform.Rotation = entityTransform.Rotation - parentRotation;
-
-					e.SetParentUUID(entity.GetUUID());
-					entity.Children().push_back(droppedHandle);
-				}
+				m_Context->ParentEntity(e, entity);
 			}
 
 			ImGui::EndDragDropTarget();

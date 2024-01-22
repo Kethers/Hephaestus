@@ -292,6 +292,30 @@ namespace Hep::Script
 		return 0;
 	}
 
+	MonoString* Hep_TagComponent_GetTag(uint64_t entityID)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		auto& tagComponent = entity.GetComponent<TagComponent>();
+		return mono_string_new(mono_domain_get(), tagComponent.Tag.c_str());
+	}
+
+	void Hep_TagComponent_SetTag(uint64_t entityID, MonoString* tag)
+	{
+		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
+		HEP_CORE_ASSERT(scene, "No active scene!");
+		const auto& entityMap = scene->GetEntityMap();
+		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
+
+		Entity entity = entityMap.at(entityID);
+		auto& tagComponent = entity.GetComponent<TagComponent>();
+		tagComponent.Tag = mono_string_to_utf8(tag);
+	}
+
 	void Hep_TransformComponent_GetTransform(uint64_t entityID, TransformComponent* outTransform)
 	{
 		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
@@ -380,7 +404,7 @@ namespace Hep::Script
 		entity.GetComponent<TransformComponent>().Scale = *inScale;
 	}
 
-	void Hep_TransformComponent_GetWorldTranslation(uint64_t entityID, glm::vec3* outTranslation)
+	void Hep_TransformComponent_GetWorldSpaceTransform(uint64_t entityID, TransformComponent* outTransform)
 	{
 		Ref<Scene> scene = ScriptEngine::GetCurrentSceneContext();
 		HEP_CORE_ASSERT(scene, "No active scene!");
@@ -388,7 +412,7 @@ namespace Hep::Script
 		HEP_CORE_ASSERT(entityMap.contains(entityID), "Invalid entity ID or entity doesn't exist in scene!");
 
 		Entity entity = entityMap.at(entityID);
-		*outTranslation = entity.GetComponent<TransformComponent>().WorldTranslation;
+		*outTransform = scene->GetWorldSpaceTransform(entity);
 	}
 
 	void* Hep_MeshComponent_GetMesh(uint64_t entityID)

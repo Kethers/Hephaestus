@@ -17,14 +17,14 @@ namespace Hep
 		public string Tag
 		{
 			get => GetTag_Native(Entity.ID);
-			set => SetTag_Native(value);
+			set => SetTag_Native(Entity.ID, value);
 		}
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		public static extern string GetTag_Native(ulong entityID);
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
-		public static extern void SetTag_Native(string tag);
+		public static extern void SetTag_Native(ulong entityID, string tag);
 	}
 
 	public class TransformComponent : Component
@@ -71,13 +71,10 @@ namespace Hep
 			set { SetScale_Native(Entity.ID, ref value); }
 		}
 
-		public Vector3 WorldTranslation
+		public Transform GetWorldSpaceTransform()
 		{
-			get
-			{
-				GetWorldTranslation_Native(Entity.ID, out Vector3 result);
-				return result;
-			}
+			GetWorldSpaceTransform_Native(Entity.ID, out Transform transform);
+			return transform;
 		}
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
@@ -96,9 +93,8 @@ namespace Hep
 		internal static extern void GetScale_Native(ulong entityID, out Vector3 outScale);
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal static extern void SetScale_Native(ulong entityID, ref Vector3 inScale);
-
 		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal static extern void GetWorldTranslation_Native(ulong entityID, out Vector3 outTranslation);
+		internal static extern void GetWorldSpaceTransform_Native(ulong entityID, out Transform outTransform);
 	}
 
 	public class MeshComponent : Component
@@ -232,8 +228,6 @@ namespace Hep
 		{
 			Rotate_Native(Entity.ID, ref rotation);
 		}
-
-		// TODO: Add SetMaxLinearVelocity() as well
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal static extern void AddForce_Native(ulong entityID, ref Vector3 force, ForceMode forceMode);

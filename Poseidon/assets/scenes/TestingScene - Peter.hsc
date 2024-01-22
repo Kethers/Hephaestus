@@ -35,29 +35,29 @@ Entities:
       EnvironmentMap: 2514227705835677036
       Intensity: 1
       Angle: 0
-  - Entity: 12057074290494475737
+  - Entity: 3785516883381544468
     Parent: 0
     Children:
-      - Handle: 6378979277065937606
+      []
     TagComponent:
       Tag: Cube
     TransformComponent:
-      Position: [3.07457423, 0, 0]
+      Position: [2.37606597, 0, -1.64829159]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
       AssetID: 16316222733560087453
-  - Entity: 6378979277065937606
-    Parent: 12057074290494475737
+  - Entity: 8707529104043222412
+    Parent: 0
     Children:
       []
     TagComponent:
-      Tag: Sphere
+      Tag: Cube
     TransformComponent:
-      Position: [-3.07022738, 0, 0]
+      Position: [1.06157684, 0.941367626, -2.94970584]
       Rotation: [0, 0, 0]
       Scale: [1, 1, 1]
     MeshComponent:
-      AssetID: 10072064586026924578
+      AssetID: 16316222733560087453
 PhysicsLayers:
   []

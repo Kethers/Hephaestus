@@ -62,6 +62,9 @@ namespace Hep
 		mono_add_internal_call("Hep.Entity::HasComponent_Native", Hep::Script::Hep_Entity_HasComponent);
 		mono_add_internal_call("Hep.Entity::FindEntityByTag_Native", Hep::Script::Hep_Entity_FindEntityByTag);
 
+		mono_add_internal_call("Hep.TagComponent::GetTag_Native", Hep::Script::Hep_TagComponent_GetTag);
+		mono_add_internal_call("Hep.TagComponent::SetTag_Native", Hep::Script::Hep_TagComponent_SetTag);
+
 		mono_add_internal_call("Hep.TransformComponent::GetTransform_Native", Hep::Script::Hep_TransformComponent_GetTransform);
 		mono_add_internal_call("Hep.TransformComponent::SetTransform_Native", Hep::Script::Hep_TransformComponent_SetTransform);
 		mono_add_internal_call("Hep.TransformComponent::GetTranslation_Native", Hep::Script::Hep_TransformComponent_GetTranslation);
@@ -70,8 +73,8 @@ namespace Hep
 		mono_add_internal_call("Hep.TransformComponent::SetRotation_Native", Hep::Script::Hep_TransformComponent_SetRotation);
 		mono_add_internal_call("Hep.TransformComponent::GetScale_Native", Hep::Script::Hep_TransformComponent_GetScale);
 		mono_add_internal_call("Hep.TransformComponent::SetScale_Native", Hep::Script::Hep_TransformComponent_SetScale);
-		mono_add_internal_call("Hep.TransformComponent::GetWorldTranslation_Native",
-			Hep::Script::Hep_TransformComponent_GetWorldTranslation);
+		mono_add_internal_call("Hep.TransformComponent::GetWorldSpaceTransform_Native",
+			Hep::Script::Hep_TransformComponent_GetWorldSpaceTransform);
 
 		mono_add_internal_call("Hep.MeshComponent::GetMesh_Native", Hep::Script::Hep_MeshComponent_GetMesh);
 		mono_add_internal_call("Hep.MeshComponent::SetMesh_Native", Hep::Script::Hep_MeshComponent_SetMesh);

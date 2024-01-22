@@ -119,21 +119,6 @@ namespace Hep
 								}
 							}
 
-							if (ImGui::MenuItem("Scene"))
-							{
-								HEP_CORE_INFO("Creating Scene...");
-							}
-
-							if (ImGui::MenuItem("Script"))
-							{
-								HEP_CORE_INFO("Creating Script...");
-							}
-
-							if (ImGui::MenuItem("Prefab"))
-							{
-								HEP_CORE_INFO("Creating Prefab...");
-							}
-
 							if (ImGui::MenuItem("Physics Material"))
 							{
 								AssetManager::CreateNewAsset<PhysicsMaterial>("New Physics Material.hpm", AssetType::PhysicsMat,
@@ -143,9 +128,6 @@ namespace Hep
 
 							ImGui::EndMenu();
 						}
-
-						if (ImGui::MenuItem("Import"))
-						{}
 
 						if (ImGui::MenuItem("Refresh"))
 						{
@@ -241,7 +223,7 @@ namespace Hep
 				}
 				else if (asset->Type == AssetType::Scene)
 				{
-					// SceneManager::OpenScene(asset);
+					// TODO: Open scene in viewport
 				}
 				else
 				{
@@ -477,7 +459,6 @@ namespace Hep
 			ImGui::SetKeyboardFocusHere();
 			if (ImGui::InputText("##rename_dummy", m_RenameBuffer, MAX_INPUT_BUFFER_LENGTH, ImGuiInputTextFlags_EnterReturnsTrue))
 			{
-				HEP_CORE_INFO("Renaming to {0}", m_RenameBuffer);
 				AssetManager::Rename(asset->Handle, m_RenameBuffer);
 				m_RenamingSelected = false;
 				m_SelectedAssets.Clear();
