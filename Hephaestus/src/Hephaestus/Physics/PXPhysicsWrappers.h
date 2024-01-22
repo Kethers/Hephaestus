@@ -22,7 +22,7 @@ namespace Hep
 		void operator()(const char* exp, const char* file, int line, bool& ignore) override;
 	};
 
-	class ContactListener : public physx::PxSimulationEventCallback
+	class ContactListener3D : public physx::PxSimulationEventCallback
 	{
 	public:
 		void onConstraintBreak(physx::PxConstraintInfo* constraints, physx::PxU32 count) override;
@@ -44,7 +44,7 @@ namespace Hep
 		static void AddCapsuleCollider(PhysicsActor& actor);
 		static void AddMeshCollider(PhysicsActor& actor);
 
-		static std::vector<physx::PxShape*> CreateConvexMesh(MeshColliderComponent& collider, const glm::vec3& size,
+		static std::vector<physx::PxShape*> CreateConvexMesh(MeshColliderComponent& collider, const glm::vec3& scale = glm::vec3(1.0f),
 			bool invalidateOld = false);
 		static std::vector<physx::PxShape*> CreateTriangleMesh(MeshColliderComponent& collider, const glm::vec3& scale = glm::vec3(1.0f),
 			bool invalidateOld = false);

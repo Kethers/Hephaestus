@@ -3,14 +3,7 @@
 
 namespace Hep
 {
-	LayerStack::~LayerStack()
-	{
-		for (Layer* layer : m_Layers)
-		{
-			layer->OnDetach();
-			delete layer;
-		}
-	}
+	LayerStack::~LayerStack() = default;
 
 	void LayerStack::PushLayer(Layer* layer)
 	{

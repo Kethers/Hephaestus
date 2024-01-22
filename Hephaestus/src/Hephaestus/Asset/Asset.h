@@ -6,7 +6,7 @@
 
 namespace Hep
 {
-	enum class AssetType
+	enum class AssetType : int8_t
 	{
 		Scene,
 		Mesh,
@@ -18,6 +18,7 @@ namespace Hep
 		Directory,
 		Other,
 		None,
+		Missing,
 	};
 
 	using AssetHandle = UUID;
@@ -33,6 +34,16 @@ namespace Hep
 		std::string Extension;
 		AssetHandle ParentDirectory;
 		bool IsDataLoaded = false;
+
+		virtual bool operator==(const Asset& other) const
+		{
+			return Handle == other.Handle;
+		}
+
+		virtual bool operator!=(const Asset& other) const
+		{
+			return !(*this == other);
+		}
 
 		virtual ~Asset() = default;
 	};

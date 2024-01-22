@@ -18,5 +18,7 @@ namespace Hep
 	void ShutdownCore()
 	{
 		HEP_CORE_TRACE("Shutting down...");
+
+		Log::Shutdown();
 	}
 }

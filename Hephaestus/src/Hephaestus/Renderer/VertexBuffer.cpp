@@ -3,6 +3,9 @@
 #include "Renderer.h"
 
 #include "Hephaestus/Platform/OpenGL/OpenGLVertexBuffer.h"
+#include "Hephaestus/Platform/Vulkan/VulkanVertexBuffer.h"
+
+#include "Hephaestus/Renderer/RendererAPI.h"
 
 namespace Hep
 {
@@ -13,6 +16,7 @@ namespace Hep
 			// @formatter:off
 			case RendererAPIType::None:		return nullptr;
 			case RendererAPIType::OpenGL:	return Ref<OpenGLVertexBuffer>::Create(data, size, usage);
+			case RendererAPIType::Vulkan:	return Ref<VulkanVertexBuffer>::Create(data, size, usage);
 			// @formatter:on
 		}
 		HEP_CORE_ASSERT(false, "Unknown RendererAPI");
@@ -26,6 +30,7 @@ namespace Hep
 			// @formatter:off
 			case RendererAPIType::None:		return nullptr;
 			case RendererAPIType::OpenGL:	return Ref<OpenGLVertexBuffer>::Create(size, usage);
+			case RendererAPIType::Vulkan:	return Ref<VulkanVertexBuffer>::Create(size, usage);
 			// @formatter:on
 		}
 		HEP_CORE_ASSERT(false, "Unknown RendererAPI");

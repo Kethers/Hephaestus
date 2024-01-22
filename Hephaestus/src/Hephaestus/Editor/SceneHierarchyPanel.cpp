@@ -25,6 +25,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Hephaestus/ImGui/ImGui.h"
+#include "Hephaestus/Renderer/Renderer.h"
 
 // TODO:
 // - Eventually change imgui node IDs to be entity/asset GUID
@@ -54,6 +55,9 @@ namespace Hep
 	void SceneHierarchyPanel::SetSelected(Entity entity)
 	{
 		m_SelectionContext = entity;
+
+		if (m_SelectionChangedCallback)
+			m_SelectionChangedCallback(m_SelectionContext);
 	}
 
 	void SceneHierarchyPanel::OnImGuiRender()
@@ -109,11 +113,83 @@ namespace Hep
 						auto newEntity = m_Context->CreateEntity("Empty Entity");
 						SetSelected(newEntity);
 					}
-					if (ImGui::MenuItem("Mesh"))
+					if (ImGui::MenuItem("Camera"))
 					{
-						auto newEntity = m_Context->CreateEntity("Mesh");
-						newEntity.AddComponent<MeshComponent>();
+						auto newEntity = m_Context->CreateEntity("Camera");
+						newEntity.AddComponent<CameraComponent>();
 						SetSelected(newEntity);
+					}
+					if (ImGui::BeginMenu("Mesh"))
+					{
+						if (ImGui::MenuItem("Empty Mesh"))
+						{
+							auto newEntity = m_Context->CreateEntity("Empty Mesh");
+							newEntity.AddComponent<MeshComponent>();
+							SetSelected(newEntity);
+						}
+						if (ImGui::MenuItem("Cube"))
+						{
+							auto newEntity = m_Context->CreateEntity("Cube");
+							newEntity.AddComponent<MeshComponent>(AssetManager::GetAsset<Mesh>("assets/meshes/Default/Cube.fbx"));
+							SetSelected(newEntity);
+						}
+						if (ImGui::MenuItem("Sphere"))
+						{
+							auto newEntity = m_Context->CreateEntity("Sphere");
+							newEntity.AddComponent<MeshComponent>(AssetManager::GetAsset<Mesh>("assets/meshes/Default/Sphere.fbx"));
+							SetSelected(newEntity);
+						}
+						if (ImGui::MenuItem("Capsule"))
+						{
+							auto newEntity = m_Context->CreateEntity("Capsule");
+							newEntity.AddComponent<MeshComponent>(AssetManager::GetAsset<Mesh>("assets/meshes/Default/Capsule.fbx"));
+							SetSelected(newEntity);
+						}
+						if (ImGui::MenuItem("Plane"))
+						{
+							auto newEntity = m_Context->CreateEntity("Plane");
+							newEntity.AddComponent<MeshComponent>(AssetManager::GetAsset<Mesh>("assets/meshes/Default/Plane.fbx"));
+							SetSelected(newEntity);
+						}
+						ImGui::EndMenu();
+					}
+					if (ImGui::BeginMenu("Physics"))
+					{
+						if (ImGui::MenuItem("Rigidbody"))
+						{
+							auto newEntity = m_Context->CreateEntity("Rigidbody");
+							newEntity.AddComponent<RigidBodyComponent>();
+							SetSelected(newEntity);
+						}
+						if (ImGui::MenuItem("Box"))
+						{
+							auto newEntity = m_Context->CreateEntity("Cube");
+							newEntity.AddComponent<MeshComponent>(AssetManager::GetAsset<Mesh>("assets/meshes/Default/Cube.fbx"));
+							newEntity.AddComponent<BoxColliderComponent>();
+							SetSelected(newEntity);
+						}
+						if (ImGui::MenuItem("Sphere"))
+						{
+							auto newEntity = m_Context->CreateEntity("Sphere");
+							newEntity.AddComponent<MeshComponent>(AssetManager::GetAsset<Mesh>("assets/meshes/Default/Sphere.fbx"));
+							newEntity.AddComponent<SphereColliderComponent>();
+							SetSelected(newEntity);
+						}
+						if (ImGui::MenuItem("Capsule"))
+						{
+							auto newEntity = m_Context->CreateEntity("Capsule");
+							newEntity.AddComponent<MeshComponent>(AssetManager::GetAsset<Mesh>("assets/meshes/Default/Capsule.fbx"));
+							newEntity.AddComponent<CapsuleColliderComponent>();
+							SetSelected(newEntity);
+						}
+						if (ImGui::MenuItem("Mesh"))
+						{
+							auto newEntity = m_Context->CreateEntity("Capsule");
+							newEntity.AddComponent<MeshComponent>();
+							newEntity.AddComponent<MeshColliderComponent>();
+							SetSelected(newEntity);
+						}
+						ImGui::EndMenu();
 					}
 					ImGui::Separator();
 					if (ImGui::MenuItem("Directional Light"))
@@ -175,6 +251,12 @@ namespace Hep
 		if (entity.Children().empty())
 			flags |= ImGuiTreeNodeFlags_Leaf;
 
+		// TODO: This should probably be a function that checks that the entities components are valid
+		bool missingMesh = entity.HasComponent<MeshComponent>() && (entity.GetComponent<MeshComponent>().Mesh && entity.GetComponent<
+			MeshComponent>().Mesh->Type == AssetType::Missing);
+		if (missingMesh)
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.4f, 0.3f, 1.0f));
+
 		bool opened = ImGui::TreeNodeEx((void*)(uint32_t)entity, flags, name);
 		if (ImGui::IsItemClicked())
 		{
@@ -182,6 +264,9 @@ namespace Hep
 			if (m_SelectionChangedCallback)
 				m_SelectionChangedCallback(m_SelectionContext);
 		}
+
+		if (missingMesh)
+			ImGui::PopStyleColor();
 
 		bool entityDeleted = false;
 		if (ImGui::BeginPopupContextItem())
@@ -226,7 +311,6 @@ namespace Hep
 					Math::DecomposeTransform(parentTransform, parentTranslation, parentRotation, parentScale);
 
 					e.Transform().Translation = e.Transform().Translation - parentTranslation;
-
 					e.SetParentUUID(entity.GetUUID());
 					entity.Children().push_back(droppedHandle);
 				}
@@ -303,7 +387,7 @@ namespace Hep
 	}
 
 	template <typename T, typename UIFunction>
-	static void DrawComponent(const std::string& name, Entity entity, UIFunction uiFunction)
+	static void DrawComponent(const std::string& name, Entity entity, UIFunction uiFunction, bool canBeRemoved = true)
 	{
 		const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |
 			ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_FramePadding;
@@ -320,18 +404,28 @@ namespace Hep
 			float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
 			ImGui::Separator();
 			bool open = ImGui::TreeNodeEx("##dummy_id", treeNodeFlags, name.c_str());
+			bool right_clicked = ImGui::IsItemClicked(ImGuiMouseButton_Right);
 			ImGui::PopStyleVar();
+
+			bool resetValues = false;
+			bool removeComponent = false;
+
 			ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
-			if (ImGui::Button("+", ImVec2{ lineHeight, lineHeight }))
+			if (ImGui::Button("+", ImVec2{ lineHeight, lineHeight }) || right_clicked)
 			{
 				ImGui::OpenPopup("ComponentSettings");
 			}
 
-			bool removeComponent = false;
 			if (ImGui::BeginPopup("ComponentSettings"))
 			{
-				if (ImGui::MenuItem("Remove component"))
-					removeComponent = true;
+				if (ImGui::MenuItem("Reset"))
+					resetValues = true;
+
+				if (canBeRemoved)
+				{
+					if (ImGui::MenuItem("Remove component"))
+						removeComponent = true;
+				}
 
 				ImGui::EndPopup();
 			}
@@ -342,8 +436,11 @@ namespace Hep
 				ImGui::TreePop();
 			}
 
-			if (removeComponent)
+			if (removeComponent || resetValues)
 				entity.RemoveComponent<T>();
+
+			if (resetValues)
+				entity.AddComponent<T>();
 
 			ImGui::PopID();
 		}
@@ -353,7 +450,7 @@ namespace Hep
 	{
 		bool modified = false;
 
-		ImGuiIO& io = ImGui::GetIO();
+		const ImGuiIO& io = ImGui::GetIO();
 		auto boldFont = io.Fonts->Fonts[0];
 
 		ImGui::PushID(label.c_str());
@@ -588,37 +685,38 @@ namespace Hep
 			DrawVec3Control("Rotation", rotation);
 			component.Rotation = glm::radians(rotation);
 			DrawVec3Control("Scale", component.Scale, 1.0f);
-		});
+		}, false);
 
-		DrawComponent<MeshComponent>("Mesh", entity, [](MeshComponent& mc)
+		DrawComponent<MeshComponent>("Mesh", entity, [&](MeshComponent& mc)
 		{
 			UI::BeginPropertyGrid();
-			UI::PropertyAssetReference("Mesh", mc.Mesh, AssetType::Mesh);
+			if (UI::PropertyAssetReference("Mesh", mc.Mesh, AssetType::Mesh))
+			{
+				if (entity.HasComponent<MeshColliderComponent>())
+				{
+					auto& mcc = entity.GetComponent<MeshColliderComponent>();
+					mcc.CollisionMesh = mc.Mesh;
+					if (mcc.IsConvex)
+						PXPhysicsWrappers::CreateConvexMesh(mcc, entity.Transform().Scale, true);
+					else
+						PXPhysicsWrappers::CreateTriangleMesh(mcc, entity.Transform().Scale, true);
+				}
+			}
 			UI::EndPropertyGrid();
 		});
 
 		DrawComponent<CameraComponent>("Camera", entity, [](CameraComponent& cc)
 		{
+			UI::BeginPropertyGrid();
+
 			// Projection Type
 			const char* projTypeStrings[] = { "Perspective", "Orthographic" };
-			const char* currentProj = projTypeStrings[(int)cc.Camera.GetProjectionType()];
-			if (ImGui::BeginCombo("Projection", currentProj))
+			int currentProj = (int)cc.Camera.GetProjectionType();
+			if (UI::PropertyDropdown("Projection", projTypeStrings, 2, &currentProj))
 			{
-				for (int type = 0; type < 2; type++)
-				{
-					bool is_selected = (currentProj == projTypeStrings[type]);
-					if (ImGui::Selectable(projTypeStrings[type], is_selected))
-					{
-						currentProj = projTypeStrings[type];
-						cc.Camera.SetProjectionType((SceneCamera::ProjectionType)type);
-					}
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
+				cc.Camera.SetProjectionType((SceneCamera::ProjectionType)currentProj);
 			}
 
-			UI::BeginPropertyGrid();
 			// Perspective parameters
 			if (cc.Camera.GetProjectionType() == SceneCamera::ProjectionType::Perspective)
 			{
@@ -673,6 +771,20 @@ namespace Hep
 			UI::BeginPropertyGrid();
 			UI::PropertyAssetReference("Environment Map", slc.SceneEnvironment, AssetType::EnvMap);
 			UI::Property("Intensity", slc.Intensity, 0.01f, 0.0f, 5.0f);
+			ImGui::Separator();
+			UI::Property("Dynamic Sky", slc.DynamicSky);
+			if (slc.DynamicSky)
+			{
+				bool changed = UI::Property("Turbidity", slc.TurbidityAzimuthInclination.x, 0.01f);
+				changed |= UI::Property("Azimuth", slc.TurbidityAzimuthInclination.y, 0.01f);
+				changed |= UI::Property("Inclination", slc.TurbidityAzimuthInclination.z, 0.01f);
+				if (changed)
+				{
+					Ref<TextureCube> preethamEnv = Renderer::CreatePreethamSky(slc.TurbidityAzimuthInclination.x,
+						slc.TurbidityAzimuthInclination.y, slc.TurbidityAzimuthInclination.z);
+					slc.SceneEnvironment = Ref<Environment>::Create(preethamEnv, preethamEnv);
+				}
+			}
 			UI::EndPropertyGrid();
 		});
 
@@ -796,24 +908,11 @@ namespace Hep
 
 		DrawComponent<RigidBody2DComponent>("Rigidbody 2D", entity, [](RigidBody2DComponent& rb2dc)
 		{
+			UI::BeginPropertyGrid();
+
 			// Rigidbody2D Type
 			const char* rb2dTypeStrings[] = { "Static", "Dynamic", "Kinematic" };
-			const char* currentType = rb2dTypeStrings[(int)rb2dc.BodyType];
-			if (ImGui::BeginCombo("Type", currentType))
-			{
-				for (int type = 0; type < 3; type++)
-				{
-					bool is_selected = (currentType == rb2dTypeStrings[type]);
-					if (ImGui::Selectable(rb2dTypeStrings[type], is_selected))
-					{
-						currentType = rb2dTypeStrings[type];
-						rb2dc.BodyType = (RigidBody2DComponent::Type)type;
-					}
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
+			UI::PropertyDropdown("Type", rb2dTypeStrings, 3, (int*)&rb2dc.BodyType);
 
 			if (rb2dc.BodyType == RigidBody2DComponent::Type::Dynamic)
 			{
@@ -821,6 +920,8 @@ namespace Hep
 				UI::Property("Fixed Rotation", rb2dc.FixedRotation);
 				UI::EndPropertyGrid();
 			}
+
+			UI::EndPropertyGrid();
 		});
 
 		DrawComponent<BoxCollider2DComponent>("Box Collider 2D", entity, [](BoxCollider2DComponent& bc2dc)
@@ -849,46 +950,19 @@ namespace Hep
 
 		DrawComponent<RigidBodyComponent>("Rigidbody", entity, [](RigidBodyComponent& rbc)
 		{
+			UI::BeginPropertyGrid();
+
 			// Rigidbody Type
 			const char* rbTypeStrings[] = { "Static", "Dynamic" };
-			const char* currentType = rbTypeStrings[(int)rbc.BodyType];
-			if (ImGui::BeginCombo("Type", currentType))
-			{
-				for (int type = 0; type < 2; type++)
-				{
-					bool is_selected = (currentType == rbTypeStrings[type]);
-					if (ImGui::Selectable(rbTypeStrings[type], is_selected))
-					{
-						currentType = rbTypeStrings[type];
-						rbc.BodyType = (RigidBodyComponent::Type)type;
-					}
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
+			UI::PropertyDropdown("Type", rbTypeStrings, 2, (int*)&rbc.BodyType);
 
 			// Layer has been removed, set to Default layer
 			if (!PhysicsLayerManager::IsLayerValid(rbc.Layer))
 				rbc.Layer = 0;
 
-			uint32_t currentLayer = rbc.Layer;
-			const PhysicsLayer& layerInfo = PhysicsLayerManager::GetLayer(currentLayer);
-			if (ImGui::BeginCombo("Layer", layerInfo.Name.c_str()))
-			{
-				for (const auto& layer : PhysicsLayerManager::GetLayers())
-				{
-					bool is_selected = (currentLayer == layer.LayerID);
-					if (ImGui::Selectable(layer.Name.c_str(), is_selected))
-					{
-						currentLayer = layer.LayerID;
-						rbc.Layer = layer.LayerID;
-					}
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
+			int layerCount = PhysicsLayerManager::GetLayerCount();
+			const auto& layerNames = PhysicsLayerManager::GetLayerNames();
+			UI::PropertyDropdown("Layer", layerNames, layerCount, (int*)&rbc.Layer);
 
 			if (rbc.BodyType == RigidBodyComponent::Type::Dynamic)
 			{
@@ -921,6 +995,8 @@ namespace Hep
 					UI::EndTreeNode();
 				}
 			}
+
+			UI::EndPropertyGrid();
 		});
 
 		DrawComponent<BoxColliderComponent>("Box Collider", entity, [](BoxColliderComponent& bcc)
@@ -928,9 +1004,7 @@ namespace Hep
 			UI::BeginPropertyGrid();
 
 			if (UI::Property("Size", bcc.Size))
-			{
 				bcc.DebugMesh = MeshFactory::CreateBox(bcc.Size);
-			}
 
 			// UI::Property("Offset", bcc.Offset);
 			UI::Property("Is Trigger", bcc.IsTrigger);
@@ -986,18 +1060,18 @@ namespace Hep
 				if (UI::PropertyAssetReference("Mesh", mcc.CollisionMesh, AssetType::Mesh))
 				{
 					if (mcc.IsConvex)
-						PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
+						PXPhysicsWrappers::CreateConvexMesh(mcc, entity.Transform().Scale, true);
 					else
-						PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
+						PXPhysicsWrappers::CreateTriangleMesh(mcc, entity.Transform().Scale, true);
 				}
 			}
 
 			if (UI::Property("Is Convex", mcc.IsConvex))
 			{
 				if (mcc.IsConvex)
-					PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
+					PXPhysicsWrappers::CreateConvexMesh(mcc, entity.Transform().Scale, true);
 				else
-					PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
+					PXPhysicsWrappers::CreateTriangleMesh(mcc, entity.Transform().Scale, true);
 			}
 
 			UI::Property("Is Trigger", mcc.IsTrigger);
@@ -1010,9 +1084,9 @@ namespace Hep
 					mcc.CollisionMesh = entity.GetComponent<MeshComponent>().Mesh;
 
 					if (mcc.IsConvex)
-						PXPhysicsWrappers::CreateConvexMesh(mcc, glm::vec3(1.0f), true);
+						PXPhysicsWrappers::CreateConvexMesh(mcc, entity.Transform().Scale, true);
 					else
-						PXPhysicsWrappers::CreateTriangleMesh(mcc, glm::vec3(1.0f), true);
+						PXPhysicsWrappers::CreateTriangleMesh(mcc, entity.Transform().Scale, true);
 				}
 			}
 			UI::EndPropertyGrid();

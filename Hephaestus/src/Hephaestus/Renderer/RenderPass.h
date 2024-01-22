@@ -9,6 +9,7 @@ namespace Hep
 	struct RenderPassSpecification
 	{
 		Ref<Framebuffer> TargetFramebuffer;
+		std::string DebugName;
 	};
 
 	class RenderPass : public RefCounted

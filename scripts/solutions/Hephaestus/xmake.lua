@@ -1,5 +1,6 @@
 set_project("Hephaestus")
 
+includes("../../util/dependencies.lua")
 includes("../../../external/Glad")
 includes("../../../external/GLFW")
 includes("../../../external/imgui")
@@ -14,32 +15,6 @@ add_requires("glfw")
 -- 	add_requires("assimp >= 5.2.4", {configs = {debug = false, vs_runtime = "MT"}} )
 -- end
 
-IncludeDir = {}
-IncludeDir["GLFW"] 		= "$(projectdir)/external/GLFW/include"
-IncludeDir["Glad"] 		= "$(projectdir)/external/Glad/include"
-IncludeDir["ImGui"] 	= "$(projectdir)/external/imgui"
-IncludeDir["glm"] 		= "$(projectdir)/external/glm"
-IncludeDir["assimp"] 	= "$(projectdir)/external/assimp/include"
-IncludeDir['stb'] 		= "$(projectdir)/external/stb"
-IncludeDir["entt"] 		= "$(projectdir)/external/entt/include"
-IncludeDir["FastNoise"] = "$(projectdir)/external/FastNoise"
-IncludeDir["mono"] 		= "$(projectdir)/external/mono/include"
-IncludeDir["yaml-cpp"] 	= "$(projectdir)/external/yaml-cpp/include"
-IncludeDir["Box2D"] 	= "$(projectdir)/external/Box2D/include"
-IncludeDir["PhysX"]		= "$(projectdir)/external/PhysX/include"
-
-LibraryDir = {}
-LibraryDir["mono"] 							= "$(projectdir)/external/mono/lib/Debug/mono-2.0-sgen.lib"
-
-LibraryDir["PhysX"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysX_static_64.lib"
-LibraryDir["PhysXCharacterKinematic"] 		= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCharacterKinematic_static_64.lib"
-LibraryDir["PhysXCommon"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCommon_static_64.lib"
-LibraryDir["PhysXCooking"] 					= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXCooking_static_64.lib"
-LibraryDir["PhysXExtensions"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXExtensions_static_64.lib"
-LibraryDir["PhysXFoundation"] 				= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXFoundation_static_64.lib"
-LibraryDir["PhysXPvd"] 						= "$(projectdir)/external/PhysX/lib/$(mode)/PhysXPvdSDK_static_64.lib"
-
-
 BuildProject({
 	projectName = "Hephaestus",
 	projectType = "static",
@@ -49,12 +24,14 @@ BuildProject({
 	files = {
 		"$(projectdir)/Hephaestus/src/**.cpp", 
 		"$(projectdir)/external/stb/**.cpp", 
-		"$(projectdir)/external/FastNoise/**.cpp"
+		"$(projectdir)/external/FastNoise/**.cpp",
+		"$(projectdir)/external/VulkanMemoryAllocator/**.cpp", 
 	},
 	headerfiles = {
 		"$(projectdir)/Hephaestus/src/**.h", 
 		"$(projectdir)/Hephaestus/src/**.hpp",
 		"$(projectdir)/external/stb/**.h",
+		"$(projectdir)/external/VulkanMemoryAllocator/**.h", 
 	},
 	pchHeader = "$(projectdir)/Hephaestus/src/heppch.h",
 	includePaths = {
@@ -72,24 +49,38 @@ BuildProject({
 		IncludeDir["yaml-cpp"],
 		IncludeDir.Box2D,
 		IncludeDir.PhysX,
+		IncludeDir.VulkanSDK,
+		IncludeDir.NvidiaAftermath,
 	},
 	packages = {"glfw"},
-	debugLink = {},
-	releaseLink = {},
+	debugLink = {
+		Library.ShaderC_Debug,
+		Library.SPIRV_Cross_Debug,
+		Library.SPIRV_Cross_GLSL_Debug,
+		Library.SPIRV_Tools_Debug,
+	},
+	releaseLink = {
+		Library.ShaderC_Release, 
+		Library.SPIRV_Cross_Release, 
+		Library.SPIRV_Cross_GLSL_Release,
+	},
 	link = { "kernel32", "User32", "Gdi32", "Shell32", "Comdlg32", "opengl32.lib", 
-		LibraryDir.mono,
-		LibraryDir.PhysX,
-		LibraryDir.PhysXCharacterKinematic,
-		LibraryDir.PhysXCommon,
-		LibraryDir.PhysXCooking,
-		LibraryDir.PhysXExtensions,
-		LibraryDir.PhysXFoundation,
-		LibraryDir.PhysXPvd,
+		Library.mono,
+		Library.PhysX,
+		Library.PhysXCharacterKinematic,
+		Library.PhysXCommon,
+		Library.PhysXCooking,
+		Library.PhysXExtensions,
+		Library.PhysXFoundation,
+		Library.PhysXPvd,
+		Library.Vulkan,
+		-- Library.VulkanUtils,
+		Library.NvidiaAftermath,
 	},
 	cxflags = {},
 	afterBuildFunc = nil,
 	enableException = true,
-	staticruntime = true,
+	staticruntime = false,
 	group = "Core",
 })
 
@@ -129,6 +120,9 @@ BuildProject({
 		"$(projectdir)/Poseidon/src",
 		IncludeDir.glm,
 		IncludeDir.entt,
+		IncludeDir.ImGui,
+		IncludeDir.VulkanSDK,
+		IncludeDir.Glad,
 	},
 	rundir = "$(projectdir)/Poseidon",
 	packages = {--[["assimp"]]},
@@ -137,7 +131,10 @@ BuildProject({
 	link = {"kernel32", "User32", "Gdi32", "Shell32"},
 	afterBuildFunc = function (target)
 		if is_plat("windows") then
+			os.cp("$(projectdir)/external/NvidiaAftermath/lib/x64/GFSDK_Aftermath_Lib.x64.dll", target:targetdir())
 			if (is_mode("debug")) then
+				-- TODO: Temp, try other way
+				os.cp(path.join(os.getenv("VULKAN_SDK"), "Bin", "shaderc_sharedd.dll"), target:targetdir())
 				os.cp("$(projectdir)/external/assimp/bin/Debug/assimp-vc141-mtd.dll", target:targetdir())
 				os.cp("$(projectdir)/external/mono/bin/Debug/mono-2.0-sgen.dll", target:targetdir())
 			else
@@ -147,7 +144,33 @@ BuildProject({
 		end
 	end,
 	enableException = true,
-	staticruntime = true,
+	staticruntime = false,
 	startproject = true,
 	group = "Tools",
 })
+
+
+--[[BuildProject({
+	projectName = "Sandbox",
+	projectType = "binary",
+	macros = {},
+	languages = {"clatest", "cxx20"},
+	depends = {"Hephaestus"},
+	files = {"Sandbox/src/**.cpp"},
+	headerfiles = {"Sandbox/src/**.hpp", "Sandbox/src/**.h"},
+	pchHeader = nil,
+	includePaths = {"external", "Hephaestus/src", "Sandbox/src",
+		IncludeDir.glm,
+		IncludeDir.entt,
+		IncludeDir.VulkanSDK,
+	},
+	rundir = "$(projectdir)/Sandbox",
+	packages = {"assimp"},
+	debugLink = {},
+	releaseLink = {},
+	link = {"kernel32", "User32", "Gdi32", "Shell32"},
+	afterBuildFunc = nil,
+	enableException = true,
+	staticruntime = true,
+	startproject = false,
+})--]]

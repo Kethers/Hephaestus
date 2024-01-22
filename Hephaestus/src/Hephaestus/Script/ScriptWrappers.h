@@ -77,17 +77,17 @@ namespace Hep::Script
 	void Hep_Material_SetFloat(Ref<Material>* _this, MonoString* uniform, float value);
 	void Hep_Material_SetTexture(Ref<Material>* _this, MonoString* uniform, Ref<Texture2D>* texture);
 
-	void Hep_MaterialInstance_Destructor(Ref<MaterialInstance>* _this);
-	void Hep_MaterialInstance_SetFloat(Ref<MaterialInstance>* _this, MonoString* uniform, float value);
-	void Hep_MaterialInstance_SetVector3(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec3* value);
-	void Hep_MaterialInstance_SetVector4(Ref<MaterialInstance>* _this, MonoString* uniform, glm::vec4* value);
-	void Hep_MaterialInstance_SetTexture(Ref<MaterialInstance>* _this, MonoString* uniform, Ref<Texture2D>* texture);
+	void Hep_MaterialInstance_Destructor(Ref<Material>* _this);
+	void Hep_MaterialInstance_SetFloat(Ref<Material>* _this, MonoString* uniform, float value);
+	void Hep_MaterialInstance_SetVector3(Ref<Material>* _this, MonoString* uniform, glm::vec3* value);
+	void Hep_MaterialInstance_SetVector4(Ref<Material>* _this, MonoString* uniform, glm::vec4* value);
+	void Hep_MaterialInstance_SetTexture(Ref<Material>* _this, MonoString* uniform, Ref<Texture2D>* texture);
 
 	// Mesh
 	Ref<Mesh>* Hep_Mesh_Constructor(MonoString* filepath);
 	void Hep_Mesh_Destructor(Ref<Mesh>* _this);
 	Ref<Material>* Hep_Mesh_GetMaterial(Ref<Mesh>* inMesh);
-	Ref<MaterialInstance>* Hep_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index);
+	Ref<Material>* Hep_Mesh_GetMaterialByIndex(Ref<Mesh>* inMesh, int index);
 	int Hep_Mesh_GetMaterialCount(Ref<Mesh>* inMesh);
 
 	void* Hep_MeshFactory_CreatePlane(float width, float height);

@@ -33,6 +33,8 @@ namespace Hep
 	OpenGLPipeline::OpenGLPipeline(const PipelineSpecification& spec)
 		: m_Specification(spec)
 	{
+		HEP_CORE_ASSERT(spec.Shader);
+		HEP_CORE_ASSERT(spec.RenderPass);
 		Invalidate();
 	}
 

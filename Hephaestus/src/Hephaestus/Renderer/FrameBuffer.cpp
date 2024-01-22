@@ -2,6 +2,9 @@
 #include "FrameBuffer.h"
 
 #include "Hephaestus/Platform/OpenGL/OpenGLFrameBuffer.h"
+#include "Hephaestus/Platform/Vulkan/VulkanFramebuffer.h"
+
+#include "Hephaestus/Renderer/RendererAPI.h"
 
 namespace Hep
 {
@@ -12,7 +15,12 @@ namespace Hep
 		switch (RendererAPI::Current())
 		{
 			case RendererAPIType::None: return nullptr;
-			case RendererAPIType::OpenGL: result = Ref<OpenGLFramebuffer>::Create(spec);
+			case RendererAPIType::OpenGL:
+				result = Ref<OpenGLFramebuffer>::Create(spec);
+				break;
+			case RendererAPIType::Vulkan:
+				result = Ref<VulkanFramebuffer>::Create(spec);
+				break;
 		}
 		FramebufferPool::GetGlobal()->Add(result);
 		return result;

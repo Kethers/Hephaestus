@@ -491,21 +491,15 @@ namespace Hep
 		out << YAML::EndMap; // Environment
 	}
 
-	static bool CheckPath(const std::string& path)
-	{
-		std::ifstream f(path, std::ios::in | std::ios::binary);
-		if (f)
-			f.close();
-		return !f.fail();
-	}
-
 	void SceneSerializer::Serialize(const std::string& filepath)
 	{
 		YAML::Emitter out;
 		out << YAML::BeginMap;
 		out << YAML::Key << "Scene";
 		out << YAML::Value << "Scene Name";
-		SerializeEnvironment(out, m_Scene);
+
+		if (m_Scene->GetEnvironment())
+			SerializeEnvironment(out, m_Scene);
 
 		out << YAML::Key << "Entities";
 		out << YAML::Value << YAML::BeginSeq;
@@ -557,6 +551,7 @@ namespace Hep
 	bool SceneSerializer::Deserialize(const std::string& filepath)
 	{
 		std::ifstream stream(filepath);
+		HEP_CORE_ASSERT(stream);
 		std::stringstream strStream;
 		strStream << stream.rdbuf();
 
@@ -566,33 +561,6 @@ namespace Hep
 
 		std::string sceneName = data["Scene"].as<std::string>();
 		HEP_CORE_INFO("Deserializing scene '{0}'", sceneName);
-
-		/*auto environment = data["Environment"];
-		if (environment)
-		{
-			AssetHandle assetHandle;
-			if (environment["AssetPath"])
-			{
-				std::string envPath = environment["AssetPath"].as<std::string>();
-				assetHandle = AssetManager::GetAssetHandleFromFilePath(envPath);
-			}
-			else
-			{
-				assetHandle = environment["AssetHandle"].as<uint64_t>();
-			}
-			//m_Scene->SetEnvironment(Environment::Load(envPath));
-
-			auto lightNode = environment["Light"];
-			if (lightNode)
-			{
-				auto& light = m_Scene->GetLight();
-				light.Direction = lightNode["Direction"].as<glm::vec3>();
-				light.Radiance = lightNode["Radiance"].as<glm::vec3>();
-				light.Multiplier = lightNode["Multiplier"].as<float>();
-			}
-		}*/
-
-		std::vector<std::string> missingPaths;
 
 		auto entities = data["Entities"];
 		if (entities)
@@ -724,20 +692,28 @@ namespace Hep
 				auto meshComponent = entity["MeshComponent"];
 				if (meshComponent)
 				{
-					UUID assetID;
+					auto& component = deserializedEntity.AddComponent<MeshComponent>();
+
+					AssetHandle assetHandle = 0;
 					if (meshComponent["AssetPath"])
+						assetHandle = AssetManager::GetAssetHandleFromFilePath(meshComponent["AssetPath"].as<std::string>());
+					else
+						assetHandle = meshComponent["AssetID"].as<uint64_t>();
+
+					if (AssetManager::IsAssetHandleValid(assetHandle))
 					{
-						std::string filepath = meshComponent["AssetPath"].as<std::string>();
-						assetID = AssetManager::GetAssetHandleFromFilePath(filepath);
+						component.Mesh = AssetManager::GetAsset<Mesh>(assetHandle);
 					}
 					else
 					{
-						assetID = meshComponent["AssetID"].as<uint64_t>();
-					}
+						component.Mesh = Ref<Asset>::Create().As<Mesh>();
+						component.Mesh->Type = AssetType::Missing;
 
-					if (AssetManager::IsAssetHandleValid(assetID) && !deserializedEntity.HasComponent<MeshComponent>())
-					{
-						deserializedEntity.AddComponent<MeshComponent>(AssetManager::GetAsset<Mesh>(assetID));
+						std::string filepath = meshComponent["AssetPath"] ? meshComponent["AssetPath"].as<std::string>() : "";
+						if (filepath.empty())
+							HEP_CORE_ERROR("Tried to load non-existent mesh in Entity: {0}", deserializedEntity.GetUUID());
+						else
+							HEP_CORE_ERROR("Tried to load invalid mesh '{0}' in Entity {1}", filepath, deserializedEntity.GetUUID());
 					}
 				}
 
@@ -781,20 +757,26 @@ namespace Hep
 				if (skyLightComponent)
 				{
 					auto& component = deserializedEntity.AddComponent<SkyLightComponent>();
-					AssetHandle assetHandle;
+					AssetHandle assetHandle = 0;
 					if (skyLightComponent["EnvironmentAssetPath"])
-					{
-						std::string filepath = skyLightComponent["EnvironmentAssetPath"].as<std::string>();
-						assetHandle = AssetManager::GetAssetHandleFromFilePath(filepath);
-					}
+						assetHandle = AssetManager::GetAssetHandleFromFilePath(skyLightComponent["EnvironmentAssetPath"].as<std::string>());
 					else
-					{
 						assetHandle = skyLightComponent["EnvironmentMap"].as<uint64_t>();
-					}
 
 					if (AssetManager::IsAssetHandleValid(assetHandle))
 					{
 						component.SceneEnvironment = AssetManager::GetAsset<Environment>(assetHandle);
+					}
+					else
+					{
+						std::string filepath = meshComponent["EnvironmentAssetPath"]
+												   ? meshComponent["EnvironmentAssetPath"].as<std::string>()
+												   : "";
+						if (filepath.empty())
+							HEP_CORE_ERROR("Tried to load non-existent environment map in Entity: {0}", deserializedEntity.GetUUID());
+						else
+							HEP_CORE_ERROR("Tried to load invalid environment map '{0}' in Entity {1}", filepath,
+							deserializedEntity.GetUUID());
 					}
 
 					component.Intensity = skyLightComponent["Intensity"].as<float>();
@@ -870,8 +852,17 @@ namespace Hep
 					component.IsTrigger = boxColliderComponent["IsTrigger"] ? boxColliderComponent["IsTrigger"].as<bool>() : false;
 
 					auto material = boxColliderComponent["Material"];
-					if (material && AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
-						component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+					if (material)
+					{
+						if (AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
+						{
+							component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+						}
+						else
+						{
+							HEP_CORE_ERROR("Tried to load invalid Physics Material in Entity {0}", deserializedEntity.GetUUID());
+						}
+					}
 
 					component.DebugMesh = MeshFactory::CreateBox(component.Size);
 				}
@@ -884,8 +875,17 @@ namespace Hep
 					component.IsTrigger = sphereColliderComponent["IsTrigger"] ? sphereColliderComponent["IsTrigger"].as<bool>() : false;
 
 					auto material = sphereColliderComponent["Material"];
-					if (material && AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
-						component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+					if (material)
+					{
+						if (AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
+						{
+							component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+						}
+						else
+						{
+							HEP_CORE_ERROR("Tried to load invalid Physics Material in Entity {0}", deserializedEntity.GetUUID());
+						}
+					}
 
 					component.DebugMesh = MeshFactory::CreateSphere(component.Radius);
 				}
@@ -899,8 +899,17 @@ namespace Hep
 					component.IsTrigger = capsuleColliderComponent["IsTrigger"] ? capsuleColliderComponent["IsTrigger"].as<bool>() : false;
 
 					auto material = capsuleColliderComponent["Material"];
-					if (material && AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
-						component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+					if (material)
+					{
+						if (AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
+						{
+							component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
+						}
+						else
+						{
+							HEP_CORE_ERROR("Tried to load invalid Physics Material in Entity {0}", deserializedEntity.GetUUID());
+						}
+					}
 
 					component.DebugMesh = MeshFactory::CreateCapsule(component.Radius, component.Height);
 				}
@@ -908,57 +917,57 @@ namespace Hep
 				auto meshColliderComponent = entity["MeshColliderComponent"];
 				if (meshColliderComponent)
 				{
-					Ref<Mesh> collisionMesh = deserializedEntity.HasComponent<MeshComponent>()
+					auto& component = deserializedEntity.AddComponent<MeshColliderComponent>();
+					component.IsConvex = meshColliderComponent["IsConvex"] ? meshColliderComponent["IsConvex"].as<bool>() : false;
+					component.IsTrigger = meshColliderComponent["IsTrigger"] ? meshColliderComponent["IsTrigger"].as<bool>() : false;
+
+					component.CollisionMesh = deserializedEntity.HasComponent<MeshComponent>()
 												  ? deserializedEntity.GetComponent<MeshComponent>().Mesh
 												  : nullptr;
 					bool overrideMesh = meshColliderComponent["OverrideMesh"] ? meshColliderComponent["OverrideMesh"].as<bool>() : false;
 
 					if (overrideMesh)
 					{
-						UUID assetID;
-						if (meshComponent["AssetPath"])
+						AssetHandle assetHandle = meshColliderComponent["AssetID"] ? meshColliderComponent["AssetID"].as<uint64_t>() : 0;
+
+						if (AssetManager::IsAssetHandleValid(assetHandle))
+							component.CollisionMesh = AssetManager::GetAsset<Mesh>(assetHandle);
+						else
+							overrideMesh = false;
+					}
+
+					if (component.CollisionMesh)
+					{
+						component.OverrideMesh = overrideMesh;
+
+						if (component.IsConvex)
+							PXPhysicsWrappers::CreateConvexMesh(component, deserializedEntity.Transform().Scale);
+						else
+							PXPhysicsWrappers::CreateTriangleMesh(component, deserializedEntity.Transform().Scale);
+					}
+					else
+					{
+						HEP_CORE_WARN("MeshColliderComponent in use without valid mesh!");
+					}
+					
+					auto material = meshColliderComponent["Material"];
+					if (material)
+					{
+						if (AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
 						{
-							std::string filepath = meshComponent["AssetPath"].as<std::string>();
-							assetID = AssetManager::GetAssetHandleFromFilePath(filepath);
+							component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
 						}
 						else
 						{
-							assetID = meshComponent["AssetID"].as<uint64_t>();
-						}
-
-						if (AssetManager::IsAssetHandleValid(assetID))
-							collisionMesh = AssetManager::GetAsset<Mesh>(assetID);
-					}
-
-					if (collisionMesh)
-					{
-						auto& component = deserializedEntity.AddComponent<MeshColliderComponent>(collisionMesh);
-						component.IsConvex = meshColliderComponent["IsConvex"] ? meshColliderComponent["IsConvex"].as<bool>() : false;
-						component.IsTrigger = meshColliderComponent["IsTrigger"] ? meshColliderComponent["IsTrigger"].as<bool>() : false;
-						component.OverrideMesh = overrideMesh;
-
-						auto material = meshColliderComponent["Material"];
-						if (material && AssetManager::IsAssetHandleValid(material.as<uint64_t>()))
-						{
-							component.Material = AssetManager::GetAsset<PhysicsMaterial>(material.as<uint64_t>());
-
-							if (component.IsConvex)
-								PXPhysicsWrappers::CreateConvexMesh(component, deserializedEntity.Transform().Scale);
-							else
-								PXPhysicsWrappers::CreateTriangleMesh(component, deserializedEntity.Transform().Scale);
+							HEP_CORE_ERROR("Tried to load invalid Physics Material in Entity {0}", deserializedEntity.GetUUID());
 						}
 					}
-				}
-				else
-				{
-					HEP_CORE_WARN("MeshColliderComponent in use without valid mesh!");
 				}
 
 				// NOTE: Compatibility fix for older scenes
 				auto physicsMaterialComponent = entity["PhysicsMaterialComponent"];
 				if (physicsMaterialComponent)
 				{
-					//auto& component = deserializedEntity.AddComponent<PhysicsMaterialComponent>();
 					Ref<PhysicsMaterial> material = Ref<PhysicsMaterial>::Create();
 					material->StaticFriction = physicsMaterialComponent["StaticFriction"].as<float>();
 					material->DynamicFriction = physicsMaterialComponent["DynamicFriction"].as<float>();
@@ -1001,17 +1010,6 @@ namespace Hep
 					}
 				}
 			}
-		}
-
-		if (!missingPaths.empty())
-		{
-			HEP_CORE_ERROR("The following files could not be loaded:");
-			for (auto& path : missingPaths)
-			{
-				HEP_CORE_ERROR("  {0}", path);
-			}
-
-			return false;
 		}
 
 		return true;

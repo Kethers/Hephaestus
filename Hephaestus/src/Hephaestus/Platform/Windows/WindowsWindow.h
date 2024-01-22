@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Hephaestus/Core/Window.h"
-#include "Hephaestus/Renderer/GraphicsContext.h"
 
 #include <GLFW/glfw3.h>
 
@@ -13,7 +12,8 @@ namespace Hep
 		WindowsWindow(const WindowProps& props);
 		virtual ~WindowsWindow();
 
-		void OnUpdate() override;
+		void ProcessEvents() override;
+		void SwapBuffers() override;
 
 		unsigned int GetWidth() const override { return m_Data.Width; }
 		unsigned int GetHeight() const override { return m_Data.Height; }
@@ -37,10 +37,11 @@ namespace Hep
 		virtual void Init(const WindowProps& props);
 		virtual void Shutdown();
 
+		Ref<RendererContext> GetRenderContext() override { return m_RendererContext; }
+
 	private:
 		GLFWwindow* m_Window;
 		GLFWcursor* m_ImGuiMouseCursors[9] = { 0 };
-		GraphicsContext* m_Context;
 
 		struct WindowData
 		{
@@ -53,5 +54,7 @@ namespace Hep
 
 		WindowData m_Data;
 		float m_LastFrameTime = 0.0f;
+
+		Ref<RendererContext> m_RendererContext;
 	};
 }

@@ -40,26 +40,3 @@ BuildProject({
 	staticruntime = false,
 	targetdir = "$(projectdir)/Poseidon/assets/scripts",
 })
-
---[[BuildProject({
-	projectName = "Sandbox",
-	projectType = "binary",
-	macros = {},
-	languages = {"clatest", "cxx20"},
-	depends = {"Hephaestus"},
-	files = {"Sandbox/src/**.cpp"},
-	headerfiles = {"Sandbox/src/**.hpp", "Sandbox/src/**.h"},
-	pchHeader = nil,
-	includePaths = {"external", "Hephaestus/src", "Sandbox/src",
-		IncludeDir.glm,
-	},
-	rundir = "$(projectdir)/Sandbox",
-	packages = {"assimp"},
-	debugLink = {},
-	releaseLink = {},
-	link = {"kernel32", "User32", "Gdi32", "Shell32"},
-	afterBuildFunc = nil,
-	enableException = true,
-	staticruntime = true,
-	startproject = false,
-})--]]
