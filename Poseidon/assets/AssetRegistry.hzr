@@ -17,6 +17,9 @@ Assets:
   - Handle: 16815532844705120241
     FilePath: assets/editor/hazel_errr.png
     Type: 2
+  - Handle: 1610290322874017948
+    FilePath: assets/meshes/CubeScene
+    Type: 7
   - Handle: 10072064586026924578
     FilePath: assets/meshes/Default/Sphere.fbx
     Type: 1
@@ -317,9 +320,27 @@ Assets:
   - Handle: 3897345725591858812
     FilePath: assets/fonts/opensans
     Type: 7
-  - Handle: 726401341005237216
-    FilePath: assets/cache/colliders
-    Type: 7
   - Handle: 17307685407301111418
     FilePath: assets/PM_Player.hpm
     Type: 6
+  - Handle: 15397237197171351329
+    FilePath: assets/meshes/Capsule
+    Type: 7
+  - Handle: 4430417209217206558
+    FilePath: assets/meshes/Cube1m
+    Type: 7
+  - Handle: 17642812647464754237
+    FilePath: assets/meshes/Default/Capsule
+    Type: 7
+  - Handle: 9626707437959308645
+    FilePath: assets/meshes/sponza/sponza
+    Type: 7
+  - Handle: 2196551457008996387
+    FilePath: assets/meshes/Tests/TransformTest
+    Type: 7
+  - Handle: 5911230639906492962
+    FilePath: assets/models/Plane1m
+    Type: 7
+  - Handle: 7933747309948012163
+    FilePath: assets/cache/colliders
+    Type: 7

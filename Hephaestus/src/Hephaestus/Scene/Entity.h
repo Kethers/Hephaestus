@@ -27,13 +27,6 @@ namespace Hep
 		}
 
 		template <typename T>
-		void RemoveComponent()
-		{
-			HEP_CORE_ASSERT(HasComponent<T>(), "Entity doesn't have component!");
-			m_Scene->m_Registry.remove<T>(m_EntityHandle);
-		}
-
-		template <typename T>
 		T& GetComponent()
 		{
 			HEP_CORE_ASSERT(HasComponent<T>(), "Entity doesn't have component!");
@@ -44,6 +37,13 @@ namespace Hep
 		bool HasComponent()
 		{
 			return m_Scene->m_Registry.has<T>(m_EntityHandle);
+		}
+		
+		template <typename T>
+		void RemoveComponent()
+		{
+			HEP_CORE_ASSERT(HasComponent<T>(), "Entity doesn't have component!");
+			m_Scene->m_Registry.remove<T>(m_EntityHandle);
 		}
 
 		TransformComponent& Transform() { return m_Scene->m_Registry.get<TransformComponent>(m_EntityHandle); }

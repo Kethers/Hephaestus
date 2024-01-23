@@ -29,8 +29,6 @@ namespace Hep
 
 	public class TransformComponent : Component
 	{
-		private Transform m_Transform;
-
 		public Transform Transform
 		{
 			get
@@ -235,14 +233,14 @@ namespace Hep
 		internal static extern void AddTorque_Native(ulong entityID, ref Vector3 torque, ForceMode forceMode);
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal static extern void GetAngularVelocity_Native(ulong entityID, out Vector3 velocity);
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		internal static extern void SetAngularVelocity_Native(ulong entityID, ref Vector3 velocity);
-
-		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal static extern void GetLinearVelocity_Native(ulong entityID, out Vector3 velocity);
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal static extern void SetLinearVelocity_Native(ulong entityID, ref Vector3 velocity);
+
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal static extern void GetAngularVelocity_Native(ulong entityID, out Vector3 velocity);
+		[MethodImpl(MethodImplOptions.InternalCall)]
+		internal static extern void SetAngularVelocity_Native(ulong entityID, ref Vector3 velocity);
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		internal static extern void Rotate_Native(ulong entityID, ref Vector3 rotation);

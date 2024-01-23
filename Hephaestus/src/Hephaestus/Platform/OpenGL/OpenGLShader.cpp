@@ -362,6 +362,9 @@ namespace Hep
 		return ShaderUniformType::None;
 	}
 
+	void OpenGLShader::Compile(const std::vector<uint32_t>& vertexBinary, const std::vector<uint32_t>& fragmentBinary)
+	{}
+
 	void OpenGLShader::ParseConstantBuffers(const spirv_cross::CompilerGLSL& compiler)
 	{
 		spirv_cross::ShaderResources res = compiler.get_shader_resources();

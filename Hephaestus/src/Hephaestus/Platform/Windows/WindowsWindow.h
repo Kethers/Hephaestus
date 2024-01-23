@@ -33,11 +33,11 @@ namespace Hep
 
 		void* GetNativeWindow() const override { return m_Window; }
 
+		Ref<RendererContext> GetRenderContext() override { return m_RendererContext; }
+
 	private:
 		virtual void Init(const WindowProps& props);
 		virtual void Shutdown();
-
-		Ref<RendererContext> GetRenderContext() override { return m_RendererContext; }
 
 	private:
 		GLFWwindow* m_Window;

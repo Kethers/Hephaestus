@@ -114,7 +114,7 @@ namespace Hep
 	{
 		enum class Type { Static, Dynamic, Kinematic };
 
-		Type BodyType = Type::Static;
+		Type BodyType;
 		bool FixedRotation = false;
 
 		// Storage for runtime
@@ -158,7 +158,7 @@ namespace Hep
 	{
 		enum class Type { Static, Dynamic };
 
-		Type BodyType;
+		Type BodyType = Type::Static;
 		float Mass = 1.0f;
 		float LinearDrag = 0.0f;
 		float AngularDrag = 0.05f;
@@ -235,8 +235,6 @@ namespace Hep
 		operator Ref<Mesh>() { return CollisionMesh; }
 	};
 
-	// Lights
-	// TODO: Move to renderer
 	enum class LightType
 	{
 		None = 0, Directional = 1, Point = 2, Spot = 3

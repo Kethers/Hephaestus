@@ -32,6 +32,9 @@ namespace Hep
 
 		bool IsSelected(AssetHandle item) const
 		{
+			if (m_Selections.size() == 0)
+				return false;
+
 			for (auto selection : m_Selections)
 			{
 				if (selection == item)
@@ -43,7 +46,8 @@ namespace Hep
 
 		void Clear()
 		{
-			m_Selections.clear();
+			if (m_Selections.size() > 0)
+				m_Selections.clear();
 		}
 
 		size_t SelectionCount() const
@@ -54,6 +58,12 @@ namespace Hep
 		AssetHandle* GetSelectionData()
 		{
 			return m_Selections.data();
+		}
+
+		AssetHandle operator[](size_t index) const
+		{
+			HEP_CORE_ASSERT(index >= 0 && index < m_Selections.size());
+			return m_Selections[index];
 		}
 
 	private:
@@ -73,6 +83,7 @@ namespace Hep
 		void RenderAsset(Ref<Asset>& assetHandle);
 		void HandleDragDrop(Ref<Image2D> icon, Ref<Asset>& asset);
 		void RenderBreadCrumbs();
+		void RenderBottomBar();
 
 		void HandleRenaming(Ref<Asset>& asset);
 

@@ -86,7 +86,8 @@ namespace Hep
 
 	glm::quat FromPhysXQuat(const physx::PxQuat& quat)
 	{
-		return *(glm::quat*)&quat;
+		// Note: PxQuat elements are in a different order than glm::quat!
+		return glm::quat(quat.w, quat.x, quat.y, quat.z);
 	}
 
 	physx::PxFilterFlags HepFilterShader(physx::PxFilterObjectAttributes attributes0, physx::PxFilterData filterData0,

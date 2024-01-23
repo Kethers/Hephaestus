@@ -81,7 +81,7 @@ namespace Hep
 	private:
 		VkDevice m_LogicalDevice = nullptr;
 		Ref<VulkanPhysicalDevice> m_PhysicalDevice;
-		VkPhysicalDeviceFeatures m_EnableFeatures;
+		VkPhysicalDeviceFeatures m_EnabledFeatures;
 		VkCommandPool m_CommandPool, m_ComputeCommandPool;
 
 		VkQueue m_Queue;

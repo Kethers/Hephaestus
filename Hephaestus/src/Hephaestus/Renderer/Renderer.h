@@ -19,7 +19,7 @@ namespace Hep
 	struct RendererConfig
 	{
 		// "Experimental" features
-		bool ComputeEnvironmentMaps = false;
+		bool ComputeEnvironmentMaps = true;
 
 		// Tiering settings
 		uint32_t EnvironmentMapResolution = 1024;

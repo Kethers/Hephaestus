@@ -51,7 +51,7 @@ namespace Hep
 			UpdateCurrentDirectory(directory);
 	}
 
-	static int s_ColumnCount = 10;
+	static int s_ColumnCount = 11;
 	void ContentBrowserPanel::OnImGuiRender()
 	{
 		ImGui::Begin("Content Browser", NULL, ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar);
@@ -59,7 +59,6 @@ namespace Hep
 			UI::BeginPropertyGrid();
 			ImGui::SetColumnOffset(1, 240);
 
-			// There happens to be recursive tree unfolding issue which doesn't show nested directories/files
 			ImGui::BeginChild("##folders_common");
 			{
 				if (ImGui::CollapsingHeader("Content", nullptr, ImGuiTreeNodeFlags_DefaultOpen))
@@ -69,12 +68,12 @@ namespace Hep
 						DrawDirectoryInfo(child);
 					}
 				}
-				ImGui::EndChild();
 			}
+			ImGui::EndChild();
 
 			ImGui::NextColumn();
 
-			ImGui::BeginChild("##directory_structure", ImVec2(0, ImGui::GetWindowHeight() - 60));
+			ImGui::BeginChild("##directory_structure", ImVec2(0, ImGui::GetWindowHeight() - 65));
 			{
 				ImGui::BeginChild("##top_bar", ImVec2(0, 30));
 				{
@@ -94,7 +93,6 @@ namespace Hep
 						m_SelectedAssets.Clear();
 						m_RenamingSelected = false;
 						memset(m_RenameBuffer, 0, MAX_INPUT_BUFFER_LENGTH);
-						memset(m_SearchBuffer, 0, MAX_INPUT_BUFFER_LENGTH);
 					}
 
 					m_IsAnyItemHovered = false;
@@ -168,17 +166,7 @@ namespace Hep
 			}
 			ImGui::EndChild();
 
-			ImGui::BeginChild("##panel_controls", ImVec2(ImGui::GetColumnWidth() - 12, 20), false,
-				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-			{
-				ImGui::Columns(4, 0, false);
-				ImGui::NextColumn();
-				ImGui::NextColumn();
-				ImGui::NextColumn();
-				ImGui::SetNextItemWidth(ImGui::GetColumnWidth());
-				ImGui::SliderInt("##column_count", &s_ColumnCount, 2, 15);
-			}
-			ImGui::EndChild();
+			RenderBottomBar();
 
 			UI::EndPropertyGrid();
 		}
@@ -198,13 +186,15 @@ namespace Hep
 								   ? m_AssetIconMap[asset->Extension]->GetImage()
 								   : m_FileTex->GetImage();
 
-		if (m_SelectedAssets.IsSelected(assetHandle))
+		bool selected = m_SelectedAssets.IsSelected(assetHandle);
+
+		if (selected)
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.25f, 0.25f, 0.25f, 0.75f));
 
 		float buttonWidth = ImGui::GetColumnWidth() - 15.0f;
 		UI::ImageButton(iconRef, { buttonWidth, buttonWidth });
 
-		if (m_SelectedAssets.IsSelected(assetHandle))
+		if (selected)
 			ImGui::PopStyleColor();
 
 		HandleDragDrop(iconRef, asset);
@@ -236,7 +226,7 @@ namespace Hep
 				if (!Input::IsKeyPressed(KeyCode::LeftControl))
 					m_SelectedAssets.Clear();
 
-				if (m_SelectedAssets.IsSelected(assetHandle))
+				if (selected)
 					m_SelectedAssets.Deselect(assetHandle);
 				else
 					m_SelectedAssets.Select(assetHandle);
@@ -244,8 +234,19 @@ namespace Hep
 		}
 
 		bool openDeleteModal = false;
+
+		// TODO: Delete multiple items at once
+		if (selected && Input::IsKeyPressed(KeyCode::Delete) && !openDeleteModal && m_SelectedAssets.SelectionCount() == 1)
+		{
+			openDeleteModal = true;
+		}
+
 		if (ImGui::BeginPopupContextItem("ContextMenu"))
 		{
+			ImGui::Text(asset->FilePath.c_str());
+
+			ImGui::Separator();
+
 			if (ImGui::MenuItem("Rename"))
 			{
 				m_SelectedAssets.Select(assetHandle);
@@ -310,10 +311,10 @@ namespace Hep
 		{
 			ImGui::SetNextItemWidth(buttonWidth);
 
-			if (!m_SelectedAssets.IsSelected(assetHandle) || !m_RenamingSelected)
+			if (!selected || !m_RenamingSelected)
 				ImGui::TextWrapped(filename.c_str());
 
-			if (m_SelectedAssets.IsSelected(assetHandle))
+			if (selected)
 				HandleRenaming(asset);
 		}
 
@@ -335,11 +336,7 @@ namespace Hep
 					for (int i = 0; i < count; i++)
 					{
 						AssetHandle handle = *(((AssetHandle*)payload->Data) + i);
-						Ref<Asset> droppedAsset = AssetManager::GetAsset<Asset>(handle, false);
-
-						bool result = FileSystem::MoveFile(droppedAsset->FilePath, asset->FilePath);
-						if (result)
-							droppedAsset->ParentDirectory = asset->Handle;
+						AssetManager::MoveAsset(handle, asset->Handle);
 					}
 
 					m_UpdateDirectoryNextFrame = true;
@@ -419,27 +416,49 @@ namespace Hep
 			m_UpdateBreadCrumbs = false;
 		}
 
-		for (int i = 0; i < m_BreadCrumbData.size(); i++)
+		for (const auto& directory : m_BreadCrumbData)
 		{
-			if (m_BreadCrumbData[i]->FileName != "assets")
+			if (directory->FileName != "assets")
 				ImGui::Text("/");
 
 			ImGui::SameLine();
 
-			int size = strlen(m_BreadCrumbData[i]->FileName.c_str()) * 7;
-
-			if (ImGui::Selectable(m_BreadCrumbData[i]->FileName.c_str(), false, 0, ImVec2(size, 22)))
+			ImVec2 textSize = ImGui::CalcTextSize(directory->FileName.c_str());
+			if (ImGui::Selectable(directory->FileName.c_str(), false, 0, ImVec2(textSize.x, 22)))
 			{
-				UpdateCurrentDirectory(m_BreadCrumbData[i]->Handle);
+				UpdateCurrentDirectory(directory->Handle);
 			}
 
 			ImGui::SameLine();
 		}
+	}
 
-		ImGui::SameLine();
+	void ContentBrowserPanel::RenderBottomBar()
+	{
+		ImGui::BeginChild("##panel_controls", ImVec2(ImGui::GetColumnWidth() - 12, 30), false,
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+		{
+			ImGui::Separator();
 
-		ImGui::Dummy(ImVec2(ImGui::GetColumnWidth() - 400, 0));
-		ImGui::SameLine();
+			ImGui::Columns(4, 0, false);
+
+			if (m_SelectedAssets.SelectionCount() == 1)
+			{
+				const Ref<Asset>& asset = AssetManager::GetAsset<Asset>(m_SelectedAssets[0], false);
+				ImGui::Text(asset->FilePath.c_str());
+			}
+			else if (m_SelectedAssets.SelectionCount() > 1)
+			{
+				ImGui::Text("%d items selected", m_SelectedAssets.SelectionCount());
+			}
+
+			ImGui::NextColumn();
+			ImGui::NextColumn();
+			ImGui::NextColumn();
+			ImGui::SetNextItemWidth(ImGui::GetColumnWidth());
+			ImGui::SliderInt("##column_count", &s_ColumnCount, 2, 15);
+		}
+		ImGui::EndChild();
 	}
 
 	void ContentBrowserPanel::HandleRenaming(Ref<Asset>& asset)
@@ -469,6 +488,8 @@ namespace Hep
 
 	void ContentBrowserPanel::UpdateCurrentDirectory(AssetHandle directoryHandle)
 	{
+		m_SelectedAssets.Clear();
+
 		m_UpdateBreadCrumbs = true;
 		m_CurrentDirFiles.clear();
 		m_CurrentDirFolders.clear();
@@ -476,6 +497,11 @@ namespace Hep
 		m_CurrentDirectory = AssetManager::GetAsset<Directory>(m_CurrentDirHandle);
 
 		std::vector<Ref<Asset>> assets = AssetManager::GetAssetsInDirectory(m_CurrentDirHandle);
+		std::sort(assets.begin(), assets.end(), [](const Ref<Asset>& a1, const Ref<Asset>& a2)
+		{
+			return Utils::ToLower(a1->FileName) < Utils::ToLower(a2->FileName);
+		});
+
 		for (auto& asset : assets)
 		{
 			if (asset->Type == AssetType::Directory)

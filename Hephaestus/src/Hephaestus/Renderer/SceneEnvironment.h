@@ -7,7 +7,6 @@ namespace Hep
 	class Environment : public Asset
 	{
 	public:
-		std::string FilePath;
 		Ref<TextureCube> RadianceMap;
 		Ref<TextureCube> IrradianceMap;
 

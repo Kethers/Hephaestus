@@ -16,9 +16,10 @@ namespace Hep
 		auto vkInstance = VulkanContext::GetInstance();
 
 		uint32_t gpuCount = 0;
-		// Get member of available physical device
+		// Get number of available physical devices
 		vkEnumeratePhysicalDevices(vkInstance, &gpuCount, nullptr);
 		HEP_CORE_ASSERT(gpuCount > 0);
+		// Enumerate devices
 		std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
 		VK_CHECK_RESULT(vkEnumeratePhysicalDevices(vkInstance, &gpuCount, physicalDevices.data()));
 
@@ -35,7 +36,7 @@ namespace Hep
 
 		if (!selectedPhysicalDevice)
 		{
-			HEP_CORE_TRACE("Coule not find discrete GPU.");
+			HEP_CORE_TRACE("Could not find discrete GPU.");
 			selectedPhysicalDevice = physicalDevices.back();
 		}
 
@@ -55,11 +56,11 @@ namespace Hep
 		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extCount, nullptr);
 		if (extCount > 0)
 		{
-			std::vector<VkExtensionProperties> extension(extCount);
-			if (vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extCount, extension.data()) == VK_SUCCESS)
+			std::vector<VkExtensionProperties> extensions(extCount);
+			if (vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extCount, &extensions.front()) == VK_SUCCESS)
 			{
-				HEP_CORE_ASSERT("Selected physical device hsa {0} extensions", extension.size());
-				for (const auto& ext : extension)
+				HEP_CORE_TRACE("Selected physical device has {0} extensions", extensions.size());
+				for (const auto& ext : extensions)
 				{
 					m_SupportedExtensions.emplace(ext.extensionName);
 					HEP_CORE_TRACE("  {0}", ext.extensionName);
@@ -247,9 +248,9 @@ namespace Hep
 	////////////////////////////////////////////////////////////////////////////////////
 
 	VulkanDevice::VulkanDevice(const Ref<VulkanPhysicalDevice>& physicalDevice, VkPhysicalDeviceFeatures enabledFeatures)
-		: m_PhysicalDevice(physicalDevice), m_EnableFeatures(enabledFeatures)
+		: m_PhysicalDevice(physicalDevice), m_EnabledFeatures(enabledFeatures)
 	{
-		// Do we need to enable any other extensions (eg. NV_RAYTRACING?
+		// Do we need to enable any other extensions (eg. NV_RAYTRACING?)
 		std::vector<const char*> deviceExtensions;
 		// If the device will be used for presenting to a display via a swapchain we need to request the swapchain extension
 		HEP_CORE_ASSERT(m_PhysicalDevice->IsExtensionSupported(VK_KHR_SWAPCHAIN_EXTENSION_NAME));

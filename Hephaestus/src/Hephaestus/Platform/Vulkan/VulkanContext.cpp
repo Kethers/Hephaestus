@@ -7,7 +7,7 @@
 namespace Hep
 {
 #ifdef HEP_DEBUG
-	static constexpr bool s_Validation = true;
+	static constexpr bool s_Validation = false;
 #else
 	static constexpr bool s_Validation = false;
 #endif

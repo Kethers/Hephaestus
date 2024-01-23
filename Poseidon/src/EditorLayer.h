@@ -150,7 +150,7 @@ namespace Hep
 		bool m_ViewportPanelMouseOver = false;
 		bool m_ViewportPanelFocused = false;
 
-		bool m_ShowWelcomePopup = true;
+		bool m_ShowWelcomePopup = false;
 
 		bool m_ShowPhysicsSettings = false;
 		bool m_ShowAboutPopup = false;

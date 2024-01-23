@@ -64,16 +64,16 @@ namespace Hep
 		m_ContentBrowserPanel = CreateScope<ContentBrowserPanel>();
 		m_ObjectsPanel = CreateScope<ObjectsPanel>();
 
-		NewScene();
-		//OpenScene("assets/scenes/ShadowTest.hsc");
+		// NewScene();
+		OpenScene("assets/scenes/SponzaDemo.hsc");
 
 		AssetEditorPanel::RegisterDefaultEditors();
-		FileSystem::StartWatching();
+		// FileSystem::StartWatching();
 	}
 
 	void EditorLayer::OnDetach()
 	{
-		FileSystem::StopWatching();
+		// FileSystem::StopWatching();
 		AssetEditorPanel::UnregisterAllEditors();
 	}
 
@@ -1205,11 +1205,11 @@ namespace Hep
 						continue;
 
 					auto& submeshes = mesh->GetSubmeshes();
-					glm::mat4 transform = m_CurrentScene->GetTransformRelativeToParent(entity);
 					float lastT = std::numeric_limits<float>::max();
 					for (uint32_t i = 0; i < submeshes.size(); i++)
 					{
 						auto& submesh = submeshes[i];
+						glm::mat4 transform = m_CurrentScene->GetTransformRelativeToParent(entity);
 						Ray ray = {
 							glm::inverse(transform * submesh.Transform) * glm::vec4(origin, 1.0f),
 							glm::inverse(glm::mat3(transform) * glm::mat3(submesh.Transform)) * direction

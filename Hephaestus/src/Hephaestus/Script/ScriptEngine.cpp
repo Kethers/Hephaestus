@@ -628,11 +628,10 @@ namespace Hep
 				MonoType* fieldType = mono_field_get_type(iter);
 				FieldType hepFieldType = GetHepFieldType(fieldType);
 
-				// TODO: Attributes
-				MonoCustomAttrInfo* attr = mono_custom_attrs_from_field(scriptClass.Class, iter);
-
 				if (hepFieldType == FieldType::ClassReference)
 					continue;
+				// TODO: Attributes
+				MonoCustomAttrInfo* attr = mono_custom_attrs_from_field(scriptClass.Class, iter);
 
 				char* typeName = mono_type_get_name(fieldType);
 

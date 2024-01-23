@@ -412,10 +412,9 @@ namespace Hep::UI
 	{
 		bool modified = false;
 
-		ImGui::Text("Mesh");
+		ImGui::Text(label);
 		ImGui::NextColumn();
 		ImGui::PushItemWidth(-1);
-		//ImGui::InputInt("##meshid", (int*)&((Ref<Asset>&)object)->ID, 0, 0, ImGuiInputTextFlags_ReadOnly);
 
 		if (object)
 		{

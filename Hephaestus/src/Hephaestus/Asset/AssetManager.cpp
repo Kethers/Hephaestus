@@ -38,9 +38,9 @@ namespace Hep
 		AssetImporter::Init();
 
 		LoadAssetRegistry();
-		FileSystem::SetChangeCallback(AssetManager::OnFileSystemChanged);
+		// FileSystem::SetChangeCallback(AssetManager::OnFileSystemChanged);
 		ReloadAssets();
-		UpdateRegistryCache();
+		WriteRegistryToFile();
 	}
 
 	void AssetManager::SetAssetChangeCallback(const AssetsChangeEventFn& callback)
@@ -50,7 +50,7 @@ namespace Hep
 
 	void AssetManager::Shutdown()
 	{
-		UpdateRegistryCache();
+		WriteRegistryToFile();
 
 		s_AssetRegistry.clear();
 		s_LoadedAssets.clear();
@@ -58,15 +58,27 @@ namespace Hep
 
 	std::vector<Ref<Asset>> AssetManager::GetAssetsInDirectory(AssetHandle directoryHandle)
 	{
-		std::vector<Ref<Asset>> results;
+		std::vector<Ref<Asset>> result;
+		Ref<Directory> directory = s_LoadedAssets[directoryHandle].As<Directory>();
+		result.reserve(directory->ChildDirectories.size() + directory->Assets.size());
 
-		for (auto& asset : s_LoadedAssets)
+		for (auto& assetHandle : directory->ChildDirectories)
 		{
-			if (asset.second && asset.second->ParentDirectory == directoryHandle && asset.second->Handle != directoryHandle)
-				results.push_back(asset.second);
+			if (!IsAssetHandleValid(assetHandle))
+				continue;
+
+			result.push_back(s_LoadedAssets[assetHandle]);
 		}
 
-		return results;
+		for (auto& assetHandle : directory->Assets)
+		{
+			if (!IsAssetHandleValid(assetHandle))
+				continue;
+
+			result.push_back(s_LoadedAssets[assetHandle]);
+		}
+
+		return result;
 	}
 
 	// Utility function to find the parent of an unprocessed directory
@@ -148,31 +160,39 @@ namespace Hep
 	{
 		std::vector<Ref<Asset>> results;
 
-		if (!searchPath.empty())
+		if (searchPath.empty())
+			return results;
+
+		std::string queryLowerCase = Utils::ToLower(query);
+
+		Ref<Directory> searchOrigin = GetAsset<Directory>(searchPath);
+
+		for (auto& childHandle : searchOrigin->ChildDirectories)
 		{
-			for (const auto& [key, asset] : s_LoadedAssets)
-			{
-				if (desiredType == AssetType::None && asset->Type == AssetType::Directory)
-					continue;
+			std::vector<Ref<Asset>> childResults = SearchAssets(query, s_LoadedAssets[childHandle]->FilePath, desiredType);
+			results.insert(results.end(), childResults.begin(), childResults.end());
+		}
 
-				if (desiredType != AssetType::None && asset->Type != desiredType)
-					continue;
+		for (auto& assetHandle : searchOrigin->Assets)
+		{
+			const auto& asset = s_LoadedAssets[assetHandle];
 
-				if (asset->FileName.find(query) != std::string::npos && asset->FilePath.find(searchPath) != std::string::npos)
-				{
-					results.push_back(asset);
-				}
+			if (desiredType == AssetType::None && asset->Type == AssetType::Directory)
+				continue;
 
-				// Search extensions
-				if (query[0] == '.')
-				{
-					if (asset->Extension.find(std::string(&query[1])) != std::string::npos
-						&& asset->FilePath.find(searchPath) != std::string::npos)
-					{
-						results.push_back(asset);
-					}
-				}
-			}
+			if (desiredType != AssetType::None && asset->Type != desiredType)
+				continue;
+
+			std::string filename = Utils::ToLower(asset->FileName);
+
+			if (filename.find(queryLowerCase) != std::string::npos)
+				results.push_back(asset);
+
+			if (queryLowerCase[0] != '.')
+				continue;
+
+			if (asset->Extension.find(std::string(&queryLowerCase[1])) != std::string::npos)
+				results.push_back(asset);
 		}
 
 		return results;
@@ -202,21 +222,47 @@ namespace Hep
 		return 0;
 	}
 
-	bool AssetManager::IsAssetHandleValid(AssetHandle assetHandle)
-	{
-		return assetHandle != 0 && s_LoadedAssets.find(assetHandle) != s_LoadedAssets.end();
-	}
-
 	void AssetManager::Rename(AssetHandle assetHandle, const std::string& newName)
 	{
 		Ref<Asset>& asset = s_LoadedAssets[assetHandle];
-		AssetMetadata& metadata = s_AssetRegistry[asset->FilePath];
+		AssetMetadata metadata = s_AssetRegistry[asset->FilePath];
 		std::string newFilePath = FileSystem::Rename(asset->FilePath, newName);
 		asset->FilePath = newFilePath;
 		asset->FileName = newName;
 
+		s_AssetRegistry.erase(metadata.FilePath);
+
 		metadata.FilePath = newFilePath;
-		UpdateRegistryCache();
+		s_AssetRegistry[metadata.FilePath] = metadata;
+
+		WriteRegistryToFile();
+	}
+
+	void AssetManager::MoveAsset(AssetHandle assetHandle, AssetHandle newDirectory)
+	{
+		Ref<Asset>& asset = s_LoadedAssets[assetHandle];
+		Ref<Directory> directory = s_LoadedAssets[newDirectory].As<Directory>();
+		Ref<Directory> currentDirectory = s_LoadedAssets[asset->ParentDirectory].As<Directory>();
+		AssetMetadata metadata = s_AssetRegistry[asset->FilePath];
+
+		bool result = FileSystem::MoveFile(asset->FilePath, directory->FilePath);
+
+		if (!result)
+			return;
+
+		asset->FilePath = directory->FilePath + "/" + asset->FileName + "." + asset->Extension;
+
+		s_AssetRegistry.erase(metadata.FilePath);
+		metadata.FilePath = asset->FilePath;
+
+		s_AssetRegistry[metadata.FilePath] = metadata;
+
+		asset->ParentDirectory = directory->Handle;
+		directory->Assets.push_back(assetHandle);
+		currentDirectory->Assets.erase(std::remove(currentDirectory->Assets.begin(), currentDirectory->Assets.end(), assetHandle),
+			currentDirectory->Assets.end());
+
+		WriteRegistryToFile();
 	}
 
 	void AssetManager::RemoveAsset(AssetHandle assetHandle)
@@ -224,32 +270,37 @@ namespace Hep
 		Ref<Asset> asset = s_LoadedAssets[assetHandle];
 		if (asset->Type == AssetType::Directory)
 		{
+			Ref<Directory> dir = asset.As<Directory>();
+
 			if (IsAssetHandleValid(asset->ParentDirectory))
 			{
 				auto& childList = s_LoadedAssets[asset->ParentDirectory].As<Directory>()->ChildDirectories;
 				childList.erase(std::remove(childList.begin(), childList.end(), assetHandle), childList.end());
 			}
 
-			for (auto child : asset.As<Directory>()->ChildDirectories)
+			for (auto child : dir->ChildDirectories)
 				RemoveAsset(child);
 
-			for (auto it = s_LoadedAssets.begin(); it != s_LoadedAssets.end();)
+			for (auto childHandle : dir->Assets)
 			{
-				if (it->second->ParentDirectory != assetHandle)
-				{
-					++it;
-					continue;
-				}
-
-				s_AssetRegistry.erase(it->second->FilePath);
-				it = s_LoadedAssets.erase(it);
+				auto child = s_LoadedAssets[childHandle];
+				s_AssetRegistry.erase(child->FilePath);
+				s_LoadedAssets.erase(childHandle);
 			}
+
+			dir->ChildDirectories.clear();
+			dir->Assets.clear();
+		}
+		else
+		{
+			auto parent = s_LoadedAssets[asset->ParentDirectory].As<Directory>();
+			parent->Assets.erase(std::remove(parent->Assets.begin(), parent->Assets.end(), assetHandle), parent->Assets.end());
 		}
 
 		s_AssetRegistry.erase(asset->FilePath);
 		s_LoadedAssets.erase(assetHandle);
 
-		UpdateRegistryCache();
+		WriteRegistryToFile();
 	}
 
 	AssetType AssetManager::GetAssetTypeForFileType(const std::string& extension)
@@ -280,7 +331,7 @@ namespace Hep
 		auto handles = data["Assets"];
 		if (!handles)
 		{
-			HEP_CORE_ERROR("Failed to read Asset Registry file.");
+			HEP_CORE_ERROR("AssetRegistry appears to be corrupted!");
 			return;
 		}
 
@@ -293,8 +344,53 @@ namespace Hep
 
 			if (!FileSystem::Exists(metadata.FilePath))
 			{
-				HEP_CORE_WARN("Tried to load metadata for non-existing asset: {0}", metadata.FilePath);
-				continue;
+				HEP_CORE_WARN("Missing asset '{0}' detected in registry file, trying to locate...", metadata.FilePath);
+
+				std::string mostLikelyCandidate;
+				uint32_t bestScore = 0;
+
+				for (auto& pathEntry : std::filesystem::recursive_directory_iterator("assets/"))
+				{
+					const std::filesystem::path& path = pathEntry.path();
+
+					if (path.filename() != Utils::GetFilename(metadata.FilePath))
+						continue;
+
+					if (bestScore > 0)
+						HEP_CORE_WARN("Multiple candiates found...");
+
+					std::vector<std::string> candidateParts = Utils::SplitString(path.string(), "/\\");
+
+					uint32_t score = 0;
+					for (const auto& part : candidateParts)
+					{
+						if (metadata.FilePath.find(part) != std::string::npos)
+							score++;
+					}
+
+					HEP_CORE_WARN("'{0}' has a score of {1}, best score is {2}", path.string(), score, bestScore);
+
+					if (bestScore > 0 && score == bestScore)
+					{
+						// TODO: How do we handle this?
+					}
+
+					if (score <= bestScore)
+						continue;
+
+					bestScore = score;
+					mostLikelyCandidate = path.string();
+				}
+
+				if (mostLikelyCandidate.empty() && bestScore == 0)
+				{
+					HEP_CORE_ERROR("Failed to locate a potential match for '{0}'", metadata.FilePath);
+					continue;
+				}
+
+				metadata.FilePath = mostLikelyCandidate;
+				std::replace(metadata.FilePath.begin(), metadata.FilePath.end(), '\\', '/');
+				HEP_CORE_WARN("Found most likely match '{0}'", metadata.FilePath);
 			}
 
 			if (metadata.Handle == 0)
@@ -361,6 +457,9 @@ namespace Hep
 		}
 
 		s_LoadedAssets[asset->Handle] = asset;
+
+		Ref<Directory> directory = s_LoadedAssets[parentHandle];
+		directory->Assets.push_back(asset->Handle);
 	}
 
 	AssetHandle AssetManager::ProcessDirectory(const std::string& directoryPath, AssetHandle parentHandle)
@@ -397,24 +496,6 @@ namespace Hep
 	{
 		ProcessDirectory("assets", 0);
 
-		// Sort the assets alphabetically (not the best impl)
-		std::vector<std::pair<std::string, Ref<Asset>>> sortedVec;
-		for (auto& [handle, asset] : s_LoadedAssets)
-		{
-			std::string filename = asset->FileName;
-			std::for_each(filename.begin(), filename.end(), [](char& c)
-			{
-				c = std::tolower(c);
-			});
-			sortedVec.push_back(std::make_pair(filename, asset));
-		}
-
-		std::sort(sortedVec.begin(), sortedVec.end());
-		s_LoadedAssets.clear();
-
-		for (auto& p : sortedVec)
-			s_LoadedAssets[p.second->Handle] = p.second;
-
 		// Remove any non-existent assets from the asset registry
 		for (auto it = s_AssetRegistry.begin(); it != s_AssetRegistry.end();)
 		{
@@ -427,9 +508,11 @@ namespace Hep
 				it++;
 			}
 		}
+
+		WriteRegistryToFile();
 	}
 
-	void AssetManager::UpdateRegistryCache()
+	void AssetManager::WriteRegistryToFile()
 	{
 		YAML::Emitter out;
 		out << YAML::BeginMap;

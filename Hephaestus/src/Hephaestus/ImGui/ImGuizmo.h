@@ -142,8 +142,7 @@ namespace ImGuizmo
 	//
 	// These functions have some numerical stability issues for now. Use with caution.
 	IMGUI_API void DecomposeMatrixToComponents(const float* matrix, float* translation, float* rotation, float* scale);
-	IMGUI_API void RecomposeMatrixFromComponents(const float* translation, const float* rotation, const float* scale,
-		float* matrix);
+	IMGUI_API void RecomposeMatrixFromComponents(const float* translation, const float* rotation, const float* scale, float* matrix);
 
 	IMGUI_API void SetRect(float x, float y, float width, float height);
 	// default is false

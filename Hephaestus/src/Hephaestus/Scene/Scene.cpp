@@ -596,8 +596,8 @@ namespace Hep
 
 	void Scene::SetSkybox(const Ref<TextureCube>& skybox)
 	{
-		m_SkyboxTexture = skybox;
-		m_SkyboxMaterial->Set("u_Texture", skybox);
+		// m_SkyboxTexture = skybox;
+		// m_SkyboxMaterial->Set("u_Texture", skybox);
 	}
 
 	Entity Scene::GetMainCameraEntity()
