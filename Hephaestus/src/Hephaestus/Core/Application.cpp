@@ -34,7 +34,7 @@ namespace Hep
 		m_Window = std::unique_ptr<Window>(
 			Window::Create(WindowProps(props.Name, props.WindowWidth, props.WindowHeight)));
 		m_Window->SetEventCallback(HEP_BIND_EVENT_FN(Application::OnEvent));
-		m_Window->Maximize();
+		// m_Window->Maximize();
 		m_Window->SetVSync(true);
 
 		// Init renderer and execute command queue to compile all shaders

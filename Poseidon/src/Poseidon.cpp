@@ -21,5 +21,5 @@ public:
 Hep::Application* Hep::CreateApplication(int argc, char** argv)
 {
 	// RendererAPI::SetAPI(RendererAPIType::Vulkan);
-	return new PoseidonApplication({ "Poseidon", 1600, 900 });
+	return new PoseidonApplication({ "Poseidon", 1920, 1080 });
 }

@@ -1,19 +1,6 @@
 set_project("Hephaestus")
 
 includes("../../util/dependencies.lua")
-includes("../../../external/Glad")
-includes("../../../external/GLFW")
-includes("../../../external/imgui")
-includes("../../../external/yaml-cpp")
-includes("../../../external/Box2D")
-add_repositories("glfw /external/GLFW", {rootdir = os.projectdir()})
-add_requires("glfw")
--- TEMP: bug on 5.2.4 MTd, disable for, emm... now?
--- if is_mode("debug") then
--- 	add_requires("assimp >= 5.2.4", {configs = {debug = true, vs_runtime = "MTd"}} )
--- else
--- 	add_requires("assimp >= 5.2.4", {configs = {debug = false, vs_runtime = "MT"}} )
--- end
 
 BuildProject({
 	projectName = "Hephaestus",
@@ -37,7 +24,6 @@ BuildProject({
 	includePaths = {
 		"$(projectdir)/external", 
 		"$(projectdir)/Hephaestus/src", 
-		IncludeDir.GLFW, 
 		IncludeDir.Glad,
 		IncludeDir.ImGui,
 		IncludeDir.glm,
@@ -49,10 +35,9 @@ BuildProject({
 		IncludeDir["yaml-cpp"],
 		IncludeDir.Box2D,
 		IncludeDir.PhysX,
-		IncludeDir.VulkanSDK,
 		IncludeDir.NvidiaAftermath,
 	},
-	packages = {"glfw"},
+	packages = {"glfw", "vulkansdk"},
 	debugLink = {
 		Library.ShaderC_Debug,
 		Library.SPIRV_Cross_Debug,
@@ -73,8 +58,6 @@ BuildProject({
 		Library.PhysXExtensions,
 		Library.PhysXFoundation,
 		Library.PhysXPvd,
-		Library.Vulkan,
-		-- Library.VulkanUtils,
 		Library.NvidiaAftermath,
 	},
 	cxflags = {},
@@ -121,7 +104,6 @@ BuildProject({
 		IncludeDir.glm,
 		IncludeDir.entt,
 		IncludeDir.ImGui,
-		IncludeDir.VulkanSDK,
 		IncludeDir.Glad,
 	},
 	rundir = "$(projectdir)/Poseidon",

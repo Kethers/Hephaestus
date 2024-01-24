@@ -1,11 +1,26 @@
 -- Hephaestus Dependencies
 
+includes("../../external/GLFW/xmake.lua")
+includes("../../external/yaml-cpp/xmake.lua")
+includes("../../external/Glad/xmake.lua")
+includes("../../external/imgui/xmake.lua")
+includes("../../external/Box2D/xmake.lua")
+
+add_repositories("glfw /external/GLFW", {rootdir = os.projectdir()})
+add_requires("glfw")
+-- TEMP: bug on 5.2.4 MTd, disable for, emm... now?
+-- if is_mode("debug") then
+-- 	add_requires("assimp >= 5.2.4", {configs = {debug = true, vs_runtime = "MTd"}} )
+-- else
+-- 	add_requires("assimp >= 5.2.4", {configs = {debug = false, vs_runtime = "MT"}} )
+-- end
+
+
+add_requires("vulkansdk")
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 
 if VULKAN_SDK == nil then
 	os.raise("Can't find VULKAN_SDK, please make sure Vulkan SDK is installed!")
-else
-	-- TODO: install VULKAN_SDK via xrepo package
 end
 
 IncludeDir = {}
@@ -43,8 +58,6 @@ Library["PhysXExtensions"] 			= path.join(LibraryDir.PhysX, "PhysXExtensions_sta
 Library["PhysXFoundation"] 			= path.join(LibraryDir.PhysX, "PhysXFoundation_static_64.lib")
 Library["PhysXPvd"] 				= path.join(LibraryDir.PhysX, "PhysXPvdSDK_static_64.lib")
 Library["Vulkan"] 					= path.join(LibraryDir.VulkanSDK, "vulkan-1.lib")
--- TODO: this has been separated into individual lib and not attached in Vulkan SDK
--- Library["VulkanUtils"] 				= path.join(LibraryDir.VulkanSDK, "VkLayer_utils.lib")
 Library["NvidiaAftermath"] 			= path.join(LibraryDir.NvidiaAftermath, "GFSDK_Aftermath_Lib.x64.lib")
 
 Library["ShaderC_Debug"] 			= path.join(LibraryDir.VulkanSDK, "shaderc_sharedd.lib")
