@@ -1,13 +1,13 @@
-call xmake f --solution_name=Hephaestus
+@REM call xmake f --solution_name=Hephaestus
 call xmake project -k vsxmake
 
 IF %ERRORLEVEL% NEQ 0 (
   PAUSE
 )
 
-call xmake f --solution_name=Sandbox
-call xmake project -k vsxmake
+@REM call xmake f --solution_name=Sandbox
+@REM call xmake project -k vsxmake
 
-IF %ERRORLEVEL% NEQ 0 (
-  PAUSE
-)
+@REM IF %ERRORLEVEL% NEQ 0 (
+@REM   PAUSE
+@REM )

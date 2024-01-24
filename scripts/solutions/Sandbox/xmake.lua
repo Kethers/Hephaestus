@@ -1,4 +1,4 @@
-set_project("Sandbox")
+--[[set_project("Sandbox")
 
 BuildProject({
 	projectName = "Hephaestus-ScriptCore",
@@ -39,4 +39,4 @@ BuildProject({
 	enableException = true,
 	staticruntime = false,
 	targetdir = "$(projectdir)/Poseidon/assets/scripts",
-})
+})--]]

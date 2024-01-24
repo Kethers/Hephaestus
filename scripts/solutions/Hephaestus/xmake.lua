@@ -67,7 +67,7 @@ BuildProject({
 	group = "Core",
 })
 
-BuildProject({
+--[[BuildProject({
 	projectName = "Hephaestus-ScriptCore",
 	projectType = "shared",
 	macros = {},
@@ -86,7 +86,7 @@ BuildProject({
 	enableException = true,
 	staticruntime = false,
 	group = "Core",
-})
+})--]]
 
 BuildProject({
 	projectName = "Poseidon",
