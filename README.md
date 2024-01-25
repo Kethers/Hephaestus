@@ -1,22 +1,22 @@
 # Hephaestus
 Hephaestus is personal learning-purpose game engine.
 
-![ExhibitionImg](wiki/imgs/v0.0.1%20exhibition.png)
+![ExhibitionImg](./wiki/imgs/v0.0.1 exhibition.png)
 
 
 
 ## Features and Third-Parties
 
-| Feature/Module | Description                                                  | Third-party libs                                      |
-| -------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
-| ECS            | Entity-Component-System                                      | [EnTT](https://github.com/skypjack/entt)              |
-| Editor         | UI interaction, simple asset manager via UUID and editor built-in content browser. | ImGui, ImGuizmo                                       |
-| Serialization  | Save scene info in file or load scene from file              | Yaml                                                  |
-| Scripting      | Call Engine (native C++) from C# (scripting). Use ScriptEngine as the bridge between managed/unmanaged language. Support Hot Reloading. | Mono                                                  |
-| Graphics       | Simple PBR Shader with PCSS shadow. Shader uniform reflection via SPIR-V. Vulkan/OpenGL as graphics pipeline backend. | Glad, SPIR-V, stb_image, NvidiaAftermath, assimp, vma |
-| Physics        | 2D and 3D physics, simple rigidbody dynamics.                | Box2D, PhysX                                          |
-| Event System   | Dispatch window events, input events etc                     | GLFW                                                  |
-| Logging        | Log for different severity and assertions                    | spdlog                                                |
+| Feature/Module | Description                                                  | Third-party libs                                             |
+| -------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ECS            | Entity-Component-System                                      | [EnTT](https://github.com/skypjack/entt)                     |
+| Editor         | UI, simple asset manager via UUID and editor built-in content browser. | [ImGui](https://github.com/ocornut/imgui), [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo) |
+| Serialization  | Save scene info in file or load scene from file              | [yaml-cpp](https://github.com/jbeder/yaml-cpp)               |
+| Scripting      | Call Engine (native C++) from C# (scripting). Use ScriptEngine as the bridge between managed/unmanaged language. Support Hot Reloading. | [Mono](https://github.com/mono/mono)                         |
+| Graphics       | Simple PBR Shader with PCSS shadow. Shader uniform reflection via SPIR-V. Vulkan/OpenGL as graphics pipeline backend. | [glad](https://github.com/Dav1dde/glad), [SPIR-V Cross/Tools](https://github.com/KhronosGroup/SPIRV-Cross), [stb](https://github.com/nothings/stb), [NsightAftermath](https://developer.nvidia.com/nsight-aftermath), [assimp](https://github.com/assimp/assimp), [VulkanMemoryAllocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) |
+| Physics        | 2D and 3D physics, simple rigidbody dynamics.                | [Box2D](https://github.com/erincatto/box2d), [PhysX](https://github.com/NVIDIAGameWorks/PhysX) |
+| Event System   | Dispatch window events, input events etc                     | [GLFW](https://github.com/glfw/glfw)                         |
+| Logging        | Log for different severity and assertions                    | [spdlog](https://github.com/gabime/spdlog)                   |
 
 
 
