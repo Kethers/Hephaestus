@@ -1,7 +1,7 @@
 # Hephaestus
 Hephaestus is personal learning-purpose game engine.
 
-![ExhibitionImg](./wiki/imgs/v0.0.1 exhibition.png)
+![ExhibitionImg](wiki/imgs/v0.0.1%20exhibition.png)
 
 
 
